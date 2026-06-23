@@ -26,6 +26,7 @@ export default function KtSelect({ value, onChange, options, placeholder, classN
     <div
       ref={containerRef}
       className={`kt-select-wrapper relative ${className}`}
+      style={{ zIndex: open ? 100 : undefined }}
     >
       {/* Trigger Button - Replicates .kt-select-display.kt-select */}
       <div
