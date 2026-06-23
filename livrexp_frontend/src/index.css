@@ -4,29 +4,12 @@
   height: 100%;
 }
 
-/* ─── Layout: full-width content at all screen sizes ─────────────────── */
-/* The sidebar is fixed/absolute — the wrapper must grow to fill remaining space */
-#wrapper {
-  /* Sidebar is 250px wide on desktop */
-  padding-left: 250px;
-}
-
-/* When sidebar is collapsed, it shrinks to ~75px */
-.kt-sidebar-collapse #wrapper {
-  padding-left: 75px;
-}
-
-/* On mobile, no sidebar offset */
-@media (max-width: 1023px) {
-  #wrapper {
-    padding-left: 0 !important;
+/* Space between main content and sidebar on desktop */
+@media (min-width: 1024px) {
+  .dashboard-content-shift,
+  .profile-content-shift {
+    margin-left: 24px !important;
   }
-}
-
-/* Remove the 80rem (1280px) max-width cap so content fills the full screen */
-#content .kt-container-fixed,
-#headerContainer.kt-container-fixed {
-  max-width: 100% !important;
 }
 
 /* Support Metronic classes that contain colons */
@@ -73,4 +56,11 @@
 table tr:has([style*="shimmer"]) td {
   padding-top: 14px;
   padding-bottom: 14px;
+}
+
+/* ─── Container: fill full available width at 1920p ──────────────────── */
+/* Metronic caps .kt-container-fixed at 80rem (1280px). Override to 100%  */
+/* so there is no white gap on the right at large resolutions.            */
+.kt-container-fixed {
+  max-width: 100% !important;
 }

@@ -279,8 +279,8 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         ></div>
       )}
 
-      {/* Main Wrapper - offset matches sidebar width (250px on desktop) */}
-      <div className="kt-wrapper flex grow flex-col" id="wrapper" style={{ minWidth: 0 }}>
+      {/* Main Wrapper */}
+      <div className="kt-wrapper flex grow flex-col ms-2" id="wrapper">
         {/* Header */}
         <header className="kt-header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
           <div className="kt-container-fixed flex justify-between items-stretch lg:gap-4 w-full" id="headerContainer">
@@ -495,7 +495,29 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         </header>
 
         {/* Content Body */}
-        {children}
+        <div className="flex-grow">
+          {children}
+        </div>
+
+        {/* Footer */}
+        <footer className="kt-footer border-t border-border mt-auto">
+          <div className="kt-container-fixed">
+            <div className="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
+              <div className="flex order-2 md:order-1 gap-2 font-normal text-sm">
+                <span className="text-secondary-foreground">
+                  2026© Yassir
+                </span>
+              </div>
+              <nav className="flex order-1 md:order-2 gap-4 font-normal text-sm text-secondary-foreground">
+                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs" target="_blank" rel="noopener noreferrer">Docs</a>
+                <a className="hover:text-primary" href="https://1.envato.market/Vm7VRE" target="_blank" rel="noopener noreferrer">Purchase</a>
+                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license" target="_blank" rel="noopener noreferrer">FAQ</a>
+                <a className="hover:text-primary" href="https://devs.keenthemes.com/" target="_blank" rel="noopener noreferrer">Support</a>
+                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license" target="_blank" rel="noopener noreferrer">License</a>
+              </nav>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
