@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
 
 export default function ColisListPage() {
@@ -52,9 +53,9 @@ export default function ColisListPage() {
   const totalPages = Math.ceil(totalColis / perPage);
   const paginatedColis = filteredColis.slice((currentPage - 1) * perPage, currentPage * perPage);
 
-  // Unique lists for filters matching the backend Twig template
-  const etatsPossibles = ['En préparation', 'Expédié', 'Livré', 'Retourné'];
-  const statutsPossibles = ['En cours', 'Reporté', 'Échec', 'Terminé'];
+  // Unique lists for filters
+  const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
+  const statutsPossibles = Array.from(new Set(colisList.map(c => c.statutLabel).filter(Boolean)));
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -130,36 +131,37 @@ export default function ColisListPage() {
                     </label>
                   </div>
                   <div className="flex flex-wrap gap-2.5">
-                    <select 
-                      className="kt-select w-36" 
+                    <KtSelect
                       value={selectedEtat}
-                      onChange={(e) => {
-                        setSelectedEtat(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <option value="">Tous les états</option>
-                      {etatsPossibles.map(etat => (
-                        <option key={etat} value={etat}>{etat}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => { setSelectedEtat(val); setCurrentPage(1); }}
+                      placeholder="État"
+                      className="w-36"
+                      options={[
+                        { value: '', label: 'Tous les états' },
+                        ...etatsPossibles.map(e => ({ value: e, label: e }))
+                      ]}
+                    />
 
-                    <select 
-                      className="kt-select w-36"
+                    <KtSelect
                       value={selectedStatut}
-                      onChange={(e) => {
-                        setSelectedStatut(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <option value="">Tous les statuts</option>
-                      {statutsPossibles.map(statut => (
-                        <option key={statut} value={statut}>{statut}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
+                      placeholder="Statut"
+                      className="w-36"
+                      options={[
+                        { value: '', label: 'Tous les statuts' },
+                        ...statutsPossibles.map(s => ({ value: s, label: s }))
+                      ]}
+                    />
 
-                    <button 
+                    <button
                       className="kt-btn kt-btn-outline kt-btn-primary"
+                      onClick={handleResetFilters}
+                    >
+                      <i className="ki-filled ki-setting-4" />
+                      Filtrer
+                    </button>
+                    <button
+                      className="kt-btn kt-btn-outline"
                       onClick={handleResetFilters}
                     >
                       Réinitialiser
@@ -318,19 +320,18 @@ export default function ColisListPage() {
                     <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                       <div className="flex items-center gap-2 order-2 md:order-1">
                         Afficher
-                        <select 
-                          className="kt-select w-16" 
-                          value={perPage}
-                          onChange={(e) => {
-                            setPerPage(Number(e.target.value));
-                            setCurrentPage(1);
-                          }}
-                        >
-                          <option value="5">5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                          <option value="50">50</option>
-                        </select>
+                        <KtSelect
+                          value={String(perPage)}
+                          onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
+                          placeholder="10"
+                          className="w-16"
+                          options={[
+                            { value: '5', label: '5' },
+                            { value: '10', label: '10' },
+                            { value: '20', label: '20' },
+                            { value: '50', label: '50' },
+                          ]}
+                        />
                         par page
                       </div>
                       
