@@ -495,7 +495,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         </header>
 
         {/* Content Body */}
-        <div className="flex-grow">
+        <div className="flex-grow pb-10">
           {children}
         </div>
 
