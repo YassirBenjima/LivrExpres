@@ -165,7 +165,7 @@ function App() {
         />
       );
     case '/colis/new':
-      return <ColisNewPage navigate={navigate} />;
+      return <ColisNewPage navigate={navigate} colisList={colisList} />;
     case '/colis/pickup':
       return <ColisPickupPage navigate={navigate} />;
     case '/colis/import':

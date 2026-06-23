@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
-export default function ColisNewPage() {
+export default function ColisNewPage({ navigate, colisList = [] }) {
   const [orderNumber, setOrderNumber] = useState('');
-  const [type, setType] = useState('');
+  const [type, setType] = useState('Colis Simple');
   const [recipient, setRecipient] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [price, setPrice] = useState('');
   const [replacePackage, setReplacePackage] = useState(false);
   const [oldColis, setOldColis] = useState('');
-  const [packageOption, setPackageOption] = useState('');
+  const [packageOption, setPackageOption] = useState('Ne pas ouvrir le colis');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [productNature, setProductNature] = useState('');
@@ -26,6 +27,34 @@ export default function ColisNewPage() {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    fetch('/api/cities')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCities(data);
+        } else if (data && Array.isArray(data.cities)) {
+          setCities(data.cities);
+        }
+      })
+      .catch(err => console.warn('Could not fetch cities, using defaults:', err));
+  }, []);
+
+  // Filter unique order numbers from colisList for replacement options
+  const oldColisChoices = Array.from(new Set(colisList.map(c => c.orderNumber).filter(Boolean)));
+
+  const typeOptions = [
+    { value: 'Colis Simple', label: 'Colis Simple' },
+    { value: 'Colis du stock', label: 'Colis du stock' }
+  ];
+
+  const packageOptionOptions = [
+    { value: 'Ne pas ouvrir le colis', label: 'Ne pas ouvrir le colis' },
+    { value: 'Ouvrir le colis', label: 'Ouvrir le colis' }
+  ];
+
+  const cityOptions = cities.map(c => ({ value: c, label: c }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,14 +96,14 @@ export default function ColisNewPage() {
         setSuccessMsg('Colis ajouté avec succès !');
         // Reset form
         setOrderNumber('');
-        setType('');
+        setType('Colis Simple');
         setRecipient('');
         setCity('');
         setAddress('');
         setPrice('');
         setReplacePackage(false);
         setOldColis('');
-        setPackageOption('');
+        setPackageOption('Ne pas ouvrir le colis');
         setPhoneNumber('');
         setNeighborhood('');
         setProductNature('');
@@ -92,14 +121,14 @@ export default function ColisNewPage() {
       setSuccessMsg('Colis (Démo) ajouté avec succès !');
       // Reset form
       setOrderNumber('');
-      setType('');
+      setType('Colis Simple');
       setRecipient('');
       setCity('');
       setAddress('');
       setPrice('');
       setReplacePackage(false);
       setOldColis('');
-      setPackageOption('');
+      setPackageOption('Ne pas ouvrir le colis');
       setPhoneNumber('');
       setNeighborhood('');
       setProductNature('');
@@ -129,12 +158,13 @@ export default function ColisNewPage() {
               </div>
             </div>
             <div className="flex items-center gap-2.5">
-              <a className="kt-btn kt-btn-outline" href="/colis/">
+              <a className="kt-btn kt-btn-outline" href="/colis">
                 Retour à la liste
               </a>
               <button 
                 className="kt-btn kt-btn-primary" 
-                onClick={handleSubmit} 
+                form="colis-new-form"
+                type="submit"
                 disabled={loading}
               >
                 {loading ? 'Ajout en cours...' : 'Ajouter le colis'}
@@ -159,323 +189,415 @@ export default function ColisNewPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-5 lg:gap-7.5">
+          <form onSubmit={handleSubmit} id="colis-new-form" className="grid grid-cols-1 gap-5 lg:gap-7.5">
             
             {/* Info Card */}
-            <div className="kt-card">
-              <div className="kt-card-content px-6 py-5 sm:px-10 sm:py-7.5">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  <div className="flex flex-col items-start gap-3 w-full lg:max-w-[70%]">
-                    <h2 className="text-lg font-semibold text-mono">
-                      Informations
-                    </h2>
-                    <div className="grid grid-cols-1 gap-2 w-full text-sm text-secondary-foreground">
-                      <div className="flex items-start gap-2">
-                        <i className="ki-filled ki-check-circle text-base text-green-500 shrink-0 mt-0.5"></i>
-                        <span>Pour assurer une livraison rapide de vos commandes, veuillez inclure l'adresse complète ou le quartier du client à l'intérieur du colis.</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <i className="ki-filled ki-check-circle text-base text-green-500 shrink-0 mt-0.5"></i>
-                        <span>Pour les colis d'un poids supérieur à 5 kg ou d'une longueur excédant 30 cm, des frais supplémentaires seront ajoutés.</span>
+            <div className="col-span-1">
+              <div className="kt-card">
+                <div className="kt-card-content px-10 py-7.5 lg:pe-12.5">
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 md:gap-10 p-2.5">
+                    <div className="flex flex-col items-start gap-3 w-full lg:max-w-[60%]">
+                      <h2 className="text-xl font-semibold text-mono">
+                        Informations
+                      </h2>
+                      <div className="grid grid-cols-1 gap-2 w-full">
+                        <div className="flex items-start gap-1.5 lg:pe-7.5">
+                          <i className="ki-filled ki-check-circle text-base text-green-500"></i>
+                          <span className="text-sm text-mono">
+                            Pour assurer une livraison rapide de vos commandes, veuillez inclure l'adresse complète ou le quartier du client à l'intérieur du colis.
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 lg:pe-7.5">
+                          <i className="ki-filled ki-check-circle text-base text-green-500"></i>
+                          <span className="text-sm text-mono">
+                            Pour les colis d'un poids supérieur à 5 kg ou d'une longueur excédant 30 cm, des frais supplémentaires seront ajoutés.
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-1.5 lg:pe-7.5">
+                          <i className="ki-filled ki-check-circle text-base text-green-500"></i>
+                          <span className="text-sm text-mono">
+                            Pour les colis stockés, vous pouvez ajouter des cartons, sachets ou papier bulle pour une meilleure protection.
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <div className="shrink-0 self-center lg:self-auto flex items-center justify-center">
+                      <i className="colis-info-icon ki-filled ki-information dark:hidden text-primary" style={{ fontSize: '80px', lineHeight: '1' }}></i>
+                    </div>
                   </div>
-                  <i className="ki-filled ki-information text-primary text-5xl opacity-40 hidden lg:block"></i>
                 </div>
               </div>
             </div>
 
-            {/* Form grid */}
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-2 gap-5 lg:gap-7.5">
-              
-              {/* Left Side: General Info */}
-              <div className="kt-card min-w-full">
-                <div className="kt-card-header">
-                  <h3 className="kt-card-title">Informations du colis</h3>
-                </div>
-                <div className="p-6">
-                  <div className="grid gap-4">
-                    
-                    {/* Order Number */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">N° Commande</label>
-                      <input 
-                        type="text"
-                        className="kt-input grow"
-                        placeholder="№ Commande"
-                        value={orderNumber}
-                        onChange={(e) => setOrderNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                        required
-                      />
-                    </div>
-
-                    {/* Type */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Type de Colis</label>
-                      <select 
-                        className="kt-select grow"
-                        value={type}
-                        onChange={(e) => setType(e.target.value)}
-                        required
-                      >
-                        <option value="">Choisir un type</option>
-                        <option value="simple">Simple</option>
-                        <option value="stock">Stocké</option>
-                      </select>
-                    </div>
-
-                    {/* Recipient */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Destinataire</label>
-                      <input 
-                        type="text"
-                        className="kt-input grow"
-                        placeholder="Nom complet"
-                        value={recipient}
-                        onChange={(e) => setRecipient(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    {/* City */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Ville</label>
-                      <select 
-                        className="kt-select grow"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        required
-                      >
-                        <option value="">Choisir une ville</option>
-                        {cities.map(c => (
-                          <option key={c} value={c.toLowerCase()}>{c}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Address */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Adresse</label>
-                      <input 
-                        type="text"
-                        className="kt-input grow"
-                        placeholder="Adresse complète"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    {/* Price */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Prix (MAD)</label>
-                      <input 
-                        type="number"
-                        className="kt-input grow"
-                        placeholder="Montant en DH"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side: Supplementary Info & Options */}
-              <div className="grid gap-5 lg:gap-7.5">
+            {/* Split cards grid */}
+            <div className="col-span-1">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 lg:gap-7.5">
                 
-                {/* Complementary Info Card */}
-                <div className="kt-card min-w-full">
-                  <div className="kt-card-header flex justify-between items-center">
-                    <h3 className="kt-card-title">Informations complémentaires</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-secondary-foreground">Colis à remplacer</span>
-                      <button 
-                        type="button"
-                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${replacePackage ? 'bg-primary' : 'bg-input'}`}
-                        onClick={() => setReplacePackage(!replacePackage)}
-                      >
-                        <span className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${replacePackage ? 'translate-x-4' : 'translate-x-0'}`} />
-                      </button>
+                {/* Left Card: Informations du colis */}
+                <div className="col-span-1">
+                  <div className="kt-card min-w-full">
+                    <div className="kt-card-header">
+                      <h3 className="kt-card-title">Informations du colis</h3>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid gap-4">
-                      
-                      {/* Old Colis to Replace (Conditional) */}
-                      {replacePackage && (
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                          <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Ancien Colis</label>
-                          <select 
-                            className="kt-select grow"
-                            value={oldColis}
-                            onChange={(e) => setOldColis(e.target.value)}
-                            required
-                          >
-                            <option value="">Choisir un colis à remplacer</option>
-                            <option value="F-20260622-0001">F-20260622-0001 (Sac à Main)</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Phone Number */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Téléphone</label>
-                        <input 
-                          type="tel"
-                          className="kt-input grow"
-                          placeholder="№ de téléphone"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Neighborhood */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Quartier</label>
-                        <input 
-                          type="text"
-                          className="kt-input grow"
-                          placeholder="Quartier"
-                          value={neighborhood}
-                          onChange={(e) => setNeighborhood(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Product Nature */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Nature Produit</label>
-                        <input 
-                          type="text"
-                          className="kt-input grow"
-                          placeholder="Ex: Vêtements, Électronique"
-                          value={productNature}
-                          onChange={(e) => setProductNature(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Comment */}
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label className="text-sm font-medium text-secondary-foreground sm:w-1/3">Commentaire</label>
-                        <input 
-                          type="text"
-                          className="kt-input grow"
-                          placeholder="Commentaires ou instructions"
-                          value={comment}
-                          onChange={(e) => setComment(e.target.value)}
-                        />
-                      </div>
-
+                    <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
+                      <table className="kt-table align-middle text-sm text-muted-foreground">
+                        <tbody>
+                          <tr>
+                            <td className="py-2 min-w-36 text-secondary-foreground font-normal">№ Commande</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="№ Commande"
+                                value={orderNumber}
+                                onChange={(e) => setOrderNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                                required
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Type</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <KtSelect
+                                value={type}
+                                onChange={setType}
+                                placeholder="Choisir un type"
+                                options={typeOptions}
+                                className="w-full"
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Destinataire</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Destinataire"
+                                value={recipient}
+                                onChange={(e) => setRecipient(e.target.value)}
+                                required
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Ville</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <KtSelect
+                                value={city}
+                                onChange={setCity}
+                                placeholder="Choisir une ville"
+                                options={cityOptions}
+                                className="w-full"
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Adresse</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Adresse"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                required
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Prix</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="number"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Prix"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                required
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
 
-                {/* Colis Options Card */}
-                <div className="kt-card">
-                  <div className="kt-card-header">
-                    <h3 className="kt-card-title">Options de colis</h3>
+                {/* Right Card: Informations complementaires */}
+                <div className="col-span-1">
+                  <div className="kt-card min-w-full">
+                    <div className="kt-card-header flex justify-between items-center">
+                      <h3 className="kt-card-title">Informations complementaires</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-secondary-foreground font-normal">Colis a remplacer</span>
+                        <label className="kt-switch kt-switch-sm">
+                          <input 
+                            type="checkbox"
+                            checked={replacePackage}
+                            onChange={(e) => setReplacePackage(e.target.checked)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
+                      <table className="kt-table align-middle text-sm text-muted-foreground colis-form-table">
+                        <tbody>
+                          {replacePackage && (
+                            <tr id="old-colis-row">
+                              <td className="py-2 text-secondary-foreground font-normal">Colis a remplacer</td>
+                              <td className="py-2 text-foreground font-normal text-sm" id="old-colis-cell">
+                                <KtSelect
+                                  value={oldColis}
+                                  onChange={setOldColis}
+                                  placeholder="Choisir un ancien colis"
+                                  options={oldColisChoices.map(c => ({ value: c, label: c }))}
+                                  className="w-full"
+                                />
+                              </td>
+                            </tr>
+                          )}
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Colis</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <KtSelect
+                                value={packageOption}
+                                onChange={setPackageOption}
+                                placeholder="Choisir une option"
+                                options={packageOptionOptions}
+                                className="w-full"
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Numero de telephone</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="tel"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Numero de telephone"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                required
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Quartier</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Quartier"
+                                value={neighborhood}
+                                onChange={(e) => setNeighborhood(e.target.value)}
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Nature de produit</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Nature de produit"
+                                value={productNature}
+                                onChange={(e) => setProductNature(e.target.value)}
+                                required
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 text-secondary-foreground font-normal">Commentaire</td>
+                            <td className="py-2 text-foreground font-normal text-sm">
+                              <input 
+                                type="text"
+                                className="kt-input h-8 text-sm w-full"
+                                placeholder="Commentaire"
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                  <div className="p-6 flex flex-col gap-4">
+                </div>
+
+              </div>
+            </div>
+
+            {/* Options de colis card */}
+            <div className="col-span-1">
+              <div className="kt-card">
+                <div className="kt-card-header">
+                  <h3 className="kt-card-title">Options de colis</h3>
+                </div>
+                <div className="kt-card-content pb-7.5 px-4 sm:px-6">
+                  <div className="grid gap-2.5">
                     
-                    {/* Fragile option */}
-                    <div className="flex items-center justify-between border border-border rounded-xl px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-primary/5 size-10 rounded-lg flex items-center justify-center text-primary">
-                          <i className="ki-filled ki-shield-cross text-lg"></i>
+                    {/* Fragile */}
+                    <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="relative size-[50px] shrink-0">
+                          <svg className="w-full h-full stroke-primary/10 fill-primary/5" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
+                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
+                          </svg>
+                          <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
+                            <i className="ki-filled ki-shield-cross text-xl ps-px text-primary"></i>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium">Colis fragile</span>
+                        <span className="text-mono text-sm font-medium break-words leading-5">
+                          Colis fragile
+                        </span>
                       </div>
                       <button 
-                        type="button" 
-                        className={`kt-btn kt-btn-sm kt-btn-icon rounded-full border ${fragile ? 'bg-primary border-primary text-white' : 'border-input hover:bg-accent'}`}
+                        className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${fragile ? 'active' : ''}`}
+                        type="button"
                         onClick={() => setFragile(!fragile)}
                       >
-                        <i className="ki-filled ki-check text-xs"></i>
+                        <i className="ki-filled ki-check"></i>
                       </button>
                     </div>
 
-                    {/* All Fragile Option */}
-                    <div className="flex items-center justify-between border border-border rounded-xl px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-yellow-50 size-10 rounded-lg flex items-center justify-center text-yellow-600">
-                          <i className="ki-filled ki-shield-tick text-lg"></i>
+                    {/* All Fragile */}
+                    <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="relative size-[50px] shrink-0">
+                          <svg className="w-full h-full stroke-yellow-200 dark:stroke-yellow-950 fill-yellow-100 dark:fill-yellow-950/30" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
+                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
+                          </svg>
+                          <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
+                            <i className="ki-filled ki-shield-tick text-xl ps-px text-yellow-600"></i>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium">Définir tous mes colis comme fragiles</span>
+                        <span className="text-mono text-sm font-medium break-words leading-5">
+                          Je souhaite definir tous mes colis comme fragiles
+                        </span>
                       </div>
                       <button 
-                        type="button" 
-                        className={`kt-btn kt-btn-sm kt-btn-icon rounded-full border ${allFragile ? 'bg-primary border-primary text-white' : 'border-input hover:bg-accent'}`}
+                        className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${allFragile ? 'active' : ''}`}
+                        type="button"
                         onClick={() => setAllFragile(!allFragile)}
                       >
-                        <i className="ki-filled ki-check text-xs"></i>
+                        <i className="ki-filled ki-check"></i>
                       </button>
                     </div>
 
-                    {/* Use Carton Option */}
-                    <div className="flex items-center justify-between border border-border rounded-xl px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-green-50 size-10 rounded-lg flex items-center justify-center text-green-600">
-                          <i className="ki-filled ki-archive text-lg"></i>
+                    {/* Carton Option */}
+                    <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="relative size-[50px] shrink-0">
+                          <svg className="w-full h-full stroke-green-200 dark:stroke-green-950 fill-green-100 dark:fill-green-950/30" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
+                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
+                          </svg>
+                          <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
+                            <i className="ki-filled ki-archive text-xl ps-px text-green-600"></i>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium">Je veux utiliser un carton</span>
+                        <span className="text-mono text-sm font-medium break-words leading-5">
+                          Je veux utiliser un carton
+                        </span>
                       </div>
                       <button 
-                        type="button" 
-                        className={`kt-btn kt-btn-sm kt-btn-icon rounded-full border ${useCarton ? 'bg-primary border-primary text-white' : 'border-input hover:bg-accent'}`}
+                        className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${useCarton ? 'active' : ''}`}
+                        type="button"
                         onClick={() => setUseCarton(!useCarton)}
                       >
-                        <i className="ki-filled ki-check text-xs"></i>
+                        <i className="ki-filled ki-check"></i>
                       </button>
                     </div>
-
-                    {/* Carton Options Choice (Conditional) */}
-                    {useCarton && (
-                      <div className="grid gap-3 pt-2 pl-4 border-l-2 border-border">
-                        <div 
-                          className={`flex items-center justify-between border rounded-xl px-4 py-3 cursor-pointer ${cartonOption === 's' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                          onClick={() => setCartonOption('s')}
-                        >
-                          <div>
-                            <div className="text-sm font-semibold">Petit carton (S)</div>
-                            <div className="text-xs text-secondary-foreground">Frais additionnels: 1.5 DH</div>
-                          </div>
-                          {cartonOption === 's' && <i className="ki-filled ki-check text-primary text-lg"></i>}
-                        </div>
-
-                        <div 
-                          className={`flex items-center justify-between border rounded-xl px-4 py-3 cursor-pointer ${cartonOption === 'm' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                          onClick={() => setCartonOption('m')}
-                        >
-                          <div>
-                            <div className="text-sm font-semibold">Carton moyen (M)</div>
-                            <div className="text-xs text-secondary-foreground">Frais additionnels: 2.5 DH</div>
-                          </div>
-                          {cartonOption === 'm' && <i className="ki-filled ki-check text-primary text-lg"></i>}
-                        </div>
-
-                        <div 
-                          className={`flex items-center justify-between border rounded-xl px-4 py-3 cursor-pointer ${cartonOption === 'l' ? 'border-primary bg-primary/5' : 'border-border'}`}
-                          onClick={() => setCartonOption('l')}
-                        >
-                          <div>
-                            <div className="text-sm font-semibold">Grand carton (L)</div>
-                            <div className="text-xs text-secondary-foreground">Frais additionnels: 3.0 DH</div>
-                          </div>
-                          {cartonOption === 'l' && <i className="ki-filled ki-check text-primary text-lg"></i>}
-                        </div>
-                      </div>
-                    )}
 
                   </div>
                 </div>
-
               </div>
+            </div>
 
-            </form>
+            {/* Options carton card */}
+            {useCarton && (
+              <div className="col-span-1" id="carton-options-card">
+                <div className="kt-card">
+                  <div className="kt-card-header">
+                    <h3 className="kt-card-title">Options carton</h3>
+                  </div>
+                  <div className="kt-card-content pb-7.5 px-4 sm:px-6">
+                    <div className="grid gap-2.5">
+                      
+                      {/* Petit carton (S) */}
+                      <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
+                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-mono text-sm font-medium">Petit carton (S)</span>
+                            <span className="text-xs text-secondary-foreground">Avec frais: 1.5 DH</span>
+                            <span className="text-xs text-secondary-foreground">Carton box de petite taille.</span>
+                          </div>
+                        </div>
+                        <button 
+                          className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${cartonOption === 's' ? 'active' : ''}`}
+                          type="button"
+                          onClick={() => setCartonOption('s')}
+                        >
+                          <i className="ki-filled ki-check"></i>
+                        </button>
+                      </div>
 
-          </div>
+                      {/* Carton moyen (M) */}
+                      <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
+                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-mono text-sm font-medium">Carton moyen (M)</span>
+                            <span className="text-xs text-secondary-foreground">Avec frais: 2.5 DH</span>
+                            <span className="text-xs text-secondary-foreground">Carton box de moyenne taille.</span>
+                          </div>
+                        </div>
+                        <button 
+                          className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${cartonOption === 'm' ? 'active' : ''}`}
+                          type="button"
+                          onClick={() => setCartonOption('m')}
+                        >
+                          <i className="ki-filled ki-check"></i>
+                        </button>
+                      </div>
+
+                      {/* Grand carton (L) */}
+                      <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
+                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-mono text-sm font-medium">Grand carton (L)</span>
+                            <span className="text-xs text-secondary-foreground">Avec frais: 3 DH</span>
+                            <span className="text-xs text-secondary-foreground">Carton box de grande taille.</span>
+                          </div>
+                        </div>
+                        <button 
+                          className={`kt-btn kt-btn-sm kt-btn-icon kt-btn-primary kt-btn-outline rounded-full shrink-0 self-start sm:self-center ${cartonOption === 'l' ? 'active' : ''}`}
+                          type="button"
+                          onClick={() => setCartonOption('l')}
+                        >
+                          <i className="ki-filled ki-check"></i>
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </form>
+
         </div>
 
       </main>
