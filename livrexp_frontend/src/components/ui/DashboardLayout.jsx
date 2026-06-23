@@ -279,8 +279,8 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         ></div>
       )}
 
-      {/* Main Wrapper */}
-      <div className="kt-wrapper flex grow flex-col ms-2" id="wrapper">
+      {/* Main Wrapper - offset matches sidebar width (250px on desktop) */}
+      <div className="kt-wrapper flex grow flex-col" id="wrapper" style={{ minWidth: 0 }}>
         {/* Header */}
         <header className="kt-header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
           <div className="kt-container-fixed flex justify-between items-stretch lg:gap-4 w-full" id="headerContainer">
