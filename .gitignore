@@ -1,0 +1,32 @@
+# ===========================
+# LivrExpress Monorepo .gitignore
+# ===========================
+
+# ---- Symfony / PHP (livrexp_backend) ----
+livrexp_backend/.env.local
+livrexp_backend/.env.*.local
+livrexp_backend/var/
+livrexp_backend/vendor/
+livrexp_backend/public/bundles/
+livrexp_backend/public/uploads/
+livrexp_backend/.php_cs.cache
+livrexp_backend/.phpunit.result.cache
+livrexp_backend/symfony.lock
+
+# ---- React / Node (livrexp_frontend) ----
+livrexp_frontend/node_modules/
+livrexp_frontend/dist/
+livrexp_frontend/.env.local
+livrexp_frontend/.env.*.local
+livrexp_frontend/*.local
+
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ---- Docker ----
+*.log

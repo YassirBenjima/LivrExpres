@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+final class Version20260407113000 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Add avatar column to user table';
+    }
+
+    public function up(Schema $schema): void
+    {
+        if (!$schema->getTable('user')->hasColumn('avatar')) {
+            $this->addSql('ALTER TABLE `user` ADD avatar VARCHAR(255) DEFAULT NULL');
+        }
+    }
+
+    public function down(Schema $schema): void
+    {
+        if ($schema->getTable('user')->hasColumn('avatar')) {
+            $this->addSql('ALTER TABLE `user` DROP avatar');
+        }
+    }
+}

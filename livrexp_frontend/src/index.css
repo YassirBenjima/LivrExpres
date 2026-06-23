@@ -1,0 +1,47 @@
+/* Minimal reset to prevent conflicts with Metronic CSS */
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Space between main content and sidebar on desktop */
+@media (min-width: 1024px) {
+  .dashboard-content-shift,
+  .profile-content-shift {
+    margin-left: 24px !important;
+  }
+}
+
+/* Support Metronic classes that contain colons */
+.kt-menu-bullet::before {
+  background-color: #a1a5b7;
+  opacity: 0.35;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+/* Active submenu link wrapper styling */
+.kt-menu-item.active > .kt-menu-link {
+  background-color: rgba(241, 245, 249, 0.6) !important; /* Fallback accent color */
+  border-radius: 0.5rem !important;
+}
+
+.dark .kt-menu-item.active > .kt-menu-link {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+}
+
+/* Active and Hover States mapping for classes with colons */
+.kt-menu-item.active > .kt-menu-link .kt-menu-item-active\:before\:bg-primary::before,
+.kt-menu-link:hover .kt-menu-item-hover\:before\:bg-primary::before {
+  background-color: var(--primary) !important;
+  opacity: 1 !important;
+}
+
+.kt-menu-item.active > .kt-menu-link .kt-menu-item-active\:text-primary {
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.kt-menu-link:hover .kt-menu-link-hover\:text-primary,
+.kt-menu-link:hover .kt-menu-link-hover\:\!text-primary {
+  color: var(--primary) !important;
+}

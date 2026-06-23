@@ -1,0 +1,469 @@
+ {% set currentRoute = app.request.attributes.get('_route') %}
+ {% set isColisRoute = currentRoute starts with 'app_colis_' and currentRoute != 'app_colis_retour' %}
+{% set isSuiviRoute = currentRoute starts with 'app_suivi_' %}
+{% set isRetourRoute = currentRoute starts with 'app_retour_' or currentRoute == 'app_colis_retour' %}
+ {% set isStockRoute = currentRoute starts with 'app_stock_' %}
+ {% set isRamassageRoute = currentRoute starts with 'app_ramassage_' %}
+ {% set isBonLivraisonRoute = currentRoute starts with 'app_bon_livraison_' %}
+ {% set isFacturationRoute = currentRoute starts with 'app_facturation_' %}
+ {% set isAffiliateRoute = currentRoute == 'app_affiliate_index' %}
+ {% set isApiDocsRoute = currentRoute == 'app_api_docs' %}
+  <!-- Sidebar -->
+   <div class="kt-sidebar bg-background border-e border-e-border fixed top-0 bottom-0 z-20 hidden lg:flex flex-col items-stretch shrink-0 [--kt-drawer-enable:true] lg:[--kt-drawer-enable:false]" data-kt-drawer="true" data-kt-drawer-class="kt-drawer kt-drawer-start top-0 bottom-0" id="sidebar">
+    <div class="kt-sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0" id="sidebar_header">
+     <a class="dark:hidden" href="{{ path('app_dashboard') }}">
+      <img class="default-logo min-h-[22px] max-w-none" src="{{ asset('assets/') }}media/app/default-logo.svg"/>
+      <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/') }}media/app/mini-logo.svg"/>
+     </a>
+     <a class="hidden dark:block" href="{{ path('app_dashboard') }}">
+      <img class="default-logo min-h-[22px] max-w-none" src="{{ asset('assets/') }}media/app/default-logo-dark.svg"/>
+      <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/') }}media/app/mini-logo.svg"/>
+     </a>
+     <button class="kt-btn kt-btn-outline kt-btn-icon size-[30px] absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4" data-kt-toggle="body" data-kt-toggle-class="kt-sidebar-collapse" id="sidebar_toggle">
+      <i class="ki-filled ki-black-left-line kt-toggle-active:rotate-180 transition-all duration-300 rtl:translate rtl:rotate-180 rtl:kt-toggle-active:rotate-0">
+      </i>
+     </button>
+    </div>
+    <div class="kt-sidebar-content flex grow shrink-0 py-5 pe-2" id="sidebar_content">
+     <div class="kt-scrollable-y-hover grow shrink-0 flex ps-2 lg:ps-5 pe-1 lg:pe-3" data-kt-scrollable="true" data-kt-scrollable-dependencies="#sidebar_header" data-kt-scrollable-height="auto" data-kt-scrollable-offset="0px" data-kt-scrollable-wrappers="#sidebar_content" id="sidebar_scrollable">
+      <!-- Sidebar Menu -->
+      <div class="kt-menu flex flex-col grow gap-1" data-kt-menu="true" data-kt-menu-accordion-expand-all="false" id="sidebar_menu">
+       <div class="kt-menu-item here">
+        <a class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="{{ path('app_dashboard') }}" tabindex="0">
+         <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+          <i class="ki-filled ki-element-11 text-lg">
+          </i>
+         </span>
+         <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+          Dashboard
+         </span>
+        </a>
+       </div>
+       <div class="kt-menu-item pt-2.25 pb-px">
+        <span class="kt-menu-heading uppercase text-xs font-medium text-muted-foreground ps-[10px] pe-[10px]">
+         User
+        </span>
+       </div>
+      <div class="kt-menu-item {{ isColisRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+         <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+          <i class="ki-filled ki-delivery-3 text-lg">
+          </i>
+         </span>
+         <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+          Colis
+         </span>
+         <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+          <span class="inline-flex kt-menu-item-show:hidden">
+           <i class="ki-filled ki-plus text-[11px]">
+           </i>
+          </span>
+          <span class="hidden kt-menu-item-show:inline-flex">
+           <i class="ki-filled ki-minus text-[11px]">
+           </i>
+          </span>
+         </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+        <div class="kt-menu-item {{ currentRoute == 'app_colis_index' ? 'active' : '' }}">
+         <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_colis_index') }}" tabindex="0">
+          <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+          </span>
+          <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+           Liste des colis
+          </span>
+         </a>
+        </div>
+        <div class="kt-menu-item {{ currentRoute == 'app_colis_new' ? 'active' : '' }}">
+         <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_colis_new') }}" tabindex="0">
+          <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+          </span>
+          <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+           Ajouter un colis
+          </span>
+         </a>
+        </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_colis_pickup' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_colis_pickup') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+          <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+           Colis pour ramassage
+          </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_colis_import' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_colis_import') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+          <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+           Importer Colis
+          </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_colis_settings' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_colis_settings') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+          <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+           Parametres des colis
+          </span>
+          </a>
+         </div>
+        <div class="kt-menu-item hidden">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="public-profile/activity.html" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Activity
+           </span>
+          </a>
+         </div>
+        <div class="kt-menu-item flex-col-reverse hidden" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+          <div class="kt-menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-secondary-foreground">
+            <span class="hidden kt-menu-item-show:!flex">
+             Show less
+            </span>
+            <span class="flex kt-menu-item-show:hidden">
+             Show 3 more
+            </span>
+           </span>
+           <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+            <span class="inline-flex kt-menu-item-show:hidden">
+             <i class="ki-filled ki-plus text-[11px]">
+             </i>
+            </span>
+            <span class="hidden kt-menu-item-show:inline-flex">
+             <i class="ki-filled ki-minus text-[11px]">
+             </i>
+            </span>
+           </span>
+          </div>
+          <div class="kt-menu-accordion gap-1">
+           <div class="kt-menu-item">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="public-profile/campaigns/card.html" tabindex="0">
+             <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+             </span>
+             <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+              Campaigns - Card
+             </span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="public-profile/campaigns/list.html" tabindex="0">
+             <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+             </span>
+             <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+              Campaigns - List
+             </span>
+            </a>
+           </div>
+           <div class="kt-menu-item">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="public-profile/empty.html" tabindex="0">
+             <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+             </span>
+             <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+              Empty
+             </span>
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+
+      <div class="kt-menu-item {{ isStockRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+         <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+          <i class="ki-filled ki-archive text-lg">
+          </i>
+         </span>
+         <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+          Stock
+         </span>
+         <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+          <span class="inline-flex kt-menu-item-show:hidden">
+           <i class="ki-filled ki-plus text-[11px]">
+           </i>
+          </span>
+          <span class="hidden kt-menu-item-show:inline-flex">
+           <i class="ki-filled ki-minus text-[11px]">
+           </i>
+          </span>
+         </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+         <div class="kt-menu-item {{ currentRoute == 'app_stock_products_index' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_stock_products_index') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Liste des produits
+           </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_stock_products_new' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_stock_products_new') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Ajouter un produit
+           </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_stock_colis_pickup' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_stock_colis_pickup') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Colis Stock
+           </span>
+          </a>
+         </div>
+        <div class="kt-menu-item {{ currentRoute == 'app_stock_entry_index' ? 'active' : '' }}">
+         <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_stock_entry_index') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Mouvement de stock
+           </span>
+          </a>
+         </div>
+        <div class="kt-menu-item {{ currentRoute == 'app_stock_packaging_settings' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_stock_packaging_settings') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Gestion d'emballage
+           </span>
+          </a>
+         </div>
+        </div>
+       </div>
+       <div class="kt-menu-item {{ isRamassageRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+         <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+          <i class="ki-filled ki-delivery text-lg">
+          </i>
+         </span>
+         <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+          Ramassage
+         </span>
+         <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+          <span class="inline-flex kt-menu-item-show:hidden">
+           <i class="ki-filled ki-plus text-[11px]">
+           </i>
+          </span>
+          <span class="hidden kt-menu-item-show:inline-flex">
+           <i class="ki-filled ki-minus text-[11px]">
+           </i>
+          </span>
+         </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+         <div class="kt-menu-item {{ currentRoute == 'app_ramassage_index' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_ramassage_index') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Liste des ramassages
+           </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_ramassage_new' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_ramassage_new') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Demander un ramassage
+           </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_ramassage_planning' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_ramassage_planning') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Planification
+           </span>
+          </a>
+         </div>
+        </div>
+       </div>
+       <div class="kt-menu-item {{ isBonLivraisonRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+         <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+          <i class="ki-filled ki-directbox-default text-lg">
+          </i>
+         </span>
+         <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+          Bon de Livraison
+         </span>
+         <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+          <span class="inline-flex kt-menu-item-show:hidden">
+           <i class="ki-filled ki-plus text-[11px]">
+           </i>
+          </span>
+          <span class="hidden kt-menu-item-show:inline-flex">
+           <i class="ki-filled ki-minus text-[11px]">
+           </i>
+          </span>
+         </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+         <div class="kt-menu-item {{ currentRoute == 'app_bon_livraison_index' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_bon_livraison_index') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Liste bons de livraison
+           </span>
+          </a>
+         </div>
+         <div class="kt-menu-item {{ currentRoute == 'app_bon_livraison_new' or currentRoute == 'app_bon_livraison_edit' ? 'active' : '' }}">
+          <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_bon_livraison_new') }}" tabindex="0">
+           <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary">
+           </span>
+           <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+            Ajouter Bon de Livraison
+           </span>
+          </a>
+         </div>
+        </div>
+       </div>
+      <div class="kt-menu-item {{ isSuiviRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+          <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+            <i class="ki-filled ki-route text-lg"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+            Suivi
+          </span>
+          <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+            <span class="inline-flex kt-menu-item-show:hidden">
+              <i class="ki-filled ki-plus text-[11px]"></i>
+            </span>
+            <span class="hidden kt-menu-item-show:inline-flex">
+              <i class="ki-filled ki-minus text-[11px]"></i>
+            </span>
+          </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+          <div class="kt-menu-item {{ currentRoute == 'app_suivi_changement_destinataire' ? 'active' : '' }}">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_suivi_changement_destinataire') }}" tabindex="0">
+              <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+              <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+                Changement destinataire
+              </span>
+            </a>
+          </div>
+          <div class="kt-menu-item {{ currentRoute == 'app_suivi_modele_whatsapp' ? 'active' : '' }}">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_suivi_modele_whatsapp') }}" tabindex="0">
+              <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+              <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+                Modele Whatsapp
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="kt-menu-item {{ isRetourRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+          <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+            <i class="ki-filled ki-delivery-time text-lg"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+            Retour
+          </span>
+          <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+            <span class="inline-flex kt-menu-item-show:hidden">
+              <i class="ki-filled ki-plus text-[11px]"></i>
+            </span>
+            <span class="hidden kt-menu-item-show:inline-flex">
+              <i class="ki-filled ki-minus text-[11px]"></i>
+            </span>
+          </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+          <div class="kt-menu-item {{ currentRoute == 'app_retour_demande_index' or currentRoute == 'app_retour_demande_new' ? 'active' : '' }}">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_retour_demande_index') }}" tabindex="0">
+              <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+              <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+                Demande de retour
+              </span>
+            </a>
+          </div>
+          <div class="kt-menu-item {{ currentRoute == 'app_retour_bons_index' ? 'active' : '' }}">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_retour_bons_index') }}" tabindex="0">
+              <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+              <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+                Liste des bons de retour
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="kt-menu-item {{ isFacturationRoute ? 'here show' : '' }}" data-kt-menu-item-toggle="accordion" data-kt-menu-item-trigger="click">
+        <div class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+          <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+            <i class="ki-filled ki-bill text-lg"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+            Facturation
+          </span>
+          <span class="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+            <span class="inline-flex kt-menu-item-show:hidden">
+              <i class="ki-filled ki-plus text-[11px]"></i>
+            </span>
+            <span class="hidden kt-menu-item-show:inline-flex">
+              <i class="ki-filled ki-minus text-[11px]"></i>
+            </span>
+          </span>
+        </div>
+        <div class="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border">
+          <div class="kt-menu-item {{ currentRoute == 'app_facturation_crbt_index' ? 'active' : '' }}">
+            <a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="{{ path('app_facturation_crbt_index') }}" tabindex="0">
+              <span class="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+              <span class="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
+                Liste CRBT
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="kt-menu-item {{ isAffiliateRoute ? 'here' : '' }}">
+        <a class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="{{ path('app_affiliate_index') }}" tabindex="0">
+          <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+            <i class="ki-filled ki-share text-lg"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+            Affiliate
+          </span>
+        </a>
+      </div>
+
+      <div class="kt-menu-item {{ isApiDocsRoute ? 'here' : '' }}">
+        <a class="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="{{ path('app_api_docs') }}" tabindex="0">
+          <span class="kt-menu-icon items-start text-muted-foreground w-[20px]">
+            <i class="ki-filled ki-code text-lg"></i>
+          </span>
+          <span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary kt-menu-link-hover:!text-primary">
+            API
+          </span>
+        </a>
+      </div>
+
+      </div>
+      <!-- End of Sidebar Menu -->
+      </div>
+      <!-- End of Sidebar Menu -->
+     </div>
+    </div>
+   </div>
+   <!-- End of Sidebar -->

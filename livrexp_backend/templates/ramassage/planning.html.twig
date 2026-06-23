@@ -1,0 +1,148 @@
+{% extends 'base_dashboard.html.twig' %}
+
+{% block title %}Planification des ramassages - LivrExpress{% endblock %}
+
+{% block body %}
+<main class="grow pt-5 dashboard-content-shift" id="content" role="content">
+    <!-- Container -->
+    <div class="kt-container-fixed" id="contentContainer">
+    </div>
+    <!-- End of Container -->
+    <!-- Container — Header -->
+    <div class="kt-container-fixed">
+     <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+      <div class="flex flex-col justify-center gap-2">
+       <h1 class="text-xl font-medium leading-none text-mono">
+        Planification des ramassages
+       </h1>
+       <div class="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
+        Vue d'ensemble de vos demandes de ramassage
+       </div>
+      </div>
+      <div class="flex items-center gap-2.5">
+       <a class="kt-btn kt-btn-outline" href="{{ path('app_ramassage_index') }}">
+        Voir la liste
+       </a>
+       <a class="kt-btn kt-btn-primary" href="{{ path('app_ramassage_new') }}">
+        Nouvelle demande
+       </a>
+      </div>
+     </div>
+    </div>
+    <!-- End of Container -->
+
+    <!-- Container — KPI Stats -->
+    <div class="kt-container-fixed">
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7.5 pb-7.5">
+      <!-- Total -->
+      <div class="kt-card">
+       <div class="kt-card-content flex items-center gap-4 p-5">
+        <div class="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+         <i class="ki-filled ki-parcel text-xl text-primary"></i>
+        </div>
+        <div class="flex flex-col">
+         <span class="text-2xl font-semibold text-mono">{{ stats.total }}</span>
+         <span class="text-xs text-secondary-foreground font-medium">Total demandes</span>
+        </div>
+       </div>
+      </div>
+      <!-- En attente -->
+      <div class="kt-card">
+       <div class="kt-card-content flex items-center gap-4 p-5">
+        <div class="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+         <i class="ki-filled ki-time text-xl text-primary"></i>
+        </div>
+        <div class="flex flex-col">
+         <span class="text-2xl font-semibold text-mono">{{ stats.pending }}</span>
+         <span class="text-xs text-secondary-foreground font-medium">En attente</span>
+        </div>
+       </div>
+      </div>
+      <!-- Confirmés -->
+      <div class="kt-card">
+       <div class="kt-card-content flex items-center gap-4 p-5">
+        <div class="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+         <i class="ki-filled ki-check-circle text-xl text-primary"></i>
+        </div>
+        <div class="flex flex-col">
+         <span class="text-2xl font-semibold text-mono">{{ stats.confirmed }}</span>
+         <span class="text-xs text-secondary-foreground font-medium">Confirmés</span>
+        </div>
+       </div>
+      </div>
+      <!-- Ramassés -->
+      <div class="kt-card">
+       <div class="kt-card-content flex items-center gap-4 p-5">
+        <div class="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+         <i class="ki-filled ki-car text-xl text-primary"></i>
+        </div>
+        <div class="flex flex-col">
+         <span class="text-2xl font-semibold text-mono">{{ stats.picked_up }}</span>
+         <span class="text-xs text-secondary-foreground font-medium">Ramassés</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+    <!-- End of Container -->
+
+    <!-- Container — Calendar -->
+    <div class="kt-container-fixed">
+        <div class="kt-card">
+            <div class="kt-card-header">
+                <h3 class="kt-card-title text-mono">Vue Calendrier</h3>
+            </div>
+            <div class="kt-card-body p-5">
+                <div id="kt_calendar_app" 
+                     data-events-url="{{ path('app_ramassage_calendar_events') }}"
+                     data-new-url="{{ path('app_ramassage_new') }}"
+                     data-move-url-template="{{ path('app_ramassage_calendar_move', { id: '__ID__' }) }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End of Container -->
+
+    <!-- Confirmation Modal (Metronic style) -->
+    <div class="kt-modal kt-modal-center" data-kt-modal="true" id="ramassage_confirm_modal">
+        <div class="kt-modal-content max-w-[500px] w-full">
+            <div class="kt-modal-header justify-end border-0 pt-5">
+                <button class="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" data-kt-modal-dismiss="true" id="ramassage_confirm_close">
+                    <i class="ki-filled ki-cross"></i>
+                </button>
+            </div>
+            <div class="kt-modal-body flex flex-col items-center pt-0 pb-10 px-6">
+                <div class="mb-9">
+                    <img alt="Confirmation" class="dark:hidden max-h-[150px]" src="{{ asset('assets/media/illustrations/23.svg') }}">
+                    <img alt="Confirmation" class="light:hidden max-h-[150px]" src="{{ asset('assets/media/illustrations/23-dark.svg') }}">
+                </div>
+                <h3 class="text-lg font-medium text-mono text-center mb-3" id="ramassage_confirm_title">
+                    Confirmation
+                </h3>
+                <div class="text-sm text-center text-secondary-foreground mb-7" id="ramassage_confirm_message">
+                    Voulez-vous confirmer cette action ?
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button class="kt-btn kt-btn-outline" data-kt-modal-dismiss="true" id="ramassage_confirm_cancel">
+                        Annuler
+                    </button>
+                    <button class="kt-btn kt-btn-primary" id="ramassage_confirm_submit">
+                        Confirmer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+   </main>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('assets/css/ramassage.css') }}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/vendors/fullcalendar/index.global.min.js') }}"></script>
+    <script src="{{ asset('assets/js/ramassage-calendar.js') }}"></script>
+{% endblock %}

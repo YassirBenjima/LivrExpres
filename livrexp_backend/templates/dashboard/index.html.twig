@@ -1,0 +1,591 @@
+{% extends 'base_dashboard.html.twig' %}
+
+{% block title %}Tableau de Bord - LivrExpress{% endblock %}
+
+{% block body %}
+    <!-- Content -->
+    <main class="grow pt-5 dashboard-content-shift" id="content" role="content">
+     <!-- Container -->
+     <div class="kt-container-fixed" id="contentContainer">
+     </div>
+     <!-- End of Container -->
+     <!-- Container -->
+     <div class="kt-container-fixed">
+      <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+       <div class="flex flex-col justify-center gap-2">
+        <h1 class="text-xl font-medium leading-none text-mono">
+         Dashboard
+        </h1>
+        <div class="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
+         Aperçu global de l'activité logistique et financière de LivrExpress
+        </div>
+       </div>
+       <div class="flex items-center gap-2.5">
+         <a class="kt-btn kt-btn-outline" href="{{ path('app_colis_new') }}">
+          Nouveau Colis
+         </a>
+         <a class="kt-btn kt-btn-primary" href="{{ path('app_bon_livraison_new') }}">
+          Nouveau Bon
+         </a>
+       </div>
+      </div>
+     </div>
+     <!-- End of Container -->
+     <!-- Container -->
+     <div class="kt-container-fixed">
+      <div class="grid gap-5 lg:gap-7.5">
+       <!-- begin: grid -->
+       <div class="grid lg:grid-cols-3 gap-y-5 lg:gap-7.5 items-stretch">
+        <div class="lg:col-span-1">
+         <div class="grid grid-cols-2 gap-5 lg:gap-7.5 h-full items-stretch">
+          <style>
+           .channel-stats-bg {
+		background-image: url('{{ asset('assets/') }}media/images/2600x1600/bg-3.png');
+	}
+	.dark .channel-stats-bg {
+		background-image: url('{{ asset('assets/') }}media/images/2600x1600/bg-3-dark.png');
+	}
+          </style>
+          <div class="kt-card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+           <div class="mt-4 ms-5 text-primary">
+            <i class="ki-filled ki-package text-3xl"></i>
+           </div>
+           <div class="flex flex-col gap-1 pb-4 px-5">
+            <span class="text-3xl font-semibold text-mono">
+             {{ totalColis }}
+            </span>
+            <span class="text-sm font-normal text-secondary-foreground">
+             Total Colis
+            </span>
+           </div>
+          </div>
+          <div class="kt-card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+           <div class="mt-4 ms-5 text-success">
+            <i class="ki-filled ki-verify text-3xl"></i>
+           </div>
+           <div class="flex flex-col gap-1 pb-4 px-5">
+            <span class="text-3xl font-semibold text-mono text-success">
+             {{ colisLivres }}
+            </span>
+            <span class="text-sm font-normal text-secondary-foreground">
+             Colis Livrés
+            </span>
+           </div>
+          </div>
+          <div class="kt-card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+           <div class="mt-4 ms-5 text-info">
+            <i class="ki-filled ki-delivery-3 text-3xl"></i>
+           </div>
+           <div class="flex flex-col gap-1 pb-4 px-5">
+            <span class="text-3xl font-semibold text-mono text-info">
+             {{ colisExpedies + colisEnPreparation }}
+            </span>
+            <span class="text-sm font-normal text-secondary-foreground">
+             Colis En Cours
+            </span>
+           </div>
+          </div>
+          <div class="kt-card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+           <div class="mt-4 ms-5 text-destructive">
+            <i class="ki-filled ki-delivery-time text-3xl"></i>
+           </div>
+           <div class="flex flex-col gap-1 pb-4 px-5">
+            <span class="text-3xl font-semibold text-mono text-destructive">
+             {{ colisRetournes }}
+            </span>
+            <span class="text-sm font-normal text-secondary-foreground">
+             Colis Retournés
+            </span>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="lg:col-span-2">
+         <style>
+          .entry-callout-bg {
+		background-image: url('{{ asset('assets/') }}media/images/2600x1600/2.png');
+	}
+	.dark .entry-callout-bg {
+		background-image: url('{{ asset('assets/') }}media/images/2600x1600/2-dark.png');
+	}
+         </style>
+         <div class="kt-card h-full">
+          <div class="kt-card-content p-10 bg-[length:80%] rtl:[background-position:-70%_25%] [background-position:175%_25%] bg-no-repeat entry-callout-bg">
+           <div class="flex flex-col justify-center gap-4">
+            <div class="flex -space-x-2">
+             <div class="flex">
+              <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="{{ asset('assets/') }}media/avatars/300-4.png"/>
+             </div>
+             <div class="flex">
+              <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="{{ asset('assets/') }}media/avatars/300-1.png"/>
+             </div>
+             <div class="flex">
+              <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="{{ asset('assets/') }}media/avatars/300-2.png"/>
+             </div>
+             <div class="flex">
+              <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 font-semibold leading-none text-2xs size-10 text-white text-xs ring-background bg-green-500">
+               S
+              </span>
+             </div>
+            </div>
+            <h2 class="text-xl font-semibold text-mono">
+             LivrExpress
+             <br/>
+             Tableau de Bord
+             <a class="kt-link" href="#">
+              Logistique
+             </a>
+            </h2>
+            <p class="text-sm font-normal text-secondary-foreground leading-5.5">
+             Gerez vos colis, vos ramassages, vos retours
+             <br/>
+             et vos bons de livraison en toute simplicite
+             <br/>
+             avec notre interface d'administration temps reel.
+            </p>
+           </div>
+          </div>
+          <div class="kt-card-footer justify-center">
+           <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ path('app_colis_index') }}">
+            Gérer les Colis
+           </a>
+          </div>
+         </div>
+        </div>
+       </div>
+       <!-- end: grid -->
+       <!-- begin: grid -->
+       <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+        <div class="lg:col-span-1">
+         <div class="kt-card h-full">
+          <div class="kt-card-header">
+           <h3 class="kt-card-title">
+            Highlights
+           </h3>
+           <div class="kt-menu" data-kt-menu="true">
+            <div class="kt-menu-item" data-kt-menu-item-offset="0, 10px" data-kt-menu-item-placement="bottom-start" data-kt-menu-item-toggle="dropdown" data-kt-menu-item-trigger="click">
+             <button class="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost">
+              <i class="ki-filled ki-dots-vertical text-lg">
+              </i>
+             </button>
+             <div class="kt-menu-dropdown kt-menu-default w-full max-w-[200px]" data-kt-menu-dismiss="true">
+              <div class="kt-menu-item">
+               <a class="kt-menu-link" href="{{ path('app_colis_index') }}">
+                <span class="kt-menu-icon">
+                 <i class="ki-filled ki-package">
+                 </i>
+                </span>
+                <span class="kt-menu-title">
+                 Colis
+                </span>
+               </a>
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+          {% set percentLivre = totalColis > 0 ? (colisLivres / totalColis * 100) : 0 %}
+          {% set percentRetour = totalColis > 0 ? (colisRetournes / totalColis * 100) : 0 %}
+          {% set percentAutre = 100 - percentLivre - percentRetour %}
+          <div class="kt-card-content flex flex-col gap-4 p-5 lg:p-7.5 lg:pt-4">
+           <div class="flex flex-col gap-0.5">
+            <span class="text-sm font-normal text-secondary-foreground">
+             Recettes CRBT (Livrés)
+            </span>
+            <div class="flex items-center gap-2.5">
+             <span class="text-2xl font-bold text-mono text-primary">
+              {{ crbtLivres|number_format(2, ',', ' ') }} MAD
+             </span>
+             <span class="kt-badge kt-badge-outline kt-badge-success kt-badge-sm">
+              +{{ percentLivre|number_format(1) }}%
+             </span>
+            </div>
+           </div>
+           <div class="flex items-center gap-1 mb-1.5">
+            <div class="bg-green-500 h-2 rounded-xs" style="width: {{ percentLivre }}%">
+            </div>
+            <div class="bg-destructive h-2 rounded-xs" style="width: {{ percentRetour }}%">
+            </div>
+            <div class="bg-violet-500 h-2 rounded-xs" style="width: {{ percentAutre }}%">
+            </div>
+           </div>
+           <div class="flex items-center flex-wrap gap-4 mb-1">
+            <div class="flex items-center gap-1.5">
+             <span class="rounded-full size-2 rounded-full kt-badge-success">
+             </span>
+             <span class="text-sm font-normal text-foreground">
+              Livré ({{ percentLivre|number_format(1) }}%)
+             </span>
+            </div>
+            <div class="flex items-center gap-1.5">
+             <span class="rounded-full size-2 rounded-full kt-badge-destructive">
+             </span>
+             <span class="text-sm font-normal text-foreground">
+              Retourné ({{ percentRetour|number_format(1) }}%)
+             </span>
+            </div>
+            <div class="flex items-center gap-1.5">
+             <span class="rounded-full size-2 rounded-full kt-badge-info">
+             </span>
+             <span class="text-sm font-normal text-foreground">
+              En cours ({{ percentAutre|number_format(1) }}%)
+             </span>
+            </div>
+           </div>
+           <div class="border-b border-input">
+           </div>
+           <div class="grid gap-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+             <div class="flex items-center gap-1.5">
+              <i class="ki-filled ki-wallet text-base text-muted-foreground">
+              </i>
+              <span class="text-sm font-normal text-mono">
+               CRBT Total
+              </span>
+             </div>
+             <div class="flex items-center text-sm font-medium text-foreground gap-6">
+              <span class="lg:text-right">
+               {{ totalCrbt|number_format(2, ',', ' ') }} MAD
+              </span>
+              <span class="lg:text-right">
+               100%
+              </span>
+             </div>
+            </div>
+            <div class="flex items-center justify-between flex-wrap gap-2">
+             <div class="flex items-center gap-1.5">
+              <i class="ki-filled ki-verify text-base text-muted-foreground">
+              </i>
+              <span class="text-sm font-normal text-mono">
+               CRBT Livré
+              </span>
+             </div>
+             <div class="flex items-center text-sm font-medium text-foreground gap-6">
+              <span class="lg:text-right">
+               {{ crbtLivres|number_format(2, ',', ' ') }} MAD
+              </span>
+              <span class="lg:text-right">
+               <i class="ki-filled ki-arrow-up text-green-500">
+               </i>
+               {{ (totalCrbt > 0 ? (crbtLivres / totalCrbt * 100) : 0)|number_format(1) }}%
+              </span>
+             </div>
+            </div>
+            <div class="flex items-center justify-between flex-wrap gap-2">
+             <div class="flex items-center gap-1.5">
+              <i class="ki-filled ki-delivery-3 text-base text-muted-foreground">
+              </i>
+              <span class="text-sm font-normal text-mono">
+               CRBT En Transit
+              </span>
+             </div>
+             <div class="flex items-center text-sm font-medium text-foreground gap-6">
+              <span class="lg:text-right">
+               {{ crbtEnCours|number_format(2, ',', ' ') }} MAD
+              </span>
+              <span class="lg:text-right">
+               <i class="ki-filled ki-arrow-up text-green-500">
+               </i>
+               {{ (totalCrbt > 0 ? (crbtEnCours / totalCrbt * 100) : 0)|number_format(1) }}%
+              </span>
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="lg:col-span-2">
+         <div class="kt-card h-full">
+          <div class="kt-card-header">
+           <h3 class="kt-card-title">
+            Volume des Colis Enregistrés
+           </h3>
+           <div class="flex gap-5">
+            <select class="kt-select w-36" data-kt-select="true" data-kt-select-placeholder="Select period" name="kt-select">
+             <option>
+              None
+             </option>
+             <option value="1" selected>
+              7 jours
+             </option>
+            </select>
+           </div>
+          </div>
+          <div class="kt-card-content flex flex-col justify-end items-stretch grow px-3 py-1">
+           <div id="real_earnings_chart" style="min-height: 250px; width: 100%;">
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <!-- end: grid -->
+       <!-- begin: grid -->
+       <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+        <div class="lg:col-span-1">
+         <div class="kt-card h-full">
+          <div class="kt-card-content lg:p-7.5 lg:pt-6 p-5">
+           <div class="flex items-center justify-between flex-wrap gap-5 mb-7.5">
+            <div class="flex flex-col gap-1">
+             <span class="text-xl font-semibold text-mono">
+              Performance
+             </span>
+             <span class="text-sm font-semibold text-foreground">
+              Statistiques Globales
+             </span>
+            </div>
+            <i class="ki-filled ki-delivery-3 text-3xl text-primary"></i>
+           </div>
+           <p class="text-sm font-normal text-foreground leading-5.5 mb-8">
+            Visualisez la performance et la répartition de vos livraisons. Vos données sont mises à jour en temps réel.
+           </p>
+           <div class="flex rounded-lg bg-accent/50 gap-10 p-5">
+            <div class="flex flex-col gap-5">
+             <div class="flex items-center gap-1.5 text-sm font-normal text-foreground">
+              <i class="ki-filled ki-geolocation text-base text-muted-foreground">
+              </i>
+              Plateforme
+             </div>
+             <div class="text-sm font-medium text-foreground pt-1.5">
+              LivrExpress
+             </div>
+            </div>
+            <div class="flex flex-col gap-5">
+             <div class="flex items-center gap-1.5 text-sm font-normal text-foreground">
+              <i class="ki-filled ki-users text-base text-muted-foreground">
+              </i>
+              Livreurs
+             </div>
+             <div class="flex -space-x-2">
+              <div class="flex">
+               <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="{{ asset('assets/') }}media/avatars/300-4.png"/>
+              </div>
+              <div class="flex">
+               <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="{{ asset('assets/') }}media/avatars/300-1.png"/>
+              </div>
+              <div class="flex">
+               <img class="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="{{ asset('assets/') }}media/avatars/300-2.png"/>
+              </div>
+              <div class="flex">
+               <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 font-semibold leading-none text-2xs size-[30px] text-white text-xs ring-background bg-green-500">
+                +5
+               </span>
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+          <div class="kt-card-footer justify-center">
+           <a class="kt-link kt-link-underlined kt-link-dashed" href="{{ path('app_colis_index') }}">
+            Consulter l'historique
+           </a>
+          </div>
+         </div>
+        </div>
+        <div class="lg:col-span-2">
+         <div class="grid">
+          <div class="kt-card kt-card-grid h-full min-w-full">
+           <div class="kt-card-header">
+            <h3 class="kt-card-title">
+             Derniers Colis Enregistrés
+            </h3>
+            <div class="kt-input max-w-48">
+             <i class="ki-filled ki-magnifier">
+             </i>
+             <input data-kt-datatable-search="#kt_datatable_1" placeholder="Rechercher..." type="text">
+             </input>
+            </div>
+           </div>
+           <div class="kt-card-table">
+            <div class="grid" data-kt-datatable="true" data-kt-datatable-page-size="5" id="teams_datatable">
+             <div class="kt-scrollable-x-auto">
+              <table class="kt-table kt-table-border table-fixed" data-kt-datatable-table="true" id="kt_datatable_1">
+               <thead>
+                <tr>
+                 <th class="w-[50px]">
+                  <input class="kt-checkbox kt-checkbox-sm" data-kt-datatable-check="true" type="checkbox"/>
+                 </th>
+                 <th class="w-[280px]">
+                  <span class="kt-table-col">
+                   <span class="kt-table-col-label">
+                    Code & Nature
+                   </span>
+                   <span class="kt-table-col-sort">
+                   </span>
+                  </span>
+                 </th>
+                 <th class="w-[125px]">
+                  <span class="kt-table-col">
+                   <span class="kt-table-col-label">
+                    État
+                   </span>
+                   <span class="kt-table-col-sort">
+                   </span>
+                  </span>
+                 </th>
+                 <th class="w-[135px]">
+                  <span class="kt-table-col">
+                   <span class="kt-table-col-label">
+                    Date d'Enregistrement
+                   </span>
+                   <span class="kt-table-col-sort">
+                   </span>
+                  </span>
+                 </th>
+                 <th class="w-[150px]">
+                  <span class="kt-table-col">
+                   <span class="kt-table-col-label">
+                    Ville & Prix
+                   </span>
+                   <span class="kt-table-col-sort">
+                   </span>
+                  </span>
+                 </th>
+                </tr>
+               </thead>
+               <tbody>
+                {% for colis in recentColis %}
+                <tr>
+                 <td>
+                  <input class="kt-checkbox kt-checkbox-sm" data-kt-datatable-row-check="true" type="checkbox" value="{{ colis.id }}"/>
+                 </td>
+                 <td>
+                  <div class="flex flex-col gap-2">
+                   <a class="leading-none font-semibold text-sm text-mono hover:text-primary" href="{{ path('app_colis_edit', {id: colis.id}) }}">
+                    {{ colis.trackingCode }}
+                   </a>
+                   <span class="text-2sm text-secondary-foreground font-normal leading-3">
+                    {{ colis.productNature }}
+                   </span>
+                  </div>
+                 </td>
+                 <td>
+                  <span class="kt-badge {{ colis.etatBadgeClass }} kt-badge-outline rounded-[30px] px-2 py-0.5">
+                    {{ colis.etatLabel }}
+                  </span>
+                 </td>
+                 <td>
+                  {{ colis.createdAt ? colis.createdAt|date('d M, Y H:i') : '-' }}
+                 </td>
+                 <td>
+                  <div class="flex flex-col gap-1">
+                   <span class="font-medium text-sm text-foreground">{{ colis.city }}</span>
+                   <span class="text-2sm text-primary font-semibold leading-3">{{ colis.price|number_format(2, ',', ' ') }} MAD</span>
+                  </div>
+                 </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-secondary-foreground">Aucun colis disponible</td>
+                </tr>
+                {% endfor %}
+               </tbody>
+              </table>
+             </div>
+             <div class="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
+              <div class="flex items-center gap-2 order-2 md:order-1">
+               Show
+               <select class="kt-select w-16" data-kt-datatable-size="true" data-kt-select="" name="perpage">
+               </select>
+               per page
+              </div>
+              <div class="flex items-center gap-4 order-1 md:order-2">
+               <span data-kt-datatable-info="true">
+               </span>
+               <div class="kt-datatable-pagination" data-kt-datatable-pagination="true">
+               </div>
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <!-- end: grid -->
+      </div>
+     </div>
+     <!-- End of Container -->
+    </main>
+    <!-- End of Content -->
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+  (function() {
+    function initChart() {
+      var container = document.querySelector("#real_earnings_chart");
+      if (!container) return;
+      if (container.hasAttribute('data-chart-rendered')) return;
+      container.setAttribute('data-chart-rendered', 'true');
+      
+      var volumeOptions = {
+          series: [{
+              name: 'Colis enregistrés',
+              data: {{ chartData|json_encode }}
+          }],
+          chart: {
+              type: 'area',
+              height: 250,
+              toolbar: { show: false },
+              zoom: { enabled: false },
+              fontFamily: 'Inter, system-ui, sans-serif'
+          },
+          colors: ['#3e97ff'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3 },
+          fill: {
+              type: 'gradient',
+              gradient: {
+                  shadeIntensity: 1,
+                  opacityFrom: 0.45,
+                  opacityTo: 0.05,
+                  stops: [0, 100]
+              }
+          },
+          xaxis: {
+              categories: {{ chartLabels|json_encode }},
+              axisBorder: { show: false },
+              axisTicks: { show: false },
+              labels: {
+                  style: {
+                      colors: '#7c8286',
+                      fontSize: '12px'
+                  }
+              }
+          },
+          yaxis: {
+              min: 0,
+              tickAmount: 5,
+              axisTicks: { show: false },
+              labels: {
+                  style: {
+                      colors: '#7c8286',
+                      fontSize: '12px'
+                  },
+                  formatter: function(val) {
+                      return parseInt(val);
+                  }
+              }
+          },
+          grid: {
+              borderColor: 'rgba(0,0,0,0.05)',
+              strokeDashArray: 4
+          },
+          tooltip: {
+              theme: 'light'
+          }
+      };
+      
+      var volumeChart = new ApexCharts(container, volumeOptions);
+      volumeChart.render();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initChart);
+    } else {
+      initChart();
+    }
+  })();
+</script>
+{% endblock %}

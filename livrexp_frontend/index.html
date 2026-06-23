@@ -1,0 +1,51 @@
+<!doctype html>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Espace des clients | LivrExpress</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Metronic Stylesheets fetched via proxy -->
+    <link href="/assets/vendors/keenicons/styles.bundle.css" rel="stylesheet"/>
+    <link href="/assets/css/styles.css" rel="stylesheet"/>
+    
+    <!-- Theme Mode -->
+    <script>
+      const defaultThemeMode = 'light'; // light|dark|system
+      let themeMode;
+
+      if (document.documentElement) {
+          if (localStorage.getItem('kt-theme')) {
+              themeMode = localStorage.getItem('kt-theme');
+          } else if (
+              document.documentElement.hasAttribute('data-kt-theme-mode')
+          ) {
+              themeMode =
+                  document.documentElement.getAttribute('data-kt-theme-mode');
+          } else {
+              themeMode = defaultThemeMode;
+          }
+
+          if (themeMode === 'system') {
+              themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+                  ? 'dark'
+                  : 'light';
+          }
+
+          document.documentElement.classList.add(themeMode);
+      }
+    </script>
+    <!-- End of Theme Mode -->
+  </head>
+  <body class="antialiased flex h-full text-base text-foreground bg-background">
+    <div id="root" class="w-full h-full flex flex-col"></div>
+    <script src="/assets/js/core.bundle.js"></script>
+    <script src="/assets/vendors/ktui/ktui.min.js"></script>
+    <script src="/assets/vendors/apexcharts/apexcharts.min.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Repository;
+
+use App\Entity\StockMovement;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<StockMovement>
+ */
+final class StockMovementRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, StockMovement::class);
+    }
+
+    /**
+     * @return list<StockMovement>
+     */
+    public function findEntryMovementsForIndex(string $search = ''): array
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->leftJoin('m.items', 'i')
+            ->addSelect('i')
+            ->leftJoin('i.variant', 'v')
+            ->addSelect('v')
+            ->leftJoin('v.product', 'p')
+            ->addSelect('p')
+            ->andWhere('m.direction = :dir')
+            ->setParameter('dir', StockMovement::DIRECTION_ENTRY)
+            ->orderBy('m.id', 'DESC');
+
+        $search = trim($search);
+        if ($search !== '') {
+            $qb
+                ->andWhere('LOWER(m.reference) LIKE :q OR LOWER(p.name) LIKE :q')
+                ->setParameter('q', '%' . mb_strtolower($search) . '%');
+        }
+
+        /** @var list<StockMovement> $rows */
+        $rows = $qb->getQuery()->getResult();
+
+        return $rows;
+    }
+
+    /**
+     * @param list<int> $ids
+     *
+     * @return list<StockMovement>
+     */
+    public function findEntryMovementsByIdsForPickupRequest(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $v): bool => $v > 0));
+        if ($ids === []) {
+            return [];
+        }
+
+        /** @var list<StockMovement> $rows */
+        $rows = $this->createQueryBuilder('m')
+            ->leftJoin('m.items', 'i')
+            ->addSelect('i')
+            ->leftJoin('i.variant', 'v')
+            ->addSelect('v')
+            ->leftJoin('v.product', 'p')
+            ->addSelect('p')
+            ->andWhere('m.direction = :dir')
+            ->andWhere('m.id IN (:ids)')
+            ->setParameter('dir', StockMovement::DIRECTION_ENTRY)
+            ->setParameter('ids', $ids)
+            ->orderBy('m.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $rows;
+    }
+
+    public function existsReference(string $reference): bool
+    {
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->andWhere('m.reference = :ref')
+            ->setParameter('ref', $reference)
+            ->getQuery()
+            ->getSingleScalarResult() > 0;
+    }
+}
+
