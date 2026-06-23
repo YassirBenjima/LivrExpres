@@ -28,23 +28,23 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
   const totalColis = filteredColis.length;
   const totalMontant = filteredColis.reduce((sum, item) => sum + item.price, 0);
 
-  const allPerPageOptions = [
+  // Filter options: always keep 5 and 10, enable 20 if >10, enable 50 if >=50
+  const perPageOptions = [
     { value: '5', label: '5' },
     { value: '10', label: '10' },
-    { value: '20', label: '20' },
-    { value: '50', label: '50' },
   ];
-
-  // Filter options: only keep those <= totalColis, fallback to first option
-  const availablePerPageOptions = allPerPageOptions.filter(opt => Number(opt.value) <= totalColis);
-  const perPageOptions = availablePerPageOptions.length > 0 ? availablePerPageOptions : [allPerPageOptions[0]];
+  if (totalColis > 10) {
+    perPageOptions.push({ value: '20', label: '20' });
+  }
+  if (totalColis >= 50) {
+    perPageOptions.push({ value: '50', label: '50' });
+  }
 
   useEffect(() => {
-    // If current perPage is no longer in the allowed options list, adjust it
+    // If current perPage is no longer in the allowed options list, fallback to 10
     const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
     if (!exists) {
-      const highestOption = Math.max(...perPageOptions.map(opt => Number(opt.value)));
-      setPerPage(highestOption);
+      setPerPage(10);
       setCurrentPage(1);
     }
   }, [totalColis, perPage, perPageOptions]);
