@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
-const mockColisData = [
-  { id: 1, trackingCode: 'F-20260623-0005', productNature: 'Téléphone portable', createdAt: '23/06/2026 10:30', address: 'Bvd Anfa, Appt 5', etatLabel: 'Livré', etatBadgeClass: 'kt-badge-success', statutLabel: 'Payé', statutBadgeClass: 'kt-badge-success', city: 'Casablanca', price: 1200.00, comment: 'Appeler avant de livrer' },
-  { id: 2, trackingCode: 'F-20260623-0004', productNature: 'Veste Cuir', createdAt: '23/06/2026 09:15', address: 'Rue Agdal, N 14', etatLabel: 'En préparation', etatBadgeClass: 'kt-badge-warning', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Rabat', price: 450.00, comment: '-' },
-  { id: 3, trackingCode: 'F-20260622-0003', productNature: 'Crème Visage', createdAt: '22/06/2026 17:45', address: 'Gueliz, Imm C', etatLabel: 'Expédié', etatBadgeClass: 'kt-badge-info', statutLabel: 'En cours', statutBadgeClass: 'kt-badge-info', city: 'Marrakech', price: 290.00, comment: 'Fragile' },
-  { id: 4, trackingCode: 'F-20260622-0002', productNature: 'Chaussures Sport', createdAt: '22/06/2026 14:20', address: 'Bvd Mohammed V', etatLabel: 'Retourné', etatBadgeClass: 'kt-badge-destructive', statutLabel: 'Retour en cours', statutBadgeClass: 'kt-badge-warning', city: 'Tanger', price: 650.00, comment: 'Refusé par le client' },
-  { id: 5, trackingCode: 'F-20260622-0001', productNature: 'Sac à Main', createdAt: '22/06/2026 11:05', address: 'Batha, Rue 4', etatLabel: 'Créé', etatBadgeClass: 'kt-badge-primary', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Fès', price: 380.00, comment: '-' }
-];
 
 export default function ColisListPage() {
   const [colisList, setColisList] = useState([]);
@@ -21,28 +14,16 @@ export default function ColisListPage() {
 
   useEffect(() => {
     const fetchColis = async () => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 1500); // 1.5 seconds fast fallback timeout
-
       try {
         const response = await fetch('/api/colis', {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json'
-          }
+          headers: { 'Accept': 'application/json' }
         });
-        clearTimeout(timeoutId);
         if (response.ok) {
           const json = await response.json();
-          setColisList(json.colis_list || json);
-        } else {
-          setColisList(mockColisData);
+          setColisList(Array.isArray(json) ? json : (json.colis_list || []));
         }
       } catch (err) {
-        clearTimeout(timeoutId);
-        setColisList(mockColisData);
+        console.error('Erreur lors du chargement des colis:', err);
       } finally {
         setLoading(false);
       }

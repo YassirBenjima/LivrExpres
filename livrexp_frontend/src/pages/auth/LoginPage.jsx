@@ -21,30 +21,28 @@ export default function LoginPage({ navigate }) {
 
     try {
       const data = await authService.login(email, password, rememberMe);
-      setApiSuccess('Connexion réussie ! Redirection...');
-      
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-      } else if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
-    } catch (error) {
-      console.warn('API connection failed, simulating login flow...', error);
-      setTimeout(() => {
-        if (email === 'demo@kt.com' && password === 'demo123') {
-          setApiSuccess('Connexion de démonstration réussie ! Redirection...');
-          localStorage.setItem('auth_token', 'demo_token_123456');
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1000);
+
+      if (data.success || data.user) {
+        // Store user info from backend response
+        const userPayload = data.user || {};
+        localStorage.setItem('user', JSON.stringify(userPayload));
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
         } else {
-          setApiError('Identifiants invalides.');
-          setIsLoading(false);
+          // Session-based auth: mark as authenticated
+          localStorage.setItem('auth_token', 'session');
         }
-      }, 1500);
+        setApiSuccess('Connexion réussie ! Redirection...');
+        setTimeout(() => {
+          navigate(data.redirect || '/dashboard');
+        }, 800);
+      } else {
+        setApiError(data.message || 'Identifiants invalides.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setApiError(error.message || 'Identifiants invalides ou erreur serveur.');
+      setIsLoading(false);
     }
   };
 

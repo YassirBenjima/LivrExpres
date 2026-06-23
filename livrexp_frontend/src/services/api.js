@@ -10,13 +10,17 @@ async function request(url, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include', // Send & receive session cookies through Vite proxy
+  });
   
   if (!response.ok) {
     let errorMessage = 'Une erreur est survenue.';
     try {
       const data = await response.json();
-      errorMessage = data.message || errorMessage;
+      errorMessage = data.message || data.error || errorMessage;
     } catch (e) {
       // JSON parsing failed, use default error message
     }

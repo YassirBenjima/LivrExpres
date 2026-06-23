@@ -9,10 +9,18 @@ export default defineConfig({
       '/api': {
         target: 'http://nginx',
         changeOrigin: true,
+        secure: false,
+        cookieDomainRewrite: 'localhost',
       },
       '/assets': {
         target: 'http://nginx',
         changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://nginx',
+        changeOrigin: true,
+        secure: false,
       }
     }
   }
