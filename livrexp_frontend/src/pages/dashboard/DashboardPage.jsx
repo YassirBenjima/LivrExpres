@@ -22,38 +22,9 @@ const mockDataFallback = {
   chartData: [8, 14, 12, 19, 24, 21, 28]
 };
 
-export default function DashboardPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function DashboardPage({ dashboardData = null, loading = false, refetchData }) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const token = localStorage.getItem('auth_token');
-        const response = await fetch('/api/dashboard', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-        if (response.ok) {
-          const json = await response.json();
-          setData(json);
-        } else {
-          console.warn('Backend endpoint returned error status, using premium mock fallback.');
-          setData(mockDataFallback);
-        }
-      } catch (err) {
-        console.warn('Could not connect to backend endpoint, using premium mock fallback.', err);
-        setData(mockDataFallback);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  const data = dashboardData || mockDataFallback;
 
   // ApexCharts initialization
   useEffect(() => {

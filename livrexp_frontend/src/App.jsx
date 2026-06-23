@@ -15,6 +15,12 @@ import ColisSettingsPage from './pages/colis/ColisSettingsPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
+  const [colisList, setColisList] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!(localStorage.getItem('auth_token') || localStorage.getItem('user'))
+  );
 
   useEffect(() => {
     const handlePopState = () => {
@@ -29,8 +35,62 @@ function App() {
     setCurrentRoute(path);
   };
 
+  // Check auth status
+  const checkAuth = () => {
+    const authed = !!(localStorage.getItem('auth_token') || localStorage.getItem('user'));
+    if (authed !== isAuthenticated) {
+      setIsAuthenticated(authed);
+      if (!authed) {
+        setColisList([]);
+        setDashboardData(null);
+      }
+    }
+    return authed;
+  };
+
+  // Master fetch function
+  const fetchAllData = async (showLoadingSpinner = false) => {
+    const authed = checkAuth();
+    if (!authed) return;
+
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const headers = {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      // Fetch both endpoints concurrently
+      const [colisRes, dashRes] = await Promise.all([
+        fetch('/api/colis', { headers }),
+        fetch('/api/dashboard', { headers })
+      ]);
+
+      if (colisRes.ok) {
+        const json = await colisRes.json();
+        setColisList(Array.isArray(json) ? json : (json.colis_list || []));
+      }
+
+      if (dashRes.ok) {
+        const json = await dashRes.json();
+        setDashboardData(json);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des données en temps réel:', err);
+    } finally {
+      if (showLoadingSpinner) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Check auth and load initially when route changes
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('auth_token') || localStorage.getItem('user');
+    const authed = checkAuth();
     const isAuthRoute = [
       '/login',
       '/login-staff',
@@ -44,12 +104,36 @@ function App() {
 
     const isProtectedRoute = currentRoute === '/dashboard' || currentRoute.startsWith('/colis');
 
-    if (isAuthenticated && isAuthRoute) {
+    if (authed && isAuthRoute) {
       navigate('/dashboard');
-    } else if (!isAuthenticated && isProtectedRoute) {
+    } else if (!authed && isProtectedRoute) {
       navigate('/login');
     }
-  }, [currentRoute]);
+
+    // Trigger initial fetch when entering a protected route if we don't have data yet
+    if (authed && isProtectedRoute && colisList.length === 0 && !loading) {
+      fetchAllData(true);
+    }
+  }, [currentRoute, isAuthenticated]);
+
+  // Background polling for real-time updates (every 8 seconds)
+  useEffect(() => {
+    let intervalId;
+    if (isAuthenticated) {
+      // Fetch once in case we don't have data
+      fetchAllData(colisList.length === 0);
+
+      intervalId = setInterval(() => {
+        fetchAllData(false);
+      }, 8000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isAuthenticated]);
 
   let normalizedRoute = currentRoute;
   if (normalizedRoute === '/') {
@@ -63,9 +147,23 @@ function App() {
 
   switch (normalizedRoute) {
     case '/dashboard':
-      return <DashboardPage navigate={navigate} />;
+      return (
+        <DashboardPage 
+          navigate={navigate} 
+          dashboardData={dashboardData} 
+          loading={loading && !dashboardData} 
+          refetchData={() => fetchAllData(true)} 
+        />
+      );
     case '/colis':
-      return <ColisListPage navigate={navigate} />;
+      return (
+        <ColisListPage 
+          navigate={navigate} 
+          colisList={colisList} 
+          loading={loading && colisList.length === 0} 
+          refetchData={() => fetchAllData(true)} 
+        />
+      );
     case '/colis/new':
       return <ColisNewPage navigate={navigate} />;
     case '/colis/pickup':

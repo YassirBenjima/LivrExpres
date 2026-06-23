@@ -3,34 +3,13 @@ import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
 
-export default function ColisListPage() {
-  const [colisList, setColisList] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ColisListPage({ colisList = [], loading = false, refetchData }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEtat, setSelectedEtat] = useState('');
   const [selectedStatut, setSelectedStatut] = useState('');
   const [perPage, setPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
-
-  useEffect(() => {
-    const fetchColis = async () => {
-      try {
-        const response = await fetch('/api/colis', {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (response.ok) {
-          const json = await response.json();
-          setColisList(Array.isArray(json) ? json : (json.colis_list || []));
-        }
-      } catch (err) {
-        console.error('Erreur lors du chargement des colis:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchColis();
-  }, []);
 
   // Filter logic
   const filteredColis = colisList.filter(colis => {
