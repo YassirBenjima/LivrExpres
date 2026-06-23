@@ -154,13 +154,6 @@ export default function ColisListPage() {
                     />
 
                     <button
-                      className="kt-btn kt-btn-outline kt-btn-primary"
-                      onClick={handleResetFilters}
-                    >
-                      <i className="ki-filled ki-setting-4" />
-                      Filtrer
-                    </button>
-                    <button
                       className="kt-btn kt-btn-outline"
                       onClick={handleResetFilters}
                     >
