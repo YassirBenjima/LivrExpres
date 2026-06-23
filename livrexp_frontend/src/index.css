@@ -45,3 +45,15 @@
 .kt-menu-link:hover .kt-menu-link-hover\:\!text-primary {
   color: var(--primary) !important;
 }
+
+/* ─── Skeleton shimmer loader ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Slightly taller skeleton rows so the table doesn't collapse */
+table tr:has([style*="shimmer"]) td {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}

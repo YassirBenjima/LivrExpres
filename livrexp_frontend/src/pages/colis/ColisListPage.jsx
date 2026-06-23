@@ -144,16 +144,10 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
 
               {/* Card Content & Table */}
               <div className="kt-card-content">
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="text-sm text-secondary-foreground font-medium">Chargement des colis...</span>
-                  </div>
-                ) : (
-                  <div className="grid">
-                    <div className="kt-scrollable-x-auto">
-                      <table className="kt-table table-auto kt-table-border">
-                        <thead>
+                <div className="grid">
+                  <div className="kt-scrollable-x-auto">
+                    <table className="kt-table table-auto kt-table-border">
+                      <thead>
                           <tr>
                             <th className="min-w-[150px]">
                               <span className="kt-table-col">
@@ -223,7 +217,28 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           </tr>
                         </thead>
                         <tbody>
-                          {paginatedColis.length > 0 ? (
+                          {loading ? (
+                            // Skeleton shimmer rows
+                            Array.from({ length: 8 }).map((_, i) => (
+                              <tr key={`skel-${i}`}>
+                                {Array.from({ length: 12 }).map((_, j) => (
+                                  <td key={j}>
+                                    <div
+                                      style={{
+                                        height: '14px',
+                                        borderRadius: '6px',
+                                        background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+                                        backgroundSize: '200% 100%',
+                                        animation: 'shimmer 1.4s infinite',
+                                        width: j === 11 ? '40px' : j === 0 ? '90px' : j === 4 || j === 5 ? '70px' : '100%',
+                                        margin: j === 11 ? 'auto' : undefined,
+                                      }}
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          ) : paginatedColis.length > 0 ? (
                             paginatedColis.map((colis) => (
                               <tr key={colis.id}>
                                 <td className="text-foreground font-medium">{colis.trackingCode}</td>
@@ -334,7 +349,6 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                     </div>
 
                   </div>
-                )}
               </div>
 
             </div>
