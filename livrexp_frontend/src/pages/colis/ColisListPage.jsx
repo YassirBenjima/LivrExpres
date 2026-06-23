@@ -52,9 +52,9 @@ export default function ColisListPage() {
   const totalPages = Math.ceil(totalColis / perPage);
   const paginatedColis = filteredColis.slice((currentPage - 1) * perPage, currentPage * perPage);
 
-  // Unique lists for filters
-  const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
-  const statutsPossibles = Array.from(new Set(colisList.map(c => c.statutLabel).filter(Boolean)));
+  // Unique lists for filters matching the backend Twig template
+  const etatsPossibles = ['En préparation', 'Expédié', 'Livré', 'Retourné'];
+  const statutsPossibles = ['En cours', 'Reporté', 'Échec', 'Terminé'];
 
   const handleResetFilters = () => {
     setSearchQuery('');
