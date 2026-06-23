@@ -28,6 +28,27 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
   const totalColis = filteredColis.length;
   const totalMontant = filteredColis.reduce((sum, item) => sum + item.price, 0);
 
+  const allPerPageOptions = [
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+    { value: '20', label: '20' },
+    { value: '50', label: '50' },
+  ];
+
+  // Filter options: only keep those <= totalColis, fallback to first option
+  const availablePerPageOptions = allPerPageOptions.filter(opt => Number(opt.value) <= totalColis);
+  const perPageOptions = availablePerPageOptions.length > 0 ? availablePerPageOptions : [allPerPageOptions[0]];
+
+  useEffect(() => {
+    // If current perPage is no longer in the allowed options list, adjust it
+    const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
+    if (!exists) {
+      const highestOption = Math.max(...perPageOptions.map(opt => Number(opt.value)));
+      setPerPage(highestOption);
+      setCurrentPage(1);
+    }
+  }, [totalColis, perPage, perPageOptions]);
+
   // Pagination logic
   const totalPages = Math.ceil(totalColis / perPage);
   const paginatedColis = filteredColis.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -312,12 +333,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                           placeholder="10"
                           className="w-16"
-                          options={[
-                            { value: '5', label: '5' },
-                            { value: '10', label: '10' },
-                            { value: '20', label: '20' },
-                            { value: '50', label: '50' },
-                          ]}
+                          options={perPageOptions}
                         />
                         par page
                       </div>
