@@ -263,14 +263,35 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                   <div className="kt-card-header">
                     <h3 className="kt-card-title">Détails</h3>
                     <div className="flex items-center gap-2">
-                      <label className="kt-label flex items-center gap-2 cursor-pointer select-none">
-                        Variantes
+                      <span className="text-sm font-medium text-secondary-foreground select-none mr-2">Variantes</span>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
                         <input 
                           type="checkbox" 
-                          className="kt-switch kt-switch-sm" 
-                          checked={variantsEnabled} 
-                          onChange={e => setVariantsEnabled(e.target.checked)} 
+                          style={{ display: 'none' }} 
+                          checked={variantsEnabled}
+                          onChange={e => setVariantsEnabled(e.target.checked)}
                         />
+                        <div style={{
+                          width: '36px',
+                          height: '20px',
+                          backgroundColor: variantsEnabled ? '#3e97ff' : 'rgb(228, 228, 231)',
+                          borderRadius: '9999px',
+                          position: 'relative',
+                          transition: 'background-color 0.2s',
+                          border: '1px solid ' + (variantsEnabled ? '#3e97ff' : 'rgb(212, 212, 216)')
+                        }}>
+                          <div style={{
+                            width: '14px',
+                            height: '14px',
+                            backgroundColor: 'rgb(255, 255, 255)',
+                            borderRadius: '50%',
+                            position: 'absolute',
+                            top: '2px',
+                            left: variantsEnabled ? '18px' : '2px',
+                            transition: 'left 0.2s',
+                            boxShadow: 'rgba(0, 0, 0, 0.15) 0px 1px 3px'
+                          }} />
+                        </div>
                       </label>
                     </div>
                   </div>
