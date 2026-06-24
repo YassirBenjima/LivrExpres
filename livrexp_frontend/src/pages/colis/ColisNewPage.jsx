@@ -65,6 +65,33 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
       .catch(err => console.warn('Could not fetch user settings, using default package option:', err));
   }, []);
 
+  const handleFillTestFields = () => {
+    setOrderNumber(Math.floor(100000 + Math.random() * 900000).toString());
+    setType('Colis Simple');
+    setRecipient('Destinataire Test');
+    
+    // Choose first available city from cities
+    let firstCity = 'Casablanca';
+    if (cities.length > 0) {
+      const c = cities[0];
+      firstCity = (typeof c === 'object' && c !== null) ? (c.name || c.label || c.value || 'Casablanca') : (c || 'Casablanca');
+    }
+    setCity(firstCity);
+    
+    setAddress('123 Boulevard d\'Anfa, Apt 4');
+    setPrice('250');
+    setReplacePackage(false);
+    setOldColis('');
+    setPhoneNumber('0612345678');
+    setNeighborhood('Maârif');
+    setProductNature('Article de test');
+    setComment('Livraison urgente avant 18h');
+    setFragile(true);
+    setAllFragile(false);
+    setUseCarton(true);
+    setCartonOption('m');
+  };
+
   // Filter unique order numbers from colisList for replacement options:
   // Must have etatLabel normalized to 'Livre' or 'Livré' and statutLabel normalized to 'Termine' or 'Terminé'.
   const oldColisChoices = Array.from(
@@ -154,6 +181,13 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
         setAllFragile(false);
         setUseCarton(false);
         setCartonOption('');
+        
+        // Redirect to colis list after a short delay so they can see the success message
+        setTimeout(() => {
+          if (navigate) {
+            navigate('/colis');
+          }
+        }, 1500);
       } else {
         const errData = await response.json();
         setErrorMsg(errData.message || 'Une erreur est survenue lors de l\'ajout.');
@@ -200,6 +234,14 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
               </div>
             </div>
             <div className="flex items-center gap-2.5">
+              <button 
+                type="button" 
+                className="kt-btn kt-btn-outline" 
+                onClick={handleFillTestFields}
+                style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
+              >
+                Remplir (Test)
+              </button>
               <a className="kt-btn kt-btn-outline" href="/colis">
                 Retour à la liste
               </a>

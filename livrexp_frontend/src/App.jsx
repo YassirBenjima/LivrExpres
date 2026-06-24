@@ -110,8 +110,8 @@ function App() {
       navigate('/login');
     }
 
-    // Trigger initial fetch when entering a protected route if we don't have data yet
-    if (authed && isProtectedRoute && colisList.length === 0 && !loading) {
+    // Trigger fetch when entering a protected route to keep data up-to-date
+    if (authed && isProtectedRoute && !loading) {
       fetchAllData(true);
     }
   }, [currentRoute, isAuthenticated]);
