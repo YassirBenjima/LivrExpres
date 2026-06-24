@@ -519,10 +519,11 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         <div className="relative size-[50px] shrink-0">
                           <svg className="w-full h-full stroke-primary/10 fill-primary/5" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
-                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
                           </svg>
                           <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
-                            <i className="ki-filled ki-shield-cross text-xl ps-px text-primary"></i>
+                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a6 6 0 00-6 6v3.5a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5V8a6 6 0 00-6-6zM12 13v6M9 22h6M12 5v3l-2 1" />
+                            </svg>
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
@@ -534,7 +535,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         type="button"
                         onClick={() => setFragile(!fragile)}
                       >
-                        <i className="ki-filled ki-check"></i>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       </button>
                     </div>
 
@@ -544,10 +547,11 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         <div className="relative size-[50px] shrink-0">
                           <svg className="w-full h-full stroke-yellow-200 dark:stroke-yellow-950 fill-yellow-100 dark:fill-yellow-950/30" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
-                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
                           </svg>
                           <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
-                            <i className="ki-filled ki-shield-tick text-xl ps-px text-yellow-600"></i>
+                            <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
@@ -559,7 +563,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         type="button"
                         onClick={() => setAllFragile(!allFragile)}
                       >
-                        <i className="ki-filled ki-check"></i>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       </button>
                     </div>
 
@@ -569,10 +575,11 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         <div className="relative size-[50px] shrink-0">
                           <svg className="w-full h-full stroke-green-200 dark:stroke-green-950 fill-green-100 dark:fill-green-950/30" fill="none" height="48" viewBox="0 0 44 48" width="44" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506 18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937 39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z" fill=""></path>
-                            <path d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506 18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937 39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z" stroke=""></path>
                           </svg>
                           <div className="absolute leading-none start-2/4 top-2/4 -translate-y-2/4 -translate-x-2/4 rtl:translate-x-2/4">
-                            <i className="ki-filled ki-archive text-xl ps-px text-green-600"></i>
+                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
@@ -584,7 +591,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                         type="button"
                         onClick={() => setUseCarton(!useCarton)}
                       >
-                        <i className="ki-filled ki-check"></i>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
                       </button>
                     </div>
 
@@ -607,7 +616,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                       <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
-                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-mono text-sm font-medium">Petit carton (S)</span>
@@ -620,7 +631,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                           type="button"
                           onClick={() => setCartonOption('s')}
                         >
-                          <i className="ki-filled ki-check"></i>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
                         </button>
                       </div>
 
@@ -628,7 +641,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                       <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
-                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                            <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-mono text-sm font-medium">Carton moyen (M)</span>
@@ -641,7 +656,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                           type="button"
                           onClick={() => setCartonOption('m')}
                         >
-                          <i className="ki-filled ki-check"></i>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
                         </button>
                       </div>
 
@@ -649,7 +666,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                       <div className="flex items-start sm:items-center justify-between group border border-border rounded-xl gap-3 px-3.5 py-2.5">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="size-[50px] shrink-0 rounded-xl bg-muted/60 flex items-center justify-center">
-                            <i className="ki-filled ki-information-2 text-xl text-muted-foreground"></i>
+                            <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-mono text-sm font-medium">Grand carton (L)</span>
@@ -662,7 +681,9 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                           type="button"
                           onClick={() => setCartonOption('l')}
                         >
-                          <i className="ki-filled ki-check"></i>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
                         </button>
                       </div>
 
