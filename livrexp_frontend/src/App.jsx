@@ -12,6 +12,10 @@ import ColisNewPage from './pages/colis/ColisNewPage';
 import ColisPickupPage from './pages/colis/ColisPickupPage';
 import ColisImportPage from './pages/colis/ColisImportPage';
 import ColisSettingsPage from './pages/colis/ColisSettingsPage';
+import StockProductsPage from './pages/stock/StockProductsPage';
+import StockProductNewPage from './pages/stock/StockProductNewPage';
+import StockEntryPage from './pages/stock/StockEntryPage';
+import StockColisPage from './pages/stock/StockColisPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -43,6 +47,8 @@ function App() {
     window.history.pushState({}, '', path);
     setCurrentRoute(path);
   };
+
+
 
   // Check auth status
   const checkAuth = () => {
@@ -172,6 +178,18 @@ function App() {
       case '/colis/settings':
         title = 'Paramètres des colis - LivrExpress';
         break;
+      case '/stock/produits':
+        title = 'Liste des produits - LivrExpress';
+        break;
+      case '/stock/produits/new':
+        title = 'Ajouter un produit - LivrExpress';
+        break;
+      case '/stock/entree':
+        title = 'Stock Entrée - LivrExpress';
+        break;
+      case '/stock/colis':
+        title = 'Colis du stock - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -233,6 +251,14 @@ function App() {
         return <ColisImportPage navigate={navigate} showNotification={showNotification} />;
       case '/colis/settings':
         return <ColisSettingsPage navigate={navigate} showNotification={showNotification} />;
+      case '/stock/produits':
+        return <StockProductsPage navigate={navigate} showNotification={showNotification} />;
+      case '/stock/produits/new':
+        return <StockProductNewPage navigate={navigate} showNotification={showNotification} />;
+      case '/stock/entree':
+        return <StockEntryPage navigate={navigate} showNotification={showNotification} />;
+      case '/stock/colis':
+        return <StockColisPage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':
