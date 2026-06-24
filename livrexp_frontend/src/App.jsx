@@ -135,6 +135,56 @@ function App() {
     };
   }, [isAuthenticated]);
 
+  // Dynamic document title update based on route
+  useEffect(() => {
+    let title = 'LivrExpress';
+    let route = currentRoute;
+    if (route !== '/' && route.endsWith('/')) {
+      route = route.slice(0, -1);
+    }
+    
+    switch (route) {
+      case '/dashboard':
+        title = 'Tableau de Bord - LivrExpress';
+        break;
+      case '/colis':
+        title = 'Liste des colis - LivrExpress';
+        break;
+      case '/colis/new':
+        title = 'Ajouter un colis - LivrExpress';
+        break;
+      case '/colis/pickup':
+        title = 'Colis pour ramassage - LivrExpress';
+        break;
+      case '/colis/import':
+        title = 'Importer Colis - LivrExpress';
+        break;
+      case '/colis/settings':
+        title = 'Paramètres des colis - LivrExpress';
+        break;
+      case '/login':
+        title = 'Connexion - LivrExpress';
+        break;
+      case '/login-staff':
+        title = 'Connexion Staff - LivrExpress';
+        break;
+      case '/register':
+        title = 'Inscription - LivrExpress';
+        break;
+      case '/forgot-password':
+        title = 'Mot de passe oublié - LivrExpress';
+        break;
+      case '/reset-password/check-email':
+      case '/reset-password/change':
+      case '/reset-password/changed':
+        title = 'Réinitialiser le mot de passe - LivrExpress';
+        break;
+      default:
+        title = 'LivrExpress';
+    }
+    document.title = title;
+  }, [currentRoute]);
+
   let normalizedRoute = currentRoute;
   if (normalizedRoute === '/') {
     normalizedRoute = (localStorage.getItem('auth_token') || localStorage.getItem('user')) ? '/dashboard' : '/login';

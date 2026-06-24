@@ -4,7 +4,7 @@ import KtSelect from '../../components/ui/KtSelect';
 
 export default function ColisNewPage({ navigate, colisList = [] }) {
   const [orderNumber, setOrderNumber] = useState('');
-  const [type, setType] = useState('Colis Simple');
+  const [type, setType] = useState('');
   const [recipient, setRecipient] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
@@ -39,10 +39,46 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
         }
       })
       .catch(err => console.warn('Could not fetch cities, using defaults:', err));
+
+    const token = localStorage.getItem('auth_token');
+    fetch('/api/settings', {
+      headers: {
+        'Accept': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      credentials: 'include'
+    })
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to fetch settings');
+      })
+      .then(data => {
+        if (data?.package_option) {
+          setPackageOption(data.package_option);
+        } else {
+          const isOpenColis = data?.parcel_settings?.open_colis?.enabled;
+          if (typeof isOpenColis === 'boolean') {
+            setPackageOption(isOpenColis ? 'Ouvrir le colis' : 'Ne pas ouvrir le colis');
+          }
+        }
+      })
+      .catch(err => console.warn('Could not fetch user settings, using default package option:', err));
   }, []);
 
-  // Filter unique order numbers from colisList for replacement options
-  const oldColisChoices = Array.from(new Set(colisList.map(c => c.orderNumber).filter(Boolean)));
+  // Filter unique order numbers from colisList for replacement options:
+  // Must have etatLabel normalized to 'Livre' or 'Livré' and statutLabel normalized to 'Termine' or 'Terminé'.
+  const oldColisChoices = Array.from(
+    new Set(
+      colisList
+        .filter(c => {
+          const etat = (c.etatLabel || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const statut = (c.statutLabel || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          return (etat === 'livre' && statut === 'termine');
+        })
+        .map(c => c.orderNumber)
+        .filter(Boolean)
+    )
+  );
 
   const typeOptions = [
     { value: 'Colis Simple', label: 'Colis Simple' },
@@ -54,7 +90,13 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
     { value: 'Ouvrir le colis', label: 'Ouvrir le colis' }
   ];
 
-  const cityOptions = cities.map(c => ({ value: c, label: c }));
+  const cityOptions = cities.map(c => {
+    if (typeof c === 'object' && c !== null) {
+      const val = c.name || c.label || c.value || JSON.stringify(c);
+      return { value: val, label: val };
+    }
+    return { value: c || '', label: c || '' };
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,7 +138,7 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
         setSuccessMsg('Colis ajouté avec succès !');
         // Reset form
         setOrderNumber('');
-        setType('Colis Simple');
+        setType('');
         setRecipient('');
         setCity('');
         setAddress('');
@@ -121,7 +163,7 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
       setSuccessMsg('Colis (Démo) ajouté avec succès !');
       // Reset form
       setOrderNumber('');
-      setType('Colis Simple');
+      setType('');
       setRecipient('');
       setCity('');
       setAddress('');
@@ -264,6 +306,8 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                                 placeholder="Choisir un type"
                                 options={typeOptions}
                                 className="w-full"
+                                enableSearch={true}
+                                searchPlaceholder="Rechercher un type..."
                               />
                             </td>
                           </tr>
@@ -289,6 +333,8 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                                 placeholder="Choisir une ville"
                                 options={cityOptions}
                                 className="w-full"
+                                enableSearch={true}
+                                searchPlaceholder="Rechercher une ville..."
                               />
                             </td>
                           </tr>
@@ -329,14 +375,41 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                   <div className="kt-card min-w-full">
                     <div className="kt-card-header flex justify-between items-center">
                       <h3 className="kt-card-title">Informations complementaires</h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="text-sm text-secondary-foreground font-normal">Colis a remplacer</span>
-                        <label className="kt-switch kt-switch-sm">
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
                           <input 
                             type="checkbox"
+                            style={{ display: 'none' }}
                             checked={replacePackage}
                             onChange={(e) => setReplacePackage(e.target.checked)}
                           />
+                          <div 
+                            style={{
+                              width: '36px',
+                              height: '20px',
+                              backgroundColor: replacePackage ? 'var(--primary, #007bff)' : '#e4e4e7',
+                              borderRadius: '9999px',
+                              position: 'relative',
+                              transition: 'background-color 0.2s ease',
+                              border: '1px solid',
+                              borderColor: replacePackage ? 'var(--primary, #007bff)' : '#d4d4d8',
+                            }}
+                          >
+                            <div 
+                              style={{
+                                width: '14px',
+                                height: '14px',
+                                backgroundColor: '#ffffff',
+                                borderRadius: '50%',
+                                position: 'absolute',
+                                top: '2px',
+                                left: replacePackage ? '18px' : '2px',
+                                transition: 'left 0.2s ease',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+                              }}
+                            />
+                          </div>
                         </label>
                       </div>
                     </div>
@@ -353,6 +426,8 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                                   placeholder="Choisir un ancien colis"
                                   options={oldColisChoices.map(c => ({ value: c, label: c }))}
                                   className="w-full"
+                                  enableSearch={true}
+                                  searchPlaceholder="Rechercher un colis..."
                                 />
                               </td>
                             </tr>
@@ -363,9 +438,10 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
                               <KtSelect
                                 value={packageOption}
                                 onChange={setPackageOption}
-                                placeholder="Choisir une option"
                                 options={packageOptionOptions}
                                 className="w-full"
+                                enableSearch={true}
+                                searchPlaceholder="Rechercher une option..."
                               />
                             </td>
                           </tr>

@@ -30,6 +30,7 @@ final class ColisApiController extends AbstractController
 
             $data[] = [
                 'id' => $colis->getId(),
+                'orderNumber' => $colis->getOrderNumber(),
                 'trackingCode' => $colis->getTrackingCode(),
                 'productNature' => $colis->getProductNature() ?: 'Marchandise',
                 'createdAt' => $colis->getCreatedAt() ? $colis->getCreatedAt()->format('d/m/Y H:i') : '',

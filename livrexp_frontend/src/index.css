@@ -64,3 +64,57 @@ table tr:has([style*="shimmer"]) td {
 .kt-container-fixed {
   max-width: 100% !important;
 }
+
+/* ─── Custom robust switch styling ───────────────────────────────────── */
+input.kt-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 38px !important;
+  height: 22px !important;
+  background-color: #e4e4e7; /* zinc-200 */
+  border-radius: 9999px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease;
+  border: 1px solid #d4d4d8; /* zinc-300 */
+}
+
+input.kt-switch:checked {
+  background-color: var(--primary, #007bff);
+  border-color: var(--primary, #007bff);
+}
+
+input.kt-switch::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input.kt-switch:checked::before {
+  transform: translateX(16px);
+}
+
+/* Small switch size */
+input.kt-switch-sm {
+  width: 32px !important;
+  height: 18px !important;
+}
+
+input.kt-switch-sm::before {
+  width: 12px;
+  height: 12px;
+}
+
+input.kt-switch-sm:checked::before {
+  transform: translateX(14px);
+}
