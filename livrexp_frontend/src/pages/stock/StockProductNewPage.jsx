@@ -28,6 +28,40 @@ export default function StockProductNewPage({ navigate, showNotification }) {
   const [loading, setLoading]                 = useState(false);
 
   const fileInputRef = useRef(null);
+  const [localNotification, setLocalNotification] = useState(null);
+
+  const triggerLocalNotification = (type, message) => {
+    setLocalNotification({ type, message });
+    if (showNotification) {
+      showNotification(type, message);
+    }
+    setTimeout(() => {
+      setLocalNotification(prev => prev?.message === message ? null : prev);
+    }, 4000);
+  };
+
+  const handlePreFillNormal = () => {
+    setName('Produit Simple Démo');
+    setCategory('1'); // Électronique
+    setBarcode('SMPL1234');
+    setQuantity('100');
+    setNote('Ceci est un produit simple pré-rempli pour test.');
+    setVariantsEnabled(false);
+    triggerLocalNotification('success', 'Formulaire pré-rempli (Produit Simple) !');
+  };
+
+  const handlePreFillVariants = () => {
+    setName('Produit Variantes Démo');
+    setCategory('2'); // Mode & Vêtements
+    setNote('Ceci est un produit avec variantes pré-rempli pour test.');
+    setVariantsEnabled(true);
+    setVariants([
+      { barcode: 'VAR-ROUGE', name: 'Rouge / L', quantity: '50' },
+      { barcode: 'VAR-BLEU', name: 'Bleu / M', quantity: '30' },
+      { barcode: 'VAR-VERT', name: 'Vert / S', quantity: '20' }
+    ]);
+    triggerLocalNotification('success', 'Formulaire pré-rempli (Produit avec Variantes) !');
+  };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -72,8 +106,8 @@ export default function StockProductNewPage({ navigate, showNotification }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name) { if (showNotification) showNotification('error', 'Le nom du produit est obligatoire.'); return; }
-    if (!category) { if (showNotification) showNotification('error', 'Veuillez choisir une catégorie valide.'); return; }
+    if (!name) { triggerLocalNotification('error', 'Le nom du produit est obligatoire.'); return; }
+    if (!category) { triggerLocalNotification('error', 'Veuillez choisir une catégorie valide.'); return; }
     
     setLoading(true);
     try {
@@ -105,14 +139,14 @@ export default function StockProductNewPage({ navigate, showNotification }) {
         headers: { 'Accept': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
       if (res.ok) {
-        if (showNotification) showNotification('success', 'Produit créé avec succès !');
+        triggerLocalNotification('success', 'Produit créé avec succès !');
         setTimeout(() => navigate('/stock/produits'), 1200);
       } else {
         const data = await res.json();
-        if (showNotification) showNotification('error', data.message || 'Erreur.');
+        triggerLocalNotification('error', data.message || 'Erreur.');
       }
     } catch {
-      if (showNotification) showNotification('error', 'Erreur réseau.');
+      triggerLocalNotification('error', 'Erreur réseau.');
     } finally {
       setLoading(false);
     }
@@ -129,7 +163,9 @@ export default function StockProductNewPage({ navigate, showNotification }) {
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
-                <button className="kt-btn kt-btn-outline" onClick={() => navigate('/stock/produits')}>Retour à la liste</button>
+                <button className="kt-btn kt-btn-light" type="button" onClick={handlePreFillNormal}>Demo Simple</button>
+                <button className="kt-btn kt-btn-light" type="button" onClick={handlePreFillVariants}>Demo Variante</button>
+                <button className="kt-btn kt-btn-outline" type="button" onClick={() => navigate('/stock/produits')}>Retour à la liste</button>
                 <button className="kt-btn kt-btn-primary" onClick={handleSubmit} disabled={loading}>{loading ? 'Enregistrement...' : 'Enregistrer'}</button>
               </div>
             </div>
@@ -439,6 +475,64 @@ export default function StockProductNewPage({ navigate, showNotification }) {
           </form>
         </div>
       </main>
+      {localNotification && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          zIndex: 99999,
+          maxWidth: '380px',
+          width: '100%',
+          backgroundColor: '#ffffff',
+          borderLeft: `4px solid ${localNotification.type === 'success' ? '#27d37f' : '#f1416c'}`,
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'start',
+          gap: '12px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e4e6ef',
+          animation: 'toastSlideIn 0.3s ease-out forwards',
+        }}>
+          <div style={{
+            borderRadius: '9999px',
+            padding: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            backgroundColor: localNotification.type === 'success' ? 'rgba(39, 211, 127, 0.1)' : 'rgba(241, 65, 108, 0.1)',
+            color: localNotification.type === 'success' ? '#27d37f' : '#f1416c'
+          }}>
+            <i className={`ki-filled ${localNotification.type === 'success' ? 'ki-check' : 'ki-information'} text-base`}></i>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#181c32', margin: 0 }}>
+              {localNotification.type === 'success' ? 'Succès' : 'Erreur'}
+            </h4>
+            <p style={{ fontSize: '12px', color: '#7e8299', marginTop: '2px', margin: 0 }}>
+              {localNotification.message}
+            </p>
+          </div>
+          <button 
+            onClick={() => setLocalNotification(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#a1a5b7',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <i className="ki-filled ki-cross text-sm"></i>
+          </button>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
