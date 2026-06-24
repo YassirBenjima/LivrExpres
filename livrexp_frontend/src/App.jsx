@@ -121,7 +121,8 @@ function App() {
 
     // Trigger fetch when entering a protected route to keep data up-to-date
     if (authed && isProtectedRoute && !loading) {
-      fetchAllData(true);
+      const needsSpinner = colisList.length === 0;
+      fetchAllData(needsSpinner);
     }
   }, [currentRoute, isAuthenticated]);
 
