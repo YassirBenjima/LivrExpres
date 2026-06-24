@@ -105,10 +105,184 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     return (
       <DashboardLayout activeMenu="dashboard">
         <main className="grow pt-5 dashboard-content-shift" role="content">
-          <div className="kt-container-fixed flex items-center justify-center min-h-[400px]">
-            <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-              <span className="text-sm text-secondary-foreground font-medium">Chargement des données...</span>
+          
+          {/* Title Container Skeleton */}
+          <div className="kt-container-fixed">
+            <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+              <div className="flex flex-col justify-center gap-2">
+                <div className="h-6 w-32 shimmer rounded-md"></div>
+                <div className="h-4 w-96 shimmer rounded-md"></div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-28 shimmer rounded-md"></div>
+                <div className="h-9 w-28 shimmer rounded-md"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Core Content Grid Skeleton */}
+          <div className="kt-container-fixed">
+            <div className="grid gap-5 lg:gap-7.5">
+              
+              {/* Top Cards Grid Skeleton */}
+              <div className="grid lg:grid-cols-3 gap-y-5 lg:gap-7.5 items-stretch">
+                <div className="lg:col-span-1">
+                  <div className="grid grid-cols-2 gap-5 lg:gap-7.5 h-full items-stretch">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="kt-card flex-col justify-between gap-6 h-full p-5 bg-card border border-border/50">
+                        <div className="size-8 rounded-lg shimmer"></div>
+                        <div className="flex flex-col gap-2 mt-4">
+                          <div className="h-7 w-12 shimmer rounded-md"></div>
+                          <div className="h-3 w-16 shimmer rounded-md"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Welcome Card Skeleton */}
+                <div className="lg:col-span-2">
+                  <div className="kt-card h-full p-10 bg-card border border-border/50 flex flex-col justify-between gap-4">
+                    <div className="flex flex-col gap-4 max-w-[60%]">
+                      <div className="flex -space-x-2">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="size-10 rounded-full shimmer border-2 border-background"></div>
+                        ))}
+                      </div>
+                      <div className="h-10 w-48 shimmer rounded-md"></div>
+                      <div className="h-3 w-full shimmer rounded-md"></div>
+                      <div className="h-3 w-3/4 shimmer rounded-md"></div>
+                    </div>
+                    <div className="h-4 w-28 shimmer rounded-md mt-4"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mid Grid Skeleton */}
+              <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+                {/* Highlights Skeleton */}
+                <div className="lg:col-span-1">
+                  <div className="kt-card h-full p-5 lg:p-7.5 flex flex-col gap-5 border border-border/50">
+                    <div className="h-5 w-24 shimmer rounded-md mb-2"></div>
+                    <div className="flex flex-col gap-2">
+                      <div className="h-3 w-32 shimmer rounded-md"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-40 shimmer rounded-md"></div>
+                        <div className="h-5 w-12 shimmer rounded-full"></div>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="h-2 w-full shimmer rounded-xs my-2"></div>
+                    {/* Legend boxes */}
+                    <div className="flex items-center flex-wrap gap-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <span className="rounded-full size-2 shimmer"></span>
+                          <div className="h-3 w-16 shimmer rounded-md"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-b border-border/50 my-2"></div>
+                    {/* Detailed CRBT rows */}
+                    <div className="grid gap-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex justify-between items-center">
+                          <div className="flex items-center gap-1.5">
+                            <div className="size-4 rounded shimmer"></div>
+                            <div className="h-3.5 w-20 shimmer rounded-md"></div>
+                          </div>
+                          <div className="flex gap-4">
+                            <div className="h-3.5 w-16 shimmer rounded-md"></div>
+                            <div className="h-3.5 w-8 shimmer rounded-md"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart Card Skeleton */}
+                <div className="lg:col-span-2">
+                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col justify-between">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="h-5 w-48 shimmer rounded-md"></div>
+                      <div className="h-8 w-28 shimmer rounded-md"></div>
+                    </div>
+                    {/* Fake Chart bars */}
+                    <div className="flex items-end gap-3 h-52 pt-4 px-2">
+                      {[15, 30, 25, 45, 60, 50, 75, 40, 65, 80, 55, 90].map((h, i) => (
+                        <div
+                          key={i}
+                          className="shimmer w-full rounded-t-md hover:opacity-80 transition-all duration-300"
+                          style={{ height: `${h}%` }}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Grid Skeleton */}
+              <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+                {/* Performance stats skeleton */}
+                <div className="lg:col-span-1">
+                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col gap-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex flex-col gap-1">
+                        <div className="h-5 w-28 shimmer rounded-md"></div>
+                        <div className="h-3.5 w-36 shimmer rounded-md"></div>
+                      </div>
+                      <div className="size-8 rounded-full shimmer"></div>
+                    </div>
+                    <div className="h-3 w-full shimmer rounded-md"></div>
+                    <div className="h-3 w-5/6 shimmer rounded-md mb-4"></div>
+                    <div className="flex rounded-lg bg-accent/30 gap-10 p-5 mt-auto">
+                      <div className="flex flex-col gap-3">
+                        <div className="h-3 w-16 shimmer rounded-md"></div>
+                        <div className="h-4 w-20 shimmer rounded-md"></div>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <div className="h-3 w-16 shimmer rounded-md"></div>
+                        <div className="flex -space-x-2">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="size-[30px] rounded-full shimmer border-2 border-background"></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table Card Skeleton */}
+                <div className="lg:col-span-2">
+                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col gap-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="h-5 w-44 shimmer rounded-md"></div>
+                      <div className="h-8 w-44 shimmer rounded-md"></div>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      {[...Array(4)].map((_, r) => (
+                        <div key={r} className="flex items-center justify-between py-3 border-b border-border/30 last:border-b-0">
+                          <div className="flex items-center gap-3 w-1/3">
+                            <div className="size-4 shimmer rounded"></div>
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <div className="h-4 w-3/4 shimmer rounded-md"></div>
+                              <div className="h-3 w-1/2 shimmer rounded-md"></div>
+                            </div>
+                          </div>
+                          <div className="h-5 w-20 shimmer rounded-full"></div>
+                          <div className="h-3.5 w-24 shimmer rounded-md"></div>
+                          <div className="flex flex-col gap-1 w-20 items-end">
+                            <div className="h-3.5 w-12 shimmer rounded-md"></div>
+                            <div className="h-3 w-16 shimmer rounded-md"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </main>
