@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
-export default function ColisNewPage({ navigate, colisList = [] }) {
+export default function ColisNewPage({ navigate, colisList = [], showNotification }) {
   const [orderNumber, setOrderNumber] = useState('');
   const [type, setType] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -162,7 +162,11 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
       });
 
       if (response.ok) {
-        setSuccessMsg('Colis ajouté avec succès !');
+        if (showNotification) {
+          showNotification('success', 'Colis ajouté avec succès !');
+        } else {
+          setSuccessMsg('Colis ajouté avec succès !');
+        }
         // Reset form
         setOrderNumber('');
         setType('');
@@ -190,29 +194,21 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
         }, 1500);
       } else {
         const errData = await response.json();
-        setErrorMsg(errData.message || 'Une erreur est survenue lors de l\'ajout.');
+        const errMsg = errData.message || 'Une erreur est survenue lors de l\'ajout.';
+        if (showNotification) {
+          showNotification('error', errMsg);
+        } else {
+          setErrorMsg(errMsg);
+        }
       }
     } catch (err) {
-      console.warn('API error, simulating successful creation locally...', err);
-      setSuccessMsg('Colis (Démo) ajouté avec succès !');
-      // Reset form
-      setOrderNumber('');
-      setType('');
-      setRecipient('');
-      setCity('');
-      setAddress('');
-      setPrice('');
-      setReplacePackage(false);
-      setOldColis('');
-      setPackageOption('Ne pas ouvrir le colis');
-      setPhoneNumber('');
-      setNeighborhood('');
-      setProductNature('');
-      setComment('');
-      setFragile(false);
-      setAllFragile(false);
-      setUseCarton(false);
-      setCartonOption('');
+      console.error('API error:', err);
+      const errMsg = 'Une erreur est survenue lors de l\'ajout.';
+      if (showNotification) {
+        showNotification('error', errMsg);
+      } else {
+        setErrorMsg(errMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -259,14 +255,14 @@ export default function ColisNewPage({ navigate, colisList = [] }) {
 
         {/* Content Container */}
         <div className="kt-container-fixed">
-          {successMsg && (
+          {!showNotification && successMsg && (
             <div className="bg-success/15 border border-success/30 text-success text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-check-circle text-lg"></i>
               <span>{successMsg}</span>
             </div>
           )}
 
-          {errorMsg && (
+          {!showNotification && errorMsg && (
             <div className="bg-destructive/15 border border-destructive/30 text-destructive text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-information-2 text-lg"></i>
               <span>{errorMsg}</span>

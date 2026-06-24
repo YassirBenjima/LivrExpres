@@ -21,6 +21,15 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!(localStorage.getItem('auth_token') || localStorage.getItem('user'))
   );
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    // Automatically clear after 4 seconds
+    setTimeout(() => {
+      setNotification(prev => (prev?.message === message ? null : prev));
+    }, 4000);
+  };
 
   useEffect(() => {
     const handlePopState = () => {
@@ -195,49 +204,101 @@ function App() {
     normalizedRoute = normalizedRoute.slice(0, -1);
   }
 
-  switch (normalizedRoute) {
-    case '/dashboard':
-      return (
-        <DashboardPage 
-          navigate={navigate} 
-          dashboardData={dashboardData} 
-          loading={loading && !dashboardData} 
-          refetchData={() => fetchAllData(true)} 
-        />
-      );
-    case '/colis':
-      return (
-        <ColisListPage 
-          navigate={navigate} 
-          colisList={colisList} 
-          loading={loading && colisList.length === 0} 
-          refetchData={() => fetchAllData(true)} 
-        />
-      );
-    case '/colis/new':
-      return <ColisNewPage navigate={navigate} colisList={colisList} />;
-    case '/colis/pickup':
-      return <ColisPickupPage navigate={navigate} />;
-    case '/colis/import':
-      return <ColisImportPage navigate={navigate} />;
-    case '/colis/settings':
-      return <ColisSettingsPage navigate={navigate} />;
-    case '/register':
-      return <RegisterPage navigate={navigate} />;
-    case '/forgot-password':
-      return <ForgotPasswordPage navigate={navigate} />;
-    case '/login-staff':
-      return <LoginStaffPage navigate={navigate} />;
-    case '/reset-password/check-email':
-      return <CheckEmailPage navigate={navigate} />;
-    case '/reset-password/change':
-      return <ChangePasswordPage navigate={navigate} />;
-    case '/reset-password/changed':
-      return <PasswordChangedPage navigate={navigate} />;
-    case '/login':
-    default:
-      return <LoginPage navigate={navigate} />;
-  }
+  const renderContent = () => {
+    switch (normalizedRoute) {
+      case '/dashboard':
+        return (
+          <DashboardPage 
+            navigate={navigate} 
+            dashboardData={dashboardData} 
+            loading={loading && !dashboardData} 
+            refetchData={() => fetchAllData(true)} 
+          />
+        );
+      case '/colis':
+        return (
+          <ColisListPage 
+            navigate={navigate} 
+            colisList={colisList} 
+            loading={loading && colisList.length === 0} 
+            refetchData={() => fetchAllData(true)} 
+          />
+        );
+      case '/colis/new':
+        return <ColisNewPage navigate={navigate} colisList={colisList} showNotification={showNotification} />;
+      case '/colis/pickup':
+        return <ColisPickupPage navigate={navigate} />;
+      case '/colis/import':
+        return <ColisImportPage navigate={navigate} />;
+      case '/colis/settings':
+        return <ColisSettingsPage navigate={navigate} showNotification={showNotification} />;
+      case '/register':
+        return <RegisterPage navigate={navigate} />;
+      case '/forgot-password':
+        return <ForgotPasswordPage navigate={navigate} />;
+      case '/login-staff':
+        return <LoginStaffPage navigate={navigate} />;
+      case '/reset-password/check-email':
+        return <CheckEmailPage navigate={navigate} />;
+      case '/reset-password/change':
+        return <ChangePasswordPage navigate={navigate} />;
+      case '/reset-password/changed':
+        return <PasswordChangedPage navigate={navigate} />;
+      case '/login':
+      default:
+        return <LoginPage navigate={navigate} />;
+    }
+  };
+
+  return (
+    <>
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateY(-20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.3s ease-out forwards;
+        }
+      `}</style>
+      {renderContent()}
+      {notification && (
+        <div className="fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-auto">
+          <div className={`bg-white dark:bg-zinc-950 border-s-4 ${
+            notification.type === 'success' ? 'border-success' : 'border-danger'
+          } shadow-2xl rounded-xl p-4 flex items-start gap-3 transition-all duration-300 animate-slide-in border border-border`}>
+            <div className={`rounded-full p-1.5 flex items-center justify-center shrink-0 ${
+              notification.type === 'success' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+            }`}>
+              <i className={`ki-filled ${
+                notification.type === 'success' ? 'ki-check' : 'ki-information'
+              } text-base`}></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-foreground">
+                {notification.type === 'success' ? 'Succès' : 'Erreur'}
+              </h4>
+              <p className="text-xs text-secondary-foreground mt-0.5 break-words">
+                {notification.message}
+              </p>
+            </div>
+            <button 
+              onClick={() => setNotification(null)} 
+              className="text-secondary-foreground hover:text-foreground shrink-0 rounded-lg p-0.5 hover:bg-muted"
+            >
+              <i className="ki-filled ki-cross text-sm"></i>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default App;

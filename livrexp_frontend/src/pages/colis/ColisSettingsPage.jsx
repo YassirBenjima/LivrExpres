@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
-export default function ColisSettingsPage() {
+export default function ColisSettingsPage({ navigate, showNotification }) {
   const [fragile, setFragile] = useState(false);
   const [openColis, setOpenColis] = useState(false);
   const [uniqueOrderNumber, setUniqueOrderNumber] = useState(false);
@@ -43,12 +43,27 @@ export default function ColisSettingsPage() {
         body: JSON.stringify({ fragile, openColis, uniqueOrderNumber })
       });
       if (response.ok) {
-        setMsg('Paramètres enregistrés avec succès !');
+        const successMsg = 'Paramètres enregistrés avec succès !';
+        if (showNotification) {
+          showNotification('success', successMsg);
+        } else {
+          setMsg(successMsg);
+        }
       } else {
-        setMsg('Paramètres enregistrés ! (Mode démo)');
+        const demoMsg = 'Paramètres enregistrés ! (Mode démo)';
+        if (showNotification) {
+          showNotification('success', demoMsg);
+        } else {
+          setMsg(demoMsg);
+        }
       }
     } catch (err) {
-      setMsg('Paramètres enregistrés ! (Mode démo)');
+      const demoMsg = 'Paramètres enregistrés ! (Mode démo)';
+      if (showNotification) {
+        showNotification('success', demoMsg);
+      } else {
+        setMsg(demoMsg);
+      }
     } finally {
       setSaveLoading(false);
     }
@@ -81,7 +96,7 @@ export default function ColisSettingsPage() {
 
         {/* Content Container */}
         <div className="kt-container-fixed">
-          {msg && (
+          {!showNotification && msg && (
             <div className="bg-success/15 border border-success/30 text-success text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-check-circle text-lg"></i>
               <span>{msg}</span>
