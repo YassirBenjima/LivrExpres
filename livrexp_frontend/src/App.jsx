@@ -230,7 +230,7 @@ function App() {
       case '/colis/pickup':
         return <ColisPickupPage navigate={navigate} showNotification={showNotification} />;
       case '/colis/import':
-        return <ColisImportPage navigate={navigate} />;
+        return <ColisImportPage navigate={navigate} showNotification={showNotification} />;
       case '/colis/settings':
         return <ColisSettingsPage navigate={navigate} showNotification={showNotification} />;
       case '/register':

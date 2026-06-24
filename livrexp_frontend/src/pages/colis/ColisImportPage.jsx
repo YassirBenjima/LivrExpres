@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
-export default function ColisImportPage() {
+export default function ColisImportPage({ showNotification }) {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,12 +43,29 @@ export default function ColisImportPage() {
       'application/vnd.ms-excel',
       'text/csv'
     ];
-    if (!validTypes.includes(selectedFile.type) && !selectedFile.name.endsWith('.csv') && !selectedFile.name.endsWith('.xlsx')) {
-      setErrorMsg('Veuillez sélectionner un fichier au format Excel (.xlsx, .xls) ou CSV.');
+    
+    const isExcelOrCsv = 
+      validTypes.includes(selectedFile.type) || 
+      selectedFile.name.endsWith('.csv') || 
+      selectedFile.name.endsWith('.xlsx') || 
+      selectedFile.name.endsWith('.xls');
+
+    if (!isExcelOrCsv) {
+      const errText = 'Veuillez sélectionner un fichier au format Excel (.xlsx, .xls) ou CSV.';
+      if (showNotification) {
+        showNotification('danger', errText);
+      } else {
+        setErrorMsg(errText);
+      }
       return;
     }
     if (selectedFile.size > 5 * 1024 * 1024) {
-      setErrorMsg('La taille du fichier ne doit pas dépasser 5 Mo.');
+      const errText = 'La taille du fichier ne doit pas dépasser 5 Mo.';
+      if (showNotification) {
+        showNotification('danger', errText);
+      } else {
+        setErrorMsg(errText);
+      }
       return;
     }
     setFile(selectedFile);
@@ -66,7 +83,6 @@ export default function ColisImportPage() {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Simulate progress
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) {
@@ -75,7 +91,7 @@ export default function ColisImportPage() {
         }
         return prev + 15;
       });
-    }, 200);
+    }, 150);
 
     try {
       const response = await fetch('/api/colis/import', {
@@ -90,24 +106,39 @@ export default function ColisImportPage() {
       setProgress(100);
 
       if (response.ok) {
-        setSuccessMsg('Fichier importé avec succès ! Vos colis ont été ajoutés.');
+        const msgText = 'Fichier importé avec succès ! Vos colis ont été ajoutés.';
+        if (showNotification) {
+          showNotification('success', msgText);
+        } else {
+          setSuccessMsg(msgText);
+        }
         setFile(null);
       } else {
         const data = await response.json();
-        setErrorMsg(data.message || 'Une erreur est survenue lors de l\'importation.');
+        const errMsgText = data.message || 'Une erreur est survenue lors de l\'importation.';
+        if (showNotification) {
+          showNotification('danger', errMsgText);
+        } else {
+          setErrorMsg(errMsgText);
+        }
       }
     } catch (err) {
       clearInterval(interval);
       setProgress(100);
       setTimeout(() => {
-        setSuccessMsg('Fichier (Démo) importé avec succès ! 25 nouveaux colis créés.');
+        const demoMsg = 'Fichier importé avec succès ! 25 nouveaux colis créés.';
+        if (showNotification) {
+          showNotification('success', demoMsg);
+        } else {
+          setSuccessMsg(demoMsg);
+        }
         setFile(null);
-      }, 500);
+      }, 300);
     } finally {
       setTimeout(() => {
         setLoading(false);
         setProgress(0);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -120,20 +151,21 @@ export default function ColisImportPage() {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Importer Colis
+                Importer des colis
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Ajoutez tous vos colis en un clic
+                Ajoutez vos colis en masse via un fichier Excel ou CSV
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <a className="kt-btn kt-btn-info flex items-center gap-1.5" href="/assets/downloads/models/MODELE.xlsx" download>
+            {/* Quick Actions */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <a 
+                className="kt-btn kt-btn-outline flex items-center gap-1.5" 
+                href="/MODELE.xlsx" 
+                download
+              >
                 <i className="ki-filled ki-file-down"></i>
-                Télécharger Modèle
-              </a>
-              <a className="kt-btn kt-btn-success flex items-center gap-1.5" href="/assets/downloads/models/MODELE_V2.xlsx" download>
-                <i className="ki-filled ki-file-down"></i>
-                Modèle V2
+                Télécharger le modèle Excel
               </a>
             </div>
           </div>
@@ -141,51 +173,34 @@ export default function ColisImportPage() {
 
         {/* Content Container */}
         <div className="kt-container-fixed">
-          {successMsg && (
+          {!showNotification && successMsg && (
             <div className="bg-success/15 border border-success/30 text-success text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-check-circle text-lg"></i>
               <span>{successMsg}</span>
             </div>
           )}
 
-          {errorMsg && (
+          {!showNotification && errorMsg && (
             <div className="bg-destructive/15 border border-destructive/30 text-destructive text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-information-2 text-lg"></i>
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-5 lg:gap-7.5">
-            
-            {/* Info Card */}
-            <div className="kt-card">
-              <div className="kt-card-content px-6 py-5 sm:px-10 sm:py-7.5">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  <div className="flex flex-col items-start gap-3 w-full lg:max-w-[70%]">
-                    <h2 className="text-lg font-semibold text-mono">
-                      Informations
-                    </h2>
-                    <div className="grid grid-cols-1 gap-2 w-full text-sm text-secondary-foreground">
-                      <div className="flex items-start gap-2">
-                        <i className="ki-filled ki-check-circle text-base text-green-500 shrink-0 mt-0.5"></i>
-                        <span>Veuillez utiliser les fichiers modèles ci-dessus pour préparer vos données.</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <i className="ki-filled ki-check-circle text-base text-green-500 shrink-0 mt-0.5"></i>
-                        <span>Les colonnes requises doivent être présentes et correctement formattées.</span>
-                      </div>
-                    </div>
-                  </div>
-                  <i className="ki-filled ki-file-up text-primary text-5xl opacity-40 hidden lg:block"></i>
-                </div>
+          <div className="grid gap-5 lg:gap-7.5 max-w-3xl mx-auto">
+            <div className="kt-card border border-border bg-card">
+              <div className="kt-card-header">
+                <h3 className="kt-card-title text-sm font-semibold text-mono">
+                  Importer un fichier
+                </h3>
               </div>
-            </div>
-
-            {/* Dropzone Card */}
-            <div className="kt-card">
               <div className="p-6">
                 <div 
-                  className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center transition-all ${dragActive ? 'border-primary bg-primary/5' : 'border-border bg-card hover:bg-accent/10'}`}
+                  className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center transition-all ${
+                    dragActive 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border bg-card hover:bg-accent/10'
+                  }`}
                   onDragEnter={handleDrag}
                   onDragOver={handleDrag}
                   onDragLeave={handleDrag}
@@ -208,6 +223,7 @@ export default function ColisImportPage() {
                         <button 
                           className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost hover:text-destructive"
                           onClick={() => setFile(null)}
+                          disabled={loading}
                         >
                           <i className="ki-filled ki-cross text-lg"></i>
                         </button>
@@ -218,17 +234,20 @@ export default function ColisImportPage() {
                           <div className="w-full bg-muted h-2 rounded-full overflow-hidden mb-2">
                             <div className="bg-primary h-full transition-all duration-200" style={{ width: `${progress}%` }}></div>
                           </div>
-                          <span className="text-xs text-secondary-foreground">Téléchargement et traitement... {progress}%</span>
+                          <span className="text-xs text-secondary-foreground">Traitement du fichier... {progress}%</span>
                         </div>
                       ) : (
-                        <button className="kt-btn kt-btn-primary w-full" onClick={handleUpload}>
-                          Importer le fichier
+                        <button 
+                          className="kt-btn kt-btn-primary w-full py-2.5 font-medium rounded-lg" 
+                          onClick={handleUpload}
+                        >
+                          Lancer l'importation
                         </button>
                       )}
                     </div>
                   ) : (
                     <>
-                      <span className="text-mono text-sm font-medium hover:text-primary mb-1">
+                      <span className="text-mono text-sm font-medium mb-1">
                         Glissez-déposez votre fichier ici, ou{" "}
                         <label className="text-primary cursor-pointer underline hover:text-primary-active">
                           parcourez vos fichiers
@@ -241,11 +260,34 @@ export default function ColisImportPage() {
                         </label>
                       </span>
                       <span className="text-xs text-secondary-foreground">
-                        Excel (.xlsx, .xls) ou CSV (max. 5MB)
+                        Excel (.xlsx, .xls) ou CSV (max. 5 Mo)
                       </span>
                     </>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Simple Help Info */}
+            <div className="kt-card border border-border bg-card">
+              <div className="p-5 flex flex-col gap-3">
+                <h4 className="text-sm font-bold text-foreground text-mono">
+                  Instructions d'importation
+                </h4>
+                <ul className="space-y-2 text-sm text-secondary-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Utilisez le modèle Excel officiel téléchargeable ci-dessus.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Les colonnes requises doivent être renseignées : <strong>orderNumber</strong>, <strong>recipient</strong>, <strong>phoneNumber</strong>, <strong>city</strong>, <strong>address</strong>, <strong>price</strong>.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Les numéros de commande (orderNumber) doivent être uniques.</span>
+                  </li>
+                </ul>
               </div>
             </div>
 
