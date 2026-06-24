@@ -331,7 +331,6 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                         <KtSelect
                           value={String(perPage)}
                           onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
-                          placeholder="10"
                           className="w-16"
                           options={perPageOptions}
                         />

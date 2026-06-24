@@ -41,8 +41,9 @@ export default function KtSelect({
     }
   }, [open]);
 
-  // Prepend placeholder option if it exists
-  const selectOptions = placeholder 
+  // Prepend placeholder option if it exists and there isn't already an option with value === ''
+  const hasEmptyOption = safeOptions.some(o => o.value === '');
+  const selectOptions = placeholder && !hasEmptyOption 
     ? [{ value: '', label: placeholder }, ...safeOptions]
     : safeOptions;
 

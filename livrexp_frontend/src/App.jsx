@@ -253,7 +253,99 @@ function App() {
   return (
     <>
       <style>{`
-        @keyframes slideIn {
+        .custom-toast-container {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 999999;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 380px;
+          width: 100%;
+          pointer-events: auto;
+        }
+
+        .custom-toast {
+          background-color: #ffffff;
+          border-left: 4px solid;
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          align-items: start;
+          gap: 12px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e4e6ef;
+          transition: all 0.3s ease-out;
+          animation: toastSlideIn 0.3s ease-out forwards;
+        }
+
+        .custom-toast.success {
+          border-left-color: #27d37f;
+        }
+
+        .custom-toast.error {
+          border-left-color: #f1416c;
+        }
+
+        .custom-toast-icon-container {
+          border-radius: 9999px;
+          padding: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .custom-toast-icon-container.success {
+          background-color: rgba(39, 211, 127, 0.1);
+          color: #27d37f;
+        }
+
+        .custom-toast-icon-container.error {
+          background-color: rgba(241, 65, 108, 0.1);
+          color: #f1416c;
+        }
+
+        .custom-toast-content {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .custom-toast-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #181c32;
+          margin: 0;
+        }
+
+        .custom-toast-message {
+          font-size: 12px;
+          color: #7e8299;
+          margin-top: 2px;
+          word-break: break-all;
+        }
+
+        .custom-toast-close {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #a1a5b7;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          flex-shrink: 0;
+          transition: all 0.2s;
+        }
+
+        .custom-toast-close:hover {
+          background-color: #f5f8fa;
+          color: #181c32;
+        }
+
+        @keyframes toastSlideIn {
           from {
             transform: translateY(-20px);
             opacity: 0;
@@ -263,34 +355,27 @@ function App() {
             opacity: 1;
           }
         }
-        .animate-slide-in {
-          animation: slideIn 0.3s ease-out forwards;
-        }
       `}</style>
       {renderContent()}
       {notification && (
-        <div className="fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-auto">
-          <div className={`bg-white dark:bg-zinc-950 border-s-4 ${
-            notification.type === 'success' ? 'border-success' : 'border-danger'
-          } shadow-2xl rounded-xl p-4 flex items-start gap-3 transition-all duration-300 animate-slide-in border border-border`}>
-            <div className={`rounded-full p-1.5 flex items-center justify-center shrink-0 ${
-              notification.type === 'success' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-            }`}>
+        <div className="custom-toast-container">
+          <div className={`custom-toast ${notification.type}`}>
+            <div className={`custom-toast-icon-container ${notification.type}`}>
               <i className={`ki-filled ${
                 notification.type === 'success' ? 'ki-check' : 'ki-information'
               } text-base`}></i>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-foreground">
+            <div className="custom-toast-content">
+              <h4 className="custom-toast-title">
                 {notification.type === 'success' ? 'Succès' : 'Erreur'}
               </h4>
-              <p className="text-xs text-secondary-foreground mt-0.5 break-words">
+              <p className="custom-toast-message">
                 {notification.message}
               </p>
             </div>
             <button 
               onClick={() => setNotification(null)} 
-              className="text-secondary-foreground hover:text-foreground shrink-0 rounded-lg p-0.5 hover:bg-muted"
+              className="custom-toast-close"
             >
               <i className="ki-filled ki-cross text-sm"></i>
             </button>
