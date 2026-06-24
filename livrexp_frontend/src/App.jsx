@@ -227,7 +227,7 @@ function App() {
       case '/colis/new':
         return <ColisNewPage navigate={navigate} colisList={colisList} showNotification={showNotification} />;
       case '/colis/pickup':
-        return <ColisPickupPage navigate={navigate} />;
+        return <ColisPickupPage navigate={navigate} showNotification={showNotification} />;
       case '/colis/import':
         return <ColisImportPage navigate={navigate} />;
       case '/colis/settings':

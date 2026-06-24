@@ -7,7 +7,7 @@ const mockPickupColis = [
   { id: 11, trackingCode: 'F-20260623-0011', productNature: 'Sac à dos sport', createdAt: '23/06/2026 11:50', address: 'Gare Rabat Ville', etatLabel: 'En attente', etatBadgeClass: 'kt-badge-warning', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Rabat', price: 320.00, comment: 'Livrer après 17h' }
 ];
 
-export default function ColisPickupPage() {
+export default function ColisPickupPage({ navigate, showNotification }) {
   const [colisList, setColisList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -71,17 +71,32 @@ export default function ColisPickupPage() {
         body: JSON.stringify({ ids: selectedIds })
       });
       if (response.ok) {
-        setSuccessMsg('Demande de ramassage envoyée avec succès pour les colis sélectionnés !');
+        const msgText = 'Demande de ramassage envoyée avec succès pour les colis sélectionnés !';
+        if (showNotification) {
+          showNotification('success', msgText);
+        } else {
+          setSuccessMsg(msgText);
+        }
         // Remove from list
         setColisList(prev => prev.filter(c => !selectedIds.includes(c.id)));
         setSelectedIds([]);
       } else {
-        setSuccessMsg('Demande de ramassage (Simulée) envoyée avec succès !');
+        const demoMsg = 'Demande de ramassage (Simulée) envoyée avec succès !';
+        if (showNotification) {
+          showNotification('success', demoMsg);
+        } else {
+          setSuccessMsg(demoMsg);
+        }
         setColisList(prev => prev.filter(c => !selectedIds.includes(c.id)));
         setSelectedIds([]);
       }
     } catch (err) {
-      setSuccessMsg('Demande de ramassage (Simulée) envoyée avec succès !');
+      const demoMsg = 'Demande de ramassage (Simulée) envoyée avec succès !';
+      if (showNotification) {
+        showNotification('success', demoMsg);
+      } else {
+        setSuccessMsg(demoMsg);
+      }
       setColisList(prev => prev.filter(c => !selectedIds.includes(c.id)));
       setSelectedIds([]);
     }
@@ -177,7 +192,7 @@ export default function ColisPickupPage() {
 
         {/* Content Container */}
         <div className="kt-container-fixed">
-          {successMsg && (
+          {!showNotification && successMsg && (
             <div className="bg-success/15 border border-success/30 text-success text-sm rounded-xl p-4 mb-5 flex items-center gap-3">
               <i className="ki-filled ki-check-circle text-lg"></i>
               <span>{successMsg}</span>
