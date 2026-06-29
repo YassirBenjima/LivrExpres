@@ -113,12 +113,41 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
                 {loading ? (
                   <div className="flex flex-col gap-2.5">
                     {[1, 2, 3].map(i => (
-                      <div key={i} className="flex items-center justify-between border border-border rounded-xl gap-3 px-3.5 py-2.5 animate-pulse">
+                      <div key={i} className="flex items-center justify-between border border-border rounded-xl gap-3 px-3.5 py-2.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="size-[50px] rounded-xl bg-muted shrink-0"></div>
-                          <div className="h-4 w-48 bg-muted rounded"></div>
+                          <div
+                            style={{
+                              height: '50px',
+                              width: '50px',
+                              borderRadius: '12px',
+                              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+                              backgroundSize: '200% 100%',
+                              animation: 'shimmer 1.4s infinite',
+                            }}
+                            className="shrink-0"
+                          />
+                          <div
+                            style={{
+                              height: '16px',
+                              width: '192px',
+                              borderRadius: '4px',
+                              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+                              backgroundSize: '200% 100%',
+                              animation: 'shimmer 1.4s infinite',
+                            }}
+                          />
                         </div>
-                        <div className="size-8 rounded-full bg-muted shrink-0"></div>
+                        <div
+                          style={{
+                            height: '32px',
+                            width: '32px',
+                            borderRadius: '9999px',
+                            background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmer 1.4s infinite',
+                          }}
+                          className="shrink-0"
+                        />
                       </div>
                     ))}
                   </div>

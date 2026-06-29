@@ -28,16 +28,11 @@ export default function StockProductNewPage({ navigate, showNotification }) {
   const [loading, setLoading]                 = useState(false);
 
   const fileInputRef = useRef(null);
-  const [localNotification, setLocalNotification] = useState(null);
 
   const triggerLocalNotification = (type, message) => {
-    setLocalNotification({ type, message });
     if (showNotification) {
       showNotification(type, message);
     }
-    setTimeout(() => {
-      setLocalNotification(prev => prev?.message === message ? null : prev);
-    }, 4000);
   };
 
   const handlePreFillNormal = () => {
@@ -47,7 +42,16 @@ export default function StockProductNewPage({ navigate, showNotification }) {
     setQuantity('100');
     setNote('Ceci est un produit simple pré-rempli pour test.');
     setVariantsEnabled(false);
-    triggerLocalNotification('success', 'Formulaire pré-rempli (Produit Simple) !');
+
+    // Fetch and pre-fill existing image
+    fetch('/assets/media/images/600x600/1.jpg')
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'product-simple.jpg', { type: 'image/jpeg' });
+        setPhoto(file);
+        setPhotoPreview('/assets/media/images/600x600/1.jpg');
+      })
+      .catch(err => console.error('Failed to pre-fill image:', err));
   };
 
   const handlePreFillVariants = () => {
@@ -60,7 +64,16 @@ export default function StockProductNewPage({ navigate, showNotification }) {
       { barcode: 'VAR-BLEU', name: 'Bleu / M', quantity: '30' },
       { barcode: 'VAR-VERT', name: 'Vert / S', quantity: '20' }
     ]);
-    triggerLocalNotification('success', 'Formulaire pré-rempli (Produit avec Variantes) !');
+
+    // Fetch and pre-fill existing image
+    fetch('/assets/media/images/600x600/3.jpg')
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'product-variants.jpg', { type: 'image/jpeg' });
+        setPhoto(file);
+        setPhotoPreview('/assets/media/images/600x600/3.jpg');
+      })
+      .catch(err => console.error('Failed to pre-fill image:', err));
   };
 
   const handlePhotoChange = (e) => {
@@ -163,8 +176,22 @@ export default function StockProductNewPage({ navigate, showNotification }) {
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
-                <button className="kt-btn kt-btn-light" type="button" onClick={handlePreFillNormal}>Demo Simple</button>
-                <button className="kt-btn kt-btn-light" type="button" onClick={handlePreFillVariants}>Demo Variante</button>
+                <button 
+                  className="kt-btn kt-btn-outline" 
+                  type="button" 
+                  onClick={handlePreFillNormal}
+                  style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
+                >
+                  Remplir ( Simple )
+                </button>
+                <button 
+                  className="kt-btn kt-btn-outline" 
+                  type="button" 
+                  onClick={handlePreFillVariants}
+                  style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
+                >
+                  Remplir ( Variante )
+                </button>
                 <button className="kt-btn kt-btn-outline" type="button" onClick={() => navigate('/stock/produits')}>Retour à la liste</button>
                 <button className="kt-btn kt-btn-primary" onClick={handleSubmit} disabled={loading}>{loading ? 'Enregistrement...' : 'Enregistrer'}</button>
               </div>
@@ -475,64 +502,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
           </form>
         </div>
       </main>
-      {localNotification && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 99999,
-          maxWidth: '380px',
-          width: '100%',
-          backgroundColor: '#ffffff',
-          borderLeft: `4px solid ${localNotification.type === 'success' ? '#27d37f' : '#f1416c'}`,
-          borderRadius: '12px',
-          padding: '16px',
-          display: 'flex',
-          alignItems: 'start',
-          gap: '12px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e4e6ef',
-          animation: 'toastSlideIn 0.3s ease-out forwards',
-        }}>
-          <div style={{
-            borderRadius: '9999px',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            backgroundColor: localNotification.type === 'success' ? 'rgba(39, 211, 127, 0.1)' : 'rgba(241, 65, 108, 0.1)',
-            color: localNotification.type === 'success' ? '#27d37f' : '#f1416c'
-          }}>
-            <i className={`ki-filled ${localNotification.type === 'success' ? 'ki-check' : 'ki-information'} text-base`}></i>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#181c32', margin: 0 }}>
-              {localNotification.type === 'success' ? 'Succès' : 'Erreur'}
-            </h4>
-            <p style={{ fontSize: '12px', color: '#7e8299', marginTop: '2px', margin: 0 }}>
-              {localNotification.message}
-            </p>
-          </div>
-          <button 
-            onClick={() => setLocalNotification(null)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#a1a5b7',
-              padding: '2px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '6px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <i className="ki-filled ki-cross text-sm"></i>
-          </button>
-        </div>
-      )}
+
     </DashboardLayout>
   );
 }

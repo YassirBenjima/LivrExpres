@@ -286,30 +286,41 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                 </td>
                                 <td className="text-foreground font-normal">Non</td>
                                 <td className="text-foreground font-normal">{colis.comment || '-'}</td>
-                                <td className="text-center relative">
-                                  <button 
-                                    className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                                    onClick={() => toggleDropdown(colis.id)}
-                                  >
-                                    <i className="ki-filled ki-dots-vertical text-lg"></i>
-                                  </button>
-                                  
-                                  {activeDropdownId === colis.id && (
-                                    <>
-                                      <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)}></div>
-                                      <div className="absolute right-0 mt-2 w-44 bg-card border border-border rounded-lg shadow-lg z-40 py-1 text-left">
-                                        <a href={`/colis/${colis.id}/edit`} className="flex items-center gap-2 px-3.5 py-2 text-xs text-foreground hover:bg-accent">
-                                          <i className="ki-filled ki-pencil text-sm"></i> Modifier
-                                        </a>
-                                        <button 
-                                          onClick={() => alert(`Supprimer colis ${colis.trackingCode}`)}
-                                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-destructive hover:bg-accent text-left"
-                                        >
-                                          <i className="ki-filled ki-trash text-sm"></i> Supprimer
-                                        </button>
-                                      </div>
-                                    </>
-                                  )}
+                                 <td className="text-center relative" style={activeDropdownId === colis.id ? { zIndex: 9999 } : {}}>
+                                   <button 
+                                     className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                                     onClick={() => toggleDropdown(colis.id)}
+                                   >
+                                     <i className="ki-filled ki-dots-vertical text-lg"></i>
+                                   </button>
+                                   
+                                   {activeDropdownId === colis.id && (
+                                     <>
+                                       <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)}></div>
+                                       <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
+                                         <div className="kt-menu-item">
+                                           <a href={`/colis/${colis.id}/edit`} className="kt-menu-link">
+                                             <span className="kt-menu-icon">
+                                               <i className="ki-filled ki-pencil"></i>
+                                             </span>
+                                             <span className="kt-menu-title">Modifier</span>
+                                           </a>
+                                         </div>
+                                         <div className="kt-menu-item">
+                                           <button 
+                                             type="button"
+                                             onClick={() => alert(`Supprimer colis ${colis.trackingCode}`)}
+                                             className="kt-menu-link text-start hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                           >
+                                             <span className="kt-menu-icon">
+                                               <i className="ki-filled ki-trash"></i>
+                                             </span>
+                                             <span className="kt-menu-title text-destructive">Supprimer</span>
+                                           </button>
+                                         </div>
+                                       </div>
+                                     </>
+                                   )}
                                 </td>
                               </tr>
                             ))

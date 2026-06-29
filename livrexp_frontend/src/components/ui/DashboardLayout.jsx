@@ -341,8 +341,50 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
 
             {/* Breadcrumb / Section Name */}
             <div className="hidden lg:flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Accueil</span>
+              <a 
+                href="/dashboard" 
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/dashboard');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+              >
+                Accueil
+              </a>
               <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+              {activeMenu.startsWith('colis_') && (
+                <>
+                  <a 
+                    href="/colis" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/colis');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    Colis
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
+              {activeMenu.startsWith('stock_') && (
+                <>
+                  <a 
+                    href="/stock/produits" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/stock/produits');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    Stock
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {activeMenu === 'dashboard' ? 'Tableau de bord'
                   : activeMenu === 'colis_list' ? 'Liste des colis'
@@ -351,6 +393,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   : activeMenu === 'colis_import' ? 'Importer Colis'
                   : activeMenu === 'colis_settings' ? 'Paramètres des colis'
                   : activeMenu === 'stock' ? 'Stock'
+                  : activeMenu === 'stock_products' ? 'Liste des produits'
+                  : activeMenu === 'stock_products_new' ? 'Ajouter un produit'
+                  : activeMenu === 'stock_entry' ? 'Stock Entrée'
+                  : activeMenu === 'stock_colis' ? 'Colis du stock'
                   : activeMenu === 'ramassage' ? 'Ramassage'
                   : activeMenu === 'bon_livraison' ? 'Bon de Livraison'
                   : activeMenu === 'suivi' ? 'Suivi'
