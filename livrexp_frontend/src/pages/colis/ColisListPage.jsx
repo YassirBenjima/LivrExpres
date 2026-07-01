@@ -1,15 +1,62 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
 
-export default function ColisListPage({ colisList = [], loading = false, refetchData }) {
+export default function ColisListPage({ colisList = [], loading = false, refetchData, navigate, showNotification }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEtat, setSelectedEtat] = useState('');
   const [selectedStatut, setSelectedStatut] = useState('');
   const [perPage, setPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [deleteColis, setDeleteColis] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDeleteSubmit = async (e) => {
+    e.preventDefault();
+    if (!deleteColis) return;
+    setDeleteLoading(true);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/colis/${deleteColis.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+
+      if (response.ok) {
+        if (refetchData) {
+          await refetchData();
+        }
+        if (showNotification) {
+          showNotification('success', 'Colis supprimé avec succès.');
+        }
+        setDeleteColis(null);
+      } else {
+        const data = await response.json();
+        const msg = data.message || 'Une erreur est survenue lors de la suppression.';
+        if (showNotification) {
+          showNotification('error', msg);
+        } else {
+          alert(msg);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      if (showNotification) {
+        showNotification('error', 'Une erreur est survenue lors de la suppression.');
+      } else {
+        alert('Une erreur est survenue lors de la suppression.');
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   // Filter logic
   const filteredColis = colisList.filter(colis => {
@@ -48,6 +95,18 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
       setCurrentPage(1);
     }
   }, [totalColis, perPage, perPageOptions]);
+
+  useEffect(() => {
+    const handleDocumentClick = (e) => {
+      if (activeDropdownId !== null && !e.target.closest('.kt-menu-toggle')) {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [activeDropdownId]);
 
   // Pagination logic
   const totalPages = Math.ceil(totalColis / perPage);
@@ -262,7 +321,14 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           ) : paginatedColis.length > 0 ? (
                             paginatedColis.map((colis) => (
                               <tr key={colis.id}>
-                                <td className="text-foreground font-medium">{colis.trackingCode}</td>
+                                <td className="font-medium">
+                                  <button
+                                    onClick={() => navigate(`/colis/${colis.id}/edit`)}
+                                    className="text-foreground hover:underline text-start bg-transparent border-0 p-0 font-medium cursor-pointer"
+                                  >
+                                    {colis.trackingCode}
+                                  </button>
+                                </td>
                                 <td className="text-foreground font-normal">{colis.productNature}</td>
                                 <td className="text-foreground font-normal">{colis.createdAt}</td>
                                 <td className="text-foreground font-normal">{colis.address}</td>
@@ -287,30 +353,39 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                 <td className="text-foreground font-normal">Non</td>
                                 <td className="text-foreground font-normal">{colis.comment || '-'}</td>
                                  <td className="text-center relative" style={activeDropdownId === colis.id ? { zIndex: 9999 } : {}}>
-                                   <button 
-                                     className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                                     onClick={() => toggleDropdown(colis.id)}
-                                   >
-                                     <i className="ki-filled ki-dots-vertical text-lg"></i>
-                                   </button>
-                                   
-                                   {activeDropdownId === colis.id && (
-                                     <>
-                                       <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)}></div>
+                                   <div className="relative inline-block text-left">
+                                     <button 
+                                       className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                                       onClick={() => toggleDropdown(colis.id)}
+                                     >
+                                       <i className="ki-filled ki-dots-vertical text-lg"></i>
+                                     </button>
+                                     
+                                     {activeDropdownId === colis.id && (
                                        <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
                                          <div className="kt-menu-item">
-                                           <a href={`/colis/${colis.id}/edit`} className="kt-menu-link">
+                                           <button 
+                                             type="button"
+                                             onClick={() => {
+                                               setActiveDropdownId(null);
+                                               navigate(`/colis/${colis.id}/edit`);
+                                             }}
+                                             className="kt-menu-link text-start w-full"
+                                           >
                                              <span className="kt-menu-icon">
                                                <i className="ki-filled ki-pencil"></i>
                                              </span>
                                              <span className="kt-menu-title">Modifier</span>
-                                           </a>
+                                           </button>
                                          </div>
                                          <div className="kt-menu-item">
                                            <button 
                                              type="button"
-                                             onClick={() => alert(`Supprimer colis ${colis.trackingCode}`)}
-                                             className="kt-menu-link text-start hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                             onClick={() => {
+                                               setActiveDropdownId(null);
+                                               setDeleteColis({ id: colis.id, trackingCode: colis.trackingCode });
+                                             }}
+                                             className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
                                            >
                                              <span className="kt-menu-icon">
                                                <i className="ki-filled ki-trash"></i>
@@ -319,8 +394,8 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                            </button>
                                          </div>
                                        </div>
-                                     </>
-                                   )}
+                                     )}
+                                   </div>
                                 </td>
                               </tr>
                             ))
@@ -382,6 +457,85 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
         </div>
 
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteColis && createPortal(
+        <div 
+          className="fixed flex items-center justify-center p-4"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 99999 
+          }}
+          onClick={() => !deleteLoading && setDeleteColis(null)}
+        >
+          <div 
+            className="bg-white dark:bg-zinc-950 border rounded-lg shadow-xl overflow-hidden" 
+            style={{ width: '100%', maxWidth: '440px', borderColor: 'var(--border)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div 
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <h3 className="text-base font-semibold text-foreground">Supprimer le colis</h3>
+              <button 
+                type="button"
+                onClick={() => setDeleteColis(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                disabled={deleteLoading}
+              >
+                <i className="ki-filled ki-cross text-lg"></i>
+              </button>
+            </div>
+
+            {/* Content & Actions */}
+            <form onSubmit={handleDeleteSubmit} className="p-5">
+              <div 
+                className="flex gap-3 border rounded-lg p-4 mb-5"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  borderColor: 'rgba(239, 68, 68, 0.2)'
+                }}
+              >
+                <i className="ki-filled ki-information-2 text-red-600 text-xl shrink-0 mt-0.5"></i>
+                <div className="text-sm text-foreground leading-relaxed">
+                  Vous êtes sur le point de supprimer le colis <strong className="font-semibold text-foreground">{deleteColis.trackingCode}</strong>. Cette action est irréversible et supprimera définitivement le colis de la base de données.
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5">
+                <button 
+                  type="button" 
+                  onClick={() => setDeleteColis(null)} 
+                  className="kt-btn kt-btn-outline"
+                  disabled={deleteLoading}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="kt-btn kt-btn-destructive"
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
     </DashboardLayout>
   );
 }

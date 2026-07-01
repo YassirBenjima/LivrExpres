@@ -77,6 +77,18 @@ export default function StockProductsPage({ navigate, showNotification }) {
     } catch(e) {}
   }, []);
 
+  useEffect(() => {
+    const handleDocumentClick = (e) => {
+      if (activeDropdownId !== null && !e.target.closest('.kt-menu-toggle')) {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [activeDropdownId]);
+
   const handleDeleteSubmit = async (e) => {
     e.preventDefault();
     if (!deleteProduct) return;
@@ -335,110 +347,107 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                     </button>
                                     
                                     {activeDropdownId === p.id && (
-                                      <>
-                                        <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)}></div>
-                                        <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
-                                          <div className="kt-menu-item">
-                                            <button 
-                                              type="button"
-                                              onClick={() => {
-                                                setActiveDropdownId(null);
-                                                navigate(`/stock/produits/${p.id}/edit`);
-                                              }}
-                                              className="kt-menu-link text-start w-full"
-                                            >
-                                              <span className="kt-menu-icon">
-                                                <i className="ki-filled ki-pencil"></i>
-                                              </span>
-                                              <span className="kt-menu-title">Modifier</span>
-                                            </button>
-                                          </div>
-                                          <div className="kt-menu-item">
-                                            <button 
-                                              type="button"
-                                              onClick={() => {
-                                                setActiveDropdownId(null);
-                                                setDeleteProduct({ id: p.id, name: p.name });
-                                              }}
-                                              className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
-                                            >
-                                              <span className="kt-menu-icon">
-                                                <i className="ki-filled ki-trash"></i>
-                                              </span>
-                                              <span className="kt-menu-title text-destructive">Supprimer</span>
-                                            </button>
-                                          </div>
-                                          
-                                          <div className="kt-menu-item">
-                                            {p.pickup_requested ? (
-                                              <button
-                                                type="button"
-                                                disabled
-                                                className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
-                                              >
-                                                <span className="kt-menu-icon">
-                                                  <i className="ki-filled ki-delivery-3"></i>
-                                                </span>
-                                                <span className="kt-menu-title">Ramassage demandé</span>
-                                              </button>
-                                            ) : (
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  setActiveDropdownId(null);
-                                                  setPickupProduct({ id: p.id, name: p.name });
-                                                }}
-                                                className="kt-menu-link text-start w-full hover:!bg-green-50 dark:hover:!bg-green-950/30 hover:!text-green-600 dark:hover:!text-green-400"
-                                              >
-                                                <span className="kt-menu-icon">
-                                                  <i className="ki-filled ki-delivery-3"></i>
-                                                </span>
-                                                <span className="kt-menu-title">Ramassage</span>
-                                              </button>
-                                            )}
-                                          </div>
-                                          
-                                          <div className="kt-menu-separator"></div>
-                                          
-                                          <div className="kt-menu-item flex flex-col items-stretch">
-                                            {p.variants && p.variants.length > 0 ? (
-                                              <>
-                                                <div className="px-2 py-1 text-xs text-secondary-foreground text-left font-medium">Imprimer sticker</div>
-                                                {p.variants.map(v => (
-                                                  <a 
-                                                    key={v.id}
-                                                    href={`/stock/produits/variant/${v.id}/sticker`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="kt-menu-link w-full"
-                                                  >
-                                                    <span className="kt-menu-icon">
-                                                      <i className="ki-filled ki-printer"></i>
-                                                    </span>
-                                                    <span className="kt-menu-title">
-                                                      {v.barcode || v.name || 'Variante'}
-                                                    </span>
-                                                  </a>
-                                                ))}
-                                              </>
-                                            ) : (
-                                              <a 
-                                                href={`/stock/produits/${p.id}/sticker`} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="kt-menu-link w-full"
-                                              >
-                                                <span className="kt-menu-icon">
-                                                  <i className="ki-filled ki-printer"></i>
-                                                </span>
-                                                <span className="kt-menu-title">
-                                                  Imprimer sticker
-                                                </span>
-                                              </a>
-                                            )}
-                                          </div>
+                                      <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
+                                        <div className="kt-menu-item">
+                                          <button 
+                                            type="button"
+                                            onClick={() => {
+                                              setActiveDropdownId(null);
+                                              navigate(`/stock/produits/${p.id}/edit`);
+                                            }}
+                                            className="kt-menu-link text-start w-full"
+                                          >
+                                            <span className="kt-menu-icon">
+                                              <i className="ki-filled ki-pencil"></i>
+                                            </span>
+                                            <span className="kt-menu-title">Modifier</span>
+                                          </button>
                                         </div>
-                                      </>
+                                        <div className="kt-menu-item">
+                                          <button 
+                                            type="button"
+                                            onClick={() => {
+                                              setActiveDropdownId(null);
+                                              setDeleteProduct({ id: p.id, name: p.name });
+                                            }}
+                                            className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                          >
+                                            <span className="kt-menu-icon">
+                                              <i className="ki-filled ki-trash"></i>
+                                            </span>
+                                            <span className="kt-menu-title text-destructive">Supprimer</span>
+                                          </button>
+                                        </div>
+                                        
+                                        <div className="kt-menu-item">
+                                          {p.pickup_requested ? (
+                                            <button
+                                              type="button"
+                                              disabled
+                                              className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
+                                            >
+                                              <span className="kt-menu-icon">
+                                                <i className="ki-filled ki-delivery-3"></i>
+                                              </span>
+                                              <span className="kt-menu-title">Ramassage demandé</span>
+                                            </button>
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setActiveDropdownId(null);
+                                                setPickupProduct({ id: p.id, name: p.name });
+                                              }}
+                                              className="kt-menu-link text-start w-full hover:!bg-green-50 dark:hover:!bg-green-950/30 hover:!text-green-600 dark:hover:!text-green-400"
+                                            >
+                                              <span className="kt-menu-icon">
+                                                <i className="ki-filled ki-delivery-3"></i>
+                                              </span>
+                                              <span className="kt-menu-title">Ramassage</span>
+                                            </button>
+                                          )}
+                                        </div>
+                                        
+                                        <div className="kt-menu-separator"></div>
+                                        
+                                        <div className="kt-menu-item flex flex-col items-stretch">
+                                          {p.variants && p.variants.length > 0 ? (
+                                            <>
+                                              <div className="px-2 py-1 text-xs text-secondary-foreground text-left font-medium">Imprimer sticker</div>
+                                              {p.variants.map(v => (
+                                                <a 
+                                                  key={v.id}
+                                                  href={`/stock/produits/variant/${v.id}/sticker`} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="kt-menu-link w-full"
+                                                >
+                                                  <span className="kt-menu-icon">
+                                                    <i className="ki-filled ki-printer"></i>
+                                                  </span>
+                                                  <span className="kt-menu-title">
+                                                    {v.barcode || v.name || 'Variante'}
+                                                  </span>
+                                                </a>
+                                              ))}
+                                            </>
+                                          ) : (
+                                            <a 
+                                              href={`/stock/produits/${p.id}/sticker`} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="kt-menu-link w-full"
+                                            >
+                                              <span className="kt-menu-icon">
+                                                <i className="ki-filled ki-printer"></i>
+                                              </span>
+                                              <span className="kt-menu-title">
+                                                Imprimer sticker
+                                              </span>
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
                                     )}
                                   </div>
                                 </td>

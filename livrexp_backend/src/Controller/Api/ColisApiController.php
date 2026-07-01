@@ -294,4 +294,91 @@ final class ColisApiController extends AbstractController
             'message' => 'Aucun colis n\'a pu être importé. Erreurs : ' . implode(', ', $errors),
         ], JsonResponse::HTTP_BAD_REQUEST);
     }
+
+    #[Route('/api/colis/{id}', name: 'api_colis_show', methods: ['GET'])]
+    public function show(Colis $colis): JsonResponse
+    {
+        return $this->json([
+            'id' => $colis->getId(),
+            'orderNumber' => str_replace('CMD-', '', $colis->getOrderNumber() ?? ''),
+            'type' => $colis->getType(),
+            'recipient' => $colis->getRecipient(),
+            'city' => $colis->getCity(),
+            'address' => $colis->getAddress(),
+            'price' => (float)($colis->getPrice() ?? 0.0),
+            'phoneNumber' => $colis->getPhoneNumber(),
+            'neighborhood' => $colis->getNeighborhood(),
+            'productNature' => $colis->getProductNature() ?: 'Marchandise',
+            'comment' => $colis->getComment(),
+            'packageOption' => $colis->getPackageOption() ?: 'Ne pas ouvrir le colis',
+            'replacePackage' => (bool)$colis->getOldOrderNumber(),
+            'oldColis' => $colis->getOldOrderNumber(),
+            'fragile' => (bool)$colis->isFragile(),
+            'allFragile' => (bool)$colis->isAllFragile(),
+            'useCarton' => (bool)$colis->getCartonOption(),
+            'cartonOption' => $colis->getCartonOption()
+        ]);
+    }
+
+    #[Route('/api/colis/{id}', name: 'api_colis_edit', methods: ['PUT'])]
+    public function edit(Request $request, Colis $colis, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!$data) {
+            return $this->json(['message' => 'Données invalides.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        // Map fields
+        $colis->setOrderNumber($data['orderNumber'] ?? '');
+        $colis->setType($data['type'] ?? Colis::TYPE_SIMPLE);
+        $colis->setRecipient($data['recipient'] ?? null);
+        $colis->setCity($data['city'] ?? '');
+        $colis->setAddress($data['address'] ?? '');
+        $colis->setPrice((string)($data['price'] ?? 0.0));
+        $colis->setPhoneNumber($data['phoneNumber'] ?? '');
+        $colis->setNeighborhood($data['neighborhood'] ?? '');
+        $colis->setProductNature($data['productNature'] ?? 'Marchandise');
+        $colis->setComment($data['comment'] ?? null);
+        $colis->setPackageOption($data['packageOption'] ?? 'Ne pas ouvrir le colis');
+        $colis->setReplacePackage((bool)($data['replacePackage'] ?? false));
+        
+        if ($colis->isReplacePackage() && !empty($data['oldColis'])) {
+            $colis->setOldOrderNumber($data['oldColis']);
+        } else {
+            $colis->setOldOrderNumber(null);
+        }
+
+        $colis->setFragile((bool)($data['fragile'] ?? false));
+        $colis->setAllFragile((bool)($data['allFragile'] ?? false));
+        
+        $useCarton = (bool)($data['useCarton'] ?? false);
+        if ($useCarton && !empty($data['cartonOption'])) {
+            $colis->setCartonOption($data['cartonOption']);
+        } else {
+            $colis->setCartonOption(null);
+        }
+
+        try {
+            $entityManager->flush();
+        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException) {
+            return $this->json(['message' => 'Numero de commande deja utilise. Veuillez saisir un numero unique.'], JsonResponse::HTTP_BAD_REQUEST);
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Une erreur est survenue lors de la modification: ' . $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $this->json(['message' => 'Colis modifié avec succès.']);
+    }
+
+    #[Route('/api/colis/{id}', name: 'api_colis_delete', methods: ['DELETE'])]
+    public function delete(Colis $colis, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $entityManager->remove($colis);
+            $entityManager->flush();
+        } catch (\Exception $e) {
+            return $this->json(['message' => 'Une erreur est survenue lors de la suppression: ' . $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $this->json(['message' => 'Colis supprimé avec succès.']);
+    }
 }

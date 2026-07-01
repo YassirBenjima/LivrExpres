@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ColisListPage from './pages/colis/ColisListPage';
 import ColisNewPage from './pages/colis/ColisNewPage';
+import ColisEditPage from './pages/colis/ColisEditPage';
 import ColisPickupPage from './pages/colis/ColisPickupPage';
 import ColisImportPage from './pages/colis/ColisImportPage';
 import ColisSettingsPage from './pages/colis/ColisSettingsPage';
@@ -165,6 +166,11 @@ function App() {
       return;
     }
     
+    if (route.match(/^\/colis\/([^/]+)\/edit$/)) {
+      document.title = 'Modifier le colis - LivrExpress';
+      return;
+    }
+    
     switch (route) {
       case '/dashboard':
         title = 'Tableau de Bord - LivrExpress';
@@ -233,9 +239,17 @@ function App() {
   const productEditMatch = normalizedRoute.match(/^\/stock\/produits\/([^/]+)\/edit$/);
   const editProductId = productEditMatch ? productEditMatch[1] : null;
 
+  // Handle dynamic routing for parcel editing
+  const colisEditMatch = normalizedRoute.match(/^\/colis\/([^/]+)\/edit$/);
+  const editColisId = colisEditMatch ? colisEditMatch[1] : null;
+
   const renderContent = () => {
     if (editProductId) {
       return <StockProductEditPage productId={editProductId} navigate={navigate} showNotification={showNotification} />;
+    }
+
+    if (editColisId) {
+      return <ColisEditPage colisId={editColisId} navigate={navigate} colisList={colisList} showNotification={showNotification} />;
     }
 
     switch (normalizedRoute) {
@@ -255,6 +269,7 @@ function App() {
             colisList={colisList} 
             loading={loading && colisList.length === 0} 
             refetchData={() => fetchAllData(true)} 
+            showNotification={showNotification}
           />
         );
       case '/colis/new':
