@@ -208,6 +208,191 @@ final class StockApiController extends AbstractController
         return $this->json(['message' => 'Produit créé avec succès.', 'id' => $product->getId()]);
     }
 
+    #[Route('/api/stock/products/{id}', name: 'api_stock_products_show', methods: ['GET'])]
+    public function getProduct(
+        int $id,
+        StockProductRepository $repo
+    ): JsonResponse {
+        $product = $repo->find($id);
+        if (!$product instanceof StockProduct) {
+            return $this->json(['message' => 'Produit introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $totalQty = $product->getVariants()->count() > 0
+            ? array_sum(array_map(fn(StockProductVariant $v): int => $v->getQuantity(), $product->getVariants()->toArray()))
+            : (int) ($product->getQuantity() ?? 0);
+
+        $variantsData = [];
+        foreach ($product->getVariants() as $v) {
+            if (!$v instanceof StockProductVariant) continue;
+            $variantsData[] = [
+                'id'       => $v->getId(),
+                'name'     => $v->getName(),
+                'barcode'  => $v->getBarcode(),
+                'quantity' => $v->getQuantity(),
+            ];
+        }
+
+        return $this->json([
+            'id'               => $product->getId(),
+            'name'             => $product->getName(),
+            'photo_url'        => $product->getPhotoPath() ? '/' . ltrim($product->getPhotoPath(), '/') : null,
+            'barcode'          => $product->getBarcode(),
+            'category'         => $product->getCategory(),
+            'note'             => $product->getNote(),
+            'quantity'         => $product->getQuantity(),
+            'total_quantity'   => $totalQty,
+            'variants'         => $variantsData,
+            'variants_enabled' => count($variantsData) > 0,
+            'updated_at'       => $product->getUpdatedAt() ? $product->getUpdatedAt()->format('d/m/Y H:i') : null,
+        ]);
+    }
+
+    #[Route('/api/stock/products/{id}', name: 'api_stock_products_update', methods: ['POST'])]
+    public function updateProduct(
+        int $id,
+        Request $request,
+        StockProductRepository $stockProductRepository,
+        StockProductVariantRepository $stockProductVariantRepository,
+        EntityManagerInterface $entityManager,
+        StockProductMediaManager $mediaManager,
+    ): JsonResponse {
+        $product = $stockProductRepository->find($id);
+        if (!$product instanceof StockProduct) {
+            return $this->json(['message' => 'Produit introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $name = trim((string) $request->request->get('name', ''));
+        $category = trim((string) $request->request->get('category', ''));
+        $variantsEnabled = (bool) $request->request->get('variants_enabled');
+        $note = trim((string) $request->request->get('note', ''));
+
+        $allowedCategories = array_map('strval', range(1, 11));
+        if ($name === '') {
+            return $this->json(['message' => 'Le nom du produit est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($category === '' || !\in_array($category, $allowedCategories, true)) {
+            return $this->json(['message' => 'Veuillez choisir une catégorie valide.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $oldPhotoPath = $product->getPhotoPath();
+        $oldQrPath = $product->getQrCodePath();
+
+        $product->setName($name);
+        $product->setCategory($category);
+        $product->setNote($note !== '' ? $note : null);
+
+        if ($variantsEnabled) {
+            // Replace variants with submitted ones
+            foreach ($product->getVariants()->toArray() as $existing) {
+                if ($existing instanceof StockProductVariant) {
+                    $product->removeVariant($existing);
+                }
+            }
+
+            /** @var array<int, array{barcode?: mixed, name?: mixed, quantity?: mixed}> $variants */
+            $variants = $request->request->all('variants');
+            $hasAtLeastOne = false;
+            foreach ($variants as $row) {
+                $vName = trim((string) ($row['name'] ?? ''));
+                $vBarcode = trim((string) ($row['barcode'] ?? ''));
+                $vQtyRaw = (string) ($row['quantity'] ?? '');
+                $vQty = $vQtyRaw !== '' ? (int) $vQtyRaw : null;
+
+                if ($vName === '' && $vBarcode === '' && ($vQty === null || $vQty === 0)) {
+                    continue;
+                }
+
+                $hasAtLeastOne = true;
+                if ($vName === '' || $vQty === null || $vQty < 0) {
+                    return $this->json(['message' => 'Chaque variante doit avoir un nom et une quantité valide.'], JsonResponse::HTTP_BAD_REQUEST);
+                }
+
+                $variant = new StockProductVariant($vName, $vQty);
+                $variant->setBarcode($vBarcode !== '' ? $vBarcode : null);
+                if ($variant->getBarcode() === null) {
+                    $variant->setBarcode($this->generateUniqueBarcode($entityManager, $stockProductVariantRepository));
+                }
+                $product->addVariant($variant);
+            }
+
+            if (!$hasAtLeastOne) {
+                return $this->json(['message' => 'Ajoutez au moins une variante ou désactivez le mode variantes.'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+
+            if ($product->getBarcode() === null) {
+                $product->setBarcode($this->generateUniqueBarcode($entityManager, $stockProductVariantRepository));
+            }
+            $product->setQuantity(null);
+        } else {
+            // No variants: keep quantity + barcode on product
+            $barcodeVal = trim((string) $request->request->get('barcode', ''));
+            $product->setBarcode($barcodeVal !== '' ? $barcodeVal : null);
+            if ($product->getBarcode() === null) {
+                $product->setBarcode($this->generateUniqueBarcode($entityManager, $stockProductVariantRepository));
+            }
+
+            $qtyRaw = trim((string) $request->request->get('quantity', ''));
+            if ($qtyRaw === '' || !ctype_digit($qtyRaw)) {
+                return $this->json(['message' => 'La quantité est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+            $product->setQuantity((int) $qtyRaw);
+        }
+
+        $photo = $request->files->get('photo');
+        if ($photo instanceof UploadedFile) {
+            if (!$photo->isValid()) {
+                return $this->json(['message' => 'Le fichier image est invalide.'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+
+            $mime = (string) $photo->getMimeType();
+            if (!\in_array($mime, ['image/jpeg', 'image/png'], true)) {
+                return $this->json(['message' => 'Format image non supporté. Utilisez JPG ou PNG.'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $photoRemove = (bool) $request->request->get('photo_remove');
+        if ($photoRemove && !$photo) {
+            $product->setPhotoPath(null);
+        }
+
+        $newPhotoPath = null;
+        $newQrPath = null;
+        try {
+            if ($photo instanceof UploadedFile) {
+                $newPhotoPath = $mediaManager->uploadProductPhoto($photo);
+                $product->setPhotoPath($newPhotoPath);
+            }
+
+            // Always regenerate QR on every update
+            $barcodeForQr = $product->getBarcode();
+            if ($barcodeForQr !== null) {
+                $newQrPath = $mediaManager->generateProductQrPng($barcodeForQr);
+                $product->setQrCodePath($newQrPath);
+            }
+
+            $entityManager->flush();
+        } catch (\Throwable $e) {
+            $mediaManager->deletePublicFileSafely($newPhotoPath);
+            $mediaManager->deletePublicFileSafely($newQrPath);
+
+            return $this->json(['message' => 'Erreur lors de la modification du produit.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        // Delete replaced files after a successful flush
+        if ($newPhotoPath !== null && $oldPhotoPath !== null && $oldPhotoPath !== $newPhotoPath) {
+            $mediaManager->deletePublicFileSafely($oldPhotoPath);
+        }
+        if ($photoRemove && !$photo && $oldPhotoPath !== null) {
+            $mediaManager->deletePublicFileSafely($oldPhotoPath);
+        }
+        if ($newQrPath !== null && $oldQrPath !== null && $oldQrPath !== $newQrPath) {
+            $mediaManager->deletePublicFileSafely($oldQrPath);
+        }
+
+        return $this->json(['message' => 'Produit modifié avec succès.']);
+    }
+
     #[Route('/api/stock/products/{id}', name: 'api_stock_products_delete', methods: ['DELETE'])]
     public function deleteProduct(
         int $id,
@@ -220,6 +405,16 @@ final class StockApiController extends AbstractController
             return $this->json(['message' => 'Produit introuvable.'], JsonResponse::HTTP_NOT_FOUND);
         }
 
+        // Check if there are any stock movements linked to the product's variants
+        $movementItemRepo = $entityManager->getRepository(StockMovementItem::class);
+        foreach ($product->getVariants() as $variant) {
+            if ($movementItemRepo->count(['variant' => $variant]) > 0) {
+                return $this->json([
+                    'message' => 'Impossible de supprimer ce produit car il est lié à des mouvements de stock.'
+                ], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
+
         $oldPhotoPath = $product->getPhotoPath();
         $oldQrPath = $product->getQrCodePath();
 
@@ -227,7 +422,10 @@ final class StockApiController extends AbstractController
         try {
             $entityManager->flush();
         } catch (\Throwable $e) {
-            return $this->json(['message' => 'Erreur lors de la suppression du produit.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json([
+                'message' => 'Erreur lors de la suppression du produit.',
+                'error' => $e->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // Best effort cleanup after DB success.
@@ -236,6 +434,7 @@ final class StockApiController extends AbstractController
 
         return $this->json(['message' => 'Produit supprimé avec succès.']);
     }
+
 
     #[Route('/api/stock/products/{id}/pickup-request', name: 'api_stock_products_pickup_request_create', methods: ['POST'])]
     public function pickupRequestCreate(

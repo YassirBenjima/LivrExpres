@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
@@ -94,8 +95,14 @@ export default function StockProductsPage({ navigate, showNotification }) {
         setDeleteProduct(null);
         fetchProducts();
       } else {
-        const err = await res.json();
-        showNotification('error', err.message || 'Erreur lors de la suppression.');
+        let errMsg = 'Erreur lors de la suppression.';
+        try {
+          const err = await res.json();
+          errMsg = err.message || errMsg;
+        } catch (e) {
+          // Fallback if not JSON (e.g. HTML debug page)
+        }
+        showNotification('error', errMsg);
       }
     } catch (err) {
       showNotification('error', 'Erreur de connexion avec le serveur.');
@@ -332,12 +339,19 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                         <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)}></div>
                                         <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
                                           <div className="kt-menu-item">
-                                            <a href={`/stock/produits/${p.id}/edit`} className="kt-menu-link">
+                                            <button 
+                                              type="button"
+                                              onClick={() => {
+                                                setActiveDropdownId(null);
+                                                navigate(`/stock/produits/${p.id}/edit`);
+                                              }}
+                                              className="kt-menu-link text-start w-full"
+                                            >
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-pencil"></i>
                                               </span>
                                               <span className="kt-menu-title">Modifier</span>
-                                            </a>
+                                            </button>
                                           </div>
                                           <div className="kt-menu-item">
                                             <button 
@@ -346,7 +360,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                                 setActiveDropdownId(null);
                                                 setDeleteProduct({ id: p.id, name: p.name });
                                               }}
-                                              className="kt-menu-link text-start hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                              className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
                                             >
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-trash"></i>
@@ -360,7 +374,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                               <button
                                                 type="button"
                                                 disabled
-                                                className="kt-menu-link text-start opacity-60 cursor-not-allowed"
+                                                className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
                                               >
                                                 <span className="kt-menu-icon">
                                                   <i className="ki-filled ki-delivery-3"></i>
@@ -374,7 +388,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                                   setActiveDropdownId(null);
                                                   setPickupProduct({ id: p.id, name: p.name });
                                                 }}
-                                                className="kt-menu-link text-start hover:!bg-green-50 dark:hover:!bg-green-950/30 hover:!text-green-600 dark:hover:!text-green-400"
+                                                className="kt-menu-link text-start w-full hover:!bg-green-50 dark:hover:!bg-green-950/30 hover:!text-green-600 dark:hover:!text-green-400"
                                               >
                                                 <span className="kt-menu-icon">
                                                   <i className="ki-filled ki-delivery-3"></i>
@@ -396,7 +410,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                                     href={`/stock/produits/variant/${v.id}/sticker`} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
-                                                    className="kt-menu-link"
+                                                    className="kt-menu-link w-full"
                                                   >
                                                     <span className="kt-menu-icon">
                                                       <i className="ki-filled ki-printer"></i>
@@ -412,7 +426,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                                 href={`/stock/produits/${p.id}/sticker`} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className="kt-menu-link"
+                                                className="kt-menu-link w-full"
                                               >
                                                 <span className="kt-menu-icon">
                                                   <i className="ki-filled ki-printer"></i>
@@ -472,9 +486,23 @@ export default function StockProductsPage({ navigate, showNotification }) {
       </main>
 
       {/* Delete Confirmation Modal */}
-      {deleteProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+      {deleteProduct && createPortal(
+        <div 
+          className="fixed flex items-center justify-center p-4"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            zIndex: 99999 
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl max-w-md w-full overflow-hidden" style={{ width: '100%', maxWidth: '450px' }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
               <h3 className="text-base font-semibold text-foreground">Supprimer le produit</h3>
               <button 
@@ -507,12 +535,27 @@ export default function StockProductsPage({ navigate, showNotification }) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Pickup Request Modal */}
-      {pickupProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+      {pickupProduct && createPortal(
+        <div 
+          className="fixed flex items-center justify-center p-4 overflow-y-auto"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            zIndex: 99999 
+          }}
+        >
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl max-w-lg w-full overflow-hidden my-8">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
               <h3 className="text-base font-semibold text-foreground">Demande de ramassage</h3>
@@ -633,7 +676,8 @@ export default function StockProductsPage({ navigate, showNotification }) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </DashboardLayout>
   );

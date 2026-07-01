@@ -14,6 +14,7 @@ import ColisImportPage from './pages/colis/ColisImportPage';
 import ColisSettingsPage from './pages/colis/ColisSettingsPage';
 import StockProductsPage from './pages/stock/StockProductsPage';
 import StockProductNewPage from './pages/stock/StockProductNewPage';
+import StockProductEditPage from './pages/stock/StockProductEditPage';
 import StockEntryPage from './pages/stock/StockEntryPage';
 import StockColisPage from './pages/stock/StockColisPage';
 
@@ -159,6 +160,11 @@ function App() {
       route = route.slice(0, -1);
     }
     
+    if (route.match(/^\/stock\/produits\/([^/]+)\/edit$/)) {
+      document.title = 'Modifier un produit - LivrExpress';
+      return;
+    }
+    
     switch (route) {
       case '/dashboard':
         title = 'Tableau de Bord - LivrExpress';
@@ -223,7 +229,15 @@ function App() {
     normalizedRoute = normalizedRoute.slice(0, -1);
   }
 
+  // Handle dynamic routing for product editing
+  const productEditMatch = normalizedRoute.match(/^\/stock\/produits\/([^/]+)\/edit$/);
+  const editProductId = productEditMatch ? productEditMatch[1] : null;
+
   const renderContent = () => {
+    if (editProductId) {
+      return <StockProductEditPage productId={editProductId} navigate={navigate} showNotification={showNotification} />;
+    }
+
     switch (normalizedRoute) {
       case '/dashboard':
         return (

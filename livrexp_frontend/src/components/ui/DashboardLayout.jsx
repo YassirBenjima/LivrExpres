@@ -192,7 +192,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                 </div>
                 {isStockMenuOpen && (
                   <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
-                    <div className={`kt-menu-item ${activeMenu === 'stock_products' ? 'active' : ''}`}>
+                    <div className={`kt-menu-item ${['stock_products', 'stock_products_edit'].includes(activeMenu) ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/produits"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/produits'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
@@ -383,6 +383,22 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     Stock
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                  {['stock_products_new', 'stock_products_edit'].includes(activeMenu) && (
+                    <>
+                      <a 
+                        href="/stock/produits" 
+                        className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.history.pushState({}, '', '/stock/produits');
+                          window.dispatchEvent(new PopStateEvent('popstate'));
+                        }}
+                      >
+                        Liste des produits
+                      </a>
+                      <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                    </>
+                  )}
                 </>
               )}
               <span className="text-sm font-semibold text-foreground">
@@ -395,6 +411,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   : activeMenu === 'stock' ? 'Stock'
                   : activeMenu === 'stock_products' ? 'Liste des produits'
                   : activeMenu === 'stock_products_new' ? 'Ajouter un produit'
+                  : activeMenu === 'stock_products_edit' ? 'Modifier le produit'
                   : activeMenu === 'stock_entry' ? 'Stock Entrée'
                   : activeMenu === 'stock_colis' ? 'Colis du stock'
                   : activeMenu === 'ramassage' ? 'Ramassage'
