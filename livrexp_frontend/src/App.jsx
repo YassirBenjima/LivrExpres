@@ -18,6 +18,7 @@ import StockProductNewPage from './pages/stock/StockProductNewPage';
 import StockProductEditPage from './pages/stock/StockProductEditPage';
 import StockEntryPage from './pages/stock/StockEntryPage';
 import StockColisPage from './pages/stock/StockColisPage';
+import StockStickerPage from './pages/stock/StockStickerPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -167,6 +168,11 @@ function App() {
       document.title = 'Modifier le colis - LivrExpress';
       return;
     }
+
+    if (route.match(/^\/stock\/produits\/variant\/([^/]+)\/sticker$/) || route.match(/^\/stock\/produits\/([^/]+)\/sticker$/)) {
+      document.title = 'Sticker - LivrExpress';
+      return;
+    }
     
     switch (route) {
       case '/dashboard':
@@ -240,6 +246,13 @@ function App() {
   const colisEditMatch = normalizedRoute.match(/^\/colis\/([^/]+)\/edit$/);
   const editColisId = colisEditMatch ? colisEditMatch[1] : null;
 
+  // Handle dynamic routing for stickers
+  const variantStickerMatch = normalizedRoute.match(/^\/stock\/produits\/variant\/([^/]+)\/sticker$/);
+  const stickerVariantId = variantStickerMatch ? variantStickerMatch[1] : null;
+
+  const productStickerMatch = normalizedRoute.match(/^\/stock\/produits\/([^/]+)\/sticker$/);
+  const stickerProductId = productStickerMatch && !variantStickerMatch ? productStickerMatch[1] : null;
+
   const renderContent = () => {
     if (editProductId) {
       return <StockProductEditPage productId={editProductId} navigate={navigate} showNotification={showNotification} />;
@@ -247,6 +260,14 @@ function App() {
 
     if (editColisId) {
       return <ColisEditPage colisId={editColisId} navigate={navigate} colisList={colisList} showNotification={showNotification} />;
+    }
+
+    if (stickerVariantId) {
+      return <StockStickerPage navigate={navigate} id={stickerVariantId} isVariant={true} showNotification={showNotification} />;
+    }
+
+    if (stickerProductId) {
+      return <StockStickerPage navigate={navigate} id={stickerProductId} isVariant={false} showNotification={showNotification} />;
     }
 
     switch (normalizedRoute) {

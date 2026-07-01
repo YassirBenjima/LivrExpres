@@ -675,4 +675,67 @@ final class StockApiController extends AbstractController
 
         return strtoupper(bin2hex(random_bytes(4)));
     }
+
+    #[Route('/api/stock/products/variant/{id}/sticker-data', name: 'api_stock_products_variant_sticker_data', methods: ['GET'])]
+    public function variantStickerData(
+        int $id,
+        StockProductVariantRepository $variantRepo
+    ): JsonResponse {
+        $variant = $variantRepo->find($id);
+        if (!$variant instanceof StockProductVariant) {
+            return $this->json(['message' => 'Variante introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $barcode = $variant->getBarcode() ?? '';
+        $qrDataUri = null;
+        if ($barcode !== '') {
+            $qrCode = new \Endroid\QrCode\QrCode(
+                data: $barcode,
+                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+                errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+                size: 220,
+                margin: 0,
+            );
+            $qrDataUri = (new \Endroid\QrCode\Writer\PngWriter())->write($qrCode)->getDataUri();
+        }
+
+        return $this->json([
+            'product_name' => $variant->getProduct()?->getName() ?? '-',
+            'variant_name' => $variant->getName() ?? '-',
+            'barcode' => $barcode,
+            'qr_data_uri' => $qrDataUri
+        ]);
+    }
+
+    #[Route('/api/stock/products/{id}/sticker-data', name: 'api_stock_products_sticker_data', methods: ['GET'])]
+    public function productStickerData(
+        int $id,
+        StockProductRepository $productRepo
+    ): JsonResponse {
+        $product = $productRepo->find($id);
+        if (!$product instanceof StockProduct) {
+            return $this->json(['message' => 'Produit introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $barcode = $product->getBarcode() ?? '';
+        $qrDataUri = null;
+        if ($barcode !== '') {
+            $qrCode = new \Endroid\QrCode\QrCode(
+                data: $barcode,
+                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+                errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+                size: 220,
+                margin: 0,
+            );
+            $qrDataUri = (new \Endroid\QrCode\Writer\PngWriter())->write($qrCode)->getDataUri();
+        }
+
+        return $this->json([
+            'product_name' => $product->getName() ?? '-',
+            'variant_name' => null,
+            'barcode' => $barcode,
+            'qr_data_uri' => $qrDataUri
+        ]);
+    }
 }
+
