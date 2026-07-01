@@ -93,12 +93,17 @@ final class RegistrationController extends AbstractController
     #[Route('/api/cities', name: 'app_api_cities', methods: ['GET'])]
     public function apiCities(CityRepository $cityRepository): Response
     {
-        $cities = $cityRepository->findBy([], ['name' => 'ASC']);
+        $cities = $cityRepository->createQueryBuilder('c')
+            ->select('c.id', 'c.name')
+            ->orderBy('c.name', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
         $data = [];
         foreach ($cities as $city) {
             $data[] = [
-                'id' => $city->getId(),
-                'name' => $city->getName()
+                'id' => $city['id'],
+                'name' => $city['name']
             ];
         }
         return new \Symfony\Component\HttpFoundation\JsonResponse($data);

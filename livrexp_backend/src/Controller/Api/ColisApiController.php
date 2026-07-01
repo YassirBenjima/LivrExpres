@@ -17,20 +17,25 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis', name: 'api_colis_list', methods: ['GET'])]
     public function getColis(ColisRepository $colisRepository): JsonResponse
     {
-        $colisList = $colisRepository->findBy([], ['id' => 'DESC']);
+        $colisList = $colisRepository->createQueryBuilder('c')
+            ->select('c.id', 'c.orderNumber', 'c.trackingCode', 'c.productNature', 'c.createdAt', 'c.address', 'c.etat', 'c.statut', 'c.city', 'c.price', 'c.comment')
+            ->orderBy('c.id', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+
         $data = [];
 
         foreach ($colisList as $colis) {
-            $statut = $colis->getStatut() ?? Colis::STATUT_EN_ATTENTE;
-            $etat = $colis->getEtat() ?? Colis::ETAT_CREE;
+            $statut = $colis['statut'] ?? Colis::STATUT_EN_ATTENTE;
+            $etat = $colis['etat'] ?? Colis::ETAT_CREE;
 
             $data[] = [
-                'id' => $colis->getId(),
-                'orderNumber' => $colis->getOrderNumber(),
-                'trackingCode' => $colis->getTrackingCode(),
-                'productNature' => $colis->getProductNature() ?: 'Marchandise',
-                'createdAt' => $colis->getCreatedAt() ? $colis->getCreatedAt()->format('d/m/Y H:i') : '',
-                'address' => $colis->getAddress() ?: '-',
+                'id' => $colis['id'],
+                'orderNumber' => $colis['orderNumber'],
+                'trackingCode' => $colis['trackingCode'],
+                'productNature' => $colis['productNature'] ?: 'Marchandise',
+                'createdAt' => $colis['createdAt'] ? $colis['createdAt']->format('d/m/Y H:i') : '',
+                'address' => $colis['address'] ?: '-',
                 'etatLabel' => $etat,
                 'etatBadgeClass' => match ($etat) {
                     Colis::ETAT_LIVRE => 'kt-badge-success',
@@ -46,9 +51,9 @@ final class ColisApiController extends AbstractController
                     Colis::STATUT_ECHEC => 'kt-badge-destructive',
                     default => 'kt-badge-primary',
                 },
-                'city' => $colis->getCity() ?: '-',
-                'price' => (float) ($colis->getPrice() ?? 0.0),
-                'comment' => $colis->getComment() ?: '-',
+                'city' => $colis['city'] ?: '-',
+                'price' => (float) ($colis['price'] ?? 0.0),
+                'comment' => $colis['comment'] ?: '-',
             ];
         }
 

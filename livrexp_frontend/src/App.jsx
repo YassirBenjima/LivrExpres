@@ -138,9 +138,6 @@ function App() {
   useEffect(() => {
     let intervalId;
     if (isAuthenticated) {
-      // Fetch once in case we don't have data
-      fetchAllData(colisList.length === 0);
-
       intervalId = setInterval(() => {
         fetchAllData(false);
       }, 8000);

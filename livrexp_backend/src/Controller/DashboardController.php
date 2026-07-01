@@ -16,32 +16,36 @@ class DashboardController extends AbstractController
     #[Route('/dashboard', name: 'app_dashboard')]
     public function index(ColisRepository $colisRepo, BonLivraisonRepository $bonLivraisonRepo): Response
     {
-        $totalColis = $colisRepo->count([]);
-        $colisLivres = $colisRepo->count(['etat' => Colis::ETAT_LIVRE]);
-        $colisEnPreparation = $colisRepo->count(['etat' => Colis::ETAT_EN_PREPARATION]);
-        $colisExpedies = $colisRepo->count(['etat' => Colis::ETAT_EXPEDIE]);
-        $colisRetournes = $colisRepo->count(['etat' => Colis::ETAT_RETOUR]);
-        $colisCrees = $colisRepo->count(['etat' => Colis::ETAT_CREE]);
-
-        // CRBT totals
-        $totalCrbt = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
-
-        $crbtLivres = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->where('c.etat = :etatLivre')
-            ->setParameter('etatLivre', Colis::ETAT_LIVRE)
-            ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
-
-        $crbtEnCours = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->where('c.etat NOT IN (:excludedEtats)')
+        $stats = $colisRepo->createQueryBuilder('c')
+            ->select('
+                COUNT(c.id) as totalColis,
+                SUM(CASE WHEN c.etat = :livre THEN 1 ELSE 0 END) as colisLivres,
+                SUM(CASE WHEN c.etat = :preparation THEN 1 ELSE 0 END) as colisEnPreparation,
+                SUM(CASE WHEN c.etat = :expedie THEN 1 ELSE 0 END) as colisExpedies,
+                SUM(CASE WHEN c.etat = :retour THEN 1 ELSE 0 END) as colisRetournes,
+                SUM(CASE WHEN c.etat = :cree THEN 1 ELSE 0 END) as colisCrees,
+                SUM(c.price) as totalCrbt,
+                SUM(CASE WHEN c.etat = :livre THEN c.price ELSE 0 END) as crbtLivres,
+                SUM(CASE WHEN c.etat NOT IN (:excludedEtats) THEN c.price ELSE 0 END) as crbtEnCours
+            ')
+            ->setParameter('livre', Colis::ETAT_LIVRE)
+            ->setParameter('preparation', Colis::ETAT_EN_PREPARATION)
+            ->setParameter('expedie', Colis::ETAT_EXPEDIE)
+            ->setParameter('retour', Colis::ETAT_RETOUR)
+            ->setParameter('cree', Colis::ETAT_CREE)
             ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR])
             ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
+            ->getSingleResult();
+
+        $totalColis = (int) $stats['totalColis'];
+        $colisLivres = (int) $stats['colisLivres'];
+        $colisEnPreparation = (int) $stats['colisEnPreparation'];
+        $colisExpedies = (int) $stats['colisExpedies'];
+        $colisRetournes = (int) $stats['colisRetournes'];
+        $colisCrees = (int) $stats['colisCrees'];
+        $totalCrbt = (float) $stats['totalCrbt'];
+        $crbtLivres = (float) $stats['crbtLivres'];
+        $crbtEnCours = (float) $stats['crbtEnCours'];
 
         // Recent items
         $recentColis = $colisRepo->findBy([], ['createdAt' => 'DESC'], 5);
@@ -100,32 +104,36 @@ class DashboardController extends AbstractController
     #[Route('/api/dashboard', name: 'app_api_dashboard', methods: ['GET'])]
     public function apiIndex(ColisRepository $colisRepo, BonLivraisonRepository $bonLivraisonRepo): Response
     {
-        $totalColis = $colisRepo->count([]);
-        $colisLivres = $colisRepo->count(['etat' => Colis::ETAT_LIVRE]);
-        $colisEnPreparation = $colisRepo->count(['etat' => Colis::ETAT_EN_PREPARATION]);
-        $colisExpedies = $colisRepo->count(['etat' => Colis::ETAT_EXPEDIE]);
-        $colisRetournes = $colisRepo->count(['etat' => Colis::ETAT_RETOUR]);
-        $colisCrees = $colisRepo->count(['etat' => Colis::ETAT_CREE]);
-
-        // CRBT totals
-        $totalCrbt = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
-
-        $crbtLivres = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->where('c.etat = :etatLivre')
-            ->setParameter('etatLivre', Colis::ETAT_LIVRE)
-            ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
-
-        $crbtEnCours = $colisRepo->createQueryBuilder('c')
-            ->select('SUM(c.price)')
-            ->where('c.etat NOT IN (:excludedEtats)')
+        $stats = $colisRepo->createQueryBuilder('c')
+            ->select('
+                COUNT(c.id) as totalColis,
+                SUM(CASE WHEN c.etat = :livre THEN 1 ELSE 0 END) as colisLivres,
+                SUM(CASE WHEN c.etat = :preparation THEN 1 ELSE 0 END) as colisEnPreparation,
+                SUM(CASE WHEN c.etat = :expedie THEN 1 ELSE 0 END) as colisExpedies,
+                SUM(CASE WHEN c.etat = :retour THEN 1 ELSE 0 END) as colisRetournes,
+                SUM(CASE WHEN c.etat = :cree THEN 1 ELSE 0 END) as colisCrees,
+                SUM(c.price) as totalCrbt,
+                SUM(CASE WHEN c.etat = :livre THEN c.price ELSE 0 END) as crbtLivres,
+                SUM(CASE WHEN c.etat NOT IN (:excludedEtats) THEN c.price ELSE 0 END) as crbtEnCours
+            ')
+            ->setParameter('livre', Colis::ETAT_LIVRE)
+            ->setParameter('preparation', Colis::ETAT_EN_PREPARATION)
+            ->setParameter('expedie', Colis::ETAT_EXPEDIE)
+            ->setParameter('retour', Colis::ETAT_RETOUR)
+            ->setParameter('cree', Colis::ETAT_CREE)
             ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR])
             ->getQuery()
-            ->getSingleScalarResult() ?: 0.0;
+            ->getSingleResult();
+
+        $totalColis = (int) $stats['totalColis'];
+        $colisLivres = (int) $stats['colisLivres'];
+        $colisEnPreparation = (int) $stats['colisEnPreparation'];
+        $colisExpedies = (int) $stats['colisExpedies'];
+        $colisRetournes = (int) $stats['colisRetournes'];
+        $colisCrees = (int) $stats['colisCrees'];
+        $totalCrbt = (float) $stats['totalCrbt'];
+        $crbtLivres = (float) $stats['crbtLivres'];
+        $crbtEnCours = (float) $stats['crbtEnCours'];
 
         // Recent items
         $recentColis = $colisRepo->findBy([], ['createdAt' => 'DESC'], 5);

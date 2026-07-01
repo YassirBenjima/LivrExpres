@@ -6,6 +6,9 @@ use App\Repository\ColisRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ColisRepository::class)]
+#[ORM\Index(name: 'idx_colis_etat', columns: ['etat'])]
+#[ORM\Index(name: 'idx_colis_statut', columns: ['statut'])]
+#[ORM\Index(name: 'idx_colis_created_at', columns: ['created_at'])]
 class Colis
 {
     public const TYPE_SIMPLE = 'Colis Simple';
