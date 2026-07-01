@@ -498,24 +498,49 @@ export default function StockProductsPage({ navigate, showNotification }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999 
           }}
+          onClick={() => !deleteLoading && setDeleteProduct(null)}
         >
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl max-w-md w-full overflow-hidden" style={{ width: '100%', maxWidth: '450px' }}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+          <div 
+            className="bg-white dark:bg-zinc-950 border rounded-lg shadow-xl overflow-hidden" 
+            style={{ width: '100%', maxWidth: '440px', borderColor: 'var(--border)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div 
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: 'var(--border)' }}
+            >
               <h3 className="text-base font-semibold text-foreground">Supprimer le produit</h3>
               <button 
+                type="button"
                 onClick={() => setDeleteProduct(null)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                disabled={deleteLoading}
               >
                 <i className="ki-filled ki-cross text-lg"></i>
               </button>
             </div>
+
+            {/* Content & Actions */}
             <form onSubmit={handleDeleteSubmit} className="p-5">
-              <p className="text-sm text-secondary-foreground mb-5">
-                Vous êtes sur le point de supprimer le produit <span className="font-semibold text-foreground">{deleteProduct.name}</span>. Cette action est irréversible.
-              </p>
+              <div 
+                className="flex gap-3 border rounded-lg p-4 mb-5"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  borderColor: 'rgba(239, 68, 68, 0.2)'
+                }}
+              >
+                <i className="ki-filled ki-information-2 text-red-600 text-xl shrink-0 mt-0.5"></i>
+                <div className="text-sm text-foreground leading-relaxed">
+                  Vous êtes sur le point de supprimer le produit <strong className="font-semibold text-foreground">{deleteProduct.name}</strong>. Cette action est irréversible et supprimera toutes ses variantes de stock.
+                </div>
+              </div>
+
               <div className="flex items-center justify-end gap-2.5">
                 <button 
                   type="button" 
