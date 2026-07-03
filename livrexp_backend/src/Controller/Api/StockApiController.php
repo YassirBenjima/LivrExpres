@@ -564,7 +564,41 @@ final class StockApiController extends AbstractController
         foreach ($variants as $variantId => $qty) {
             $qty = (int) $qty;
             if ($qty <= 0) continue;
-            $variant = $variantRepo->find((int) $variantId);
+
+            $variant = null;
+            $variantIdStr = (string) $variantId;
+
+            if (ctype_digit($variantIdStr)) {
+                $variant = $variantRepo->find((int) $variantIdStr);
+            }
+
+            if (!$variant instanceof StockProductVariant) {
+                $prodId = 0;
+                if (str_starts_with($variantIdStr, 'p_')) {
+                    $prodId = (int) substr($variantIdStr, 2);
+                } else if (ctype_digit($variantIdStr)) {
+                    $prodId = (int) $variantIdStr;
+                }
+
+                if ($prodId > 0) {
+                    $product = $em->getRepository(StockProduct::class)->find($prodId);
+                    if ($product instanceof StockProduct) {
+                        foreach ($product->getVariants() as $existing) {
+                            if ($existing instanceof StockProductVariant) {
+                                $variant = $existing;
+                                break;
+                            }
+                        }
+                        if (!$variant instanceof StockProductVariant) {
+                            $variant = new StockProductVariant($product->getName(), (int) ($product->getQuantity() ?? 0));
+                            $variant->setBarcode($product->getBarcode());
+                            $variant->setProduct($product);
+                            $em->persist($variant);
+                        }
+                    }
+                }
+            }
+
             if ($variant instanceof StockProductVariant) {
                 $movement->addItem(new StockMovementItem($variant, $qty));
             }
@@ -577,6 +611,147 @@ final class StockApiController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Mouvement de stock enregistré avec succès.', 'id' => $movement->getId()]);
+    }
+
+    #[Route('/api/stock/entry/pickup-request/modal-data', name: 'api_stock_entry_pickup_request_modal_data', methods: ['GET'])]
+    public function entryPickupRequestModalData(
+        Request $request,
+        StockMovementRepository $stockMovementRepository,
+    ): JsonResponse {
+        $idsRaw = trim((string) $request->query->get('ids', ''));
+        $ids = $idsRaw !== '' ? array_values(array_filter(array_map(
+            static fn(string $v): int => ctype_digit($v) ? (int) $v : 0,
+            array_map('trim', explode(',', $idsRaw))
+        ), static fn(int $v): bool => $v > 0)) : [];
+
+        if (empty($ids)) {
+            return $this->json(['message' => 'Aucun mouvement sélectionné.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $movements = $stockMovementRepository->findEntryMovementsByIdsForPickupRequest($ids);
+        if (empty($movements)) {
+            return $this->json(['message' => 'Mouvements introuvables.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $lines = [];
+        foreach ($movements as $m) {
+            if (!$m instanceof StockMovement) continue;
+            $productNames = [];
+            foreach ($m->getItems() as $item) {
+                $name = $item->getVariant()?->getProduct()?->getName();
+                if (is_string($name) && $name !== '') {
+                    $productNames[$name] = true;
+                }
+            }
+            $names = array_keys($productNames);
+            sort($names);
+            $lines[] = sprintf(
+                '%s — %s',
+                $m->getReference(),
+                $names !== [] ? implode(', ', array_slice($names, 0, 8)) . (count($names) > 8 ? ' …' : '') : '-'
+            );
+        }
+
+        return $this->json([
+            'summary' => implode("\n", $lines),
+            'count' => count($movements),
+        ]);
+    }
+
+    #[Route('/api/stock/entry/pickup-request', name: 'api_stock_entry_pickup_request', methods: ['POST'])]
+    public function entryPickupRequest(
+        Request $request,
+        StockMovementRepository $stockMovementRepository,
+        PickupRequestRepository $pickupRequestRepository,
+        CityRepository $cityRepository,
+        EntityManagerInterface $entityManager,
+    ): JsonResponse {
+        $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User) {
+            return $this->json(['message' => 'Vous devez être connecté pour effectuer cette action.'], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? $request->request->all();
+        $movementIds = $data['movementIds'] ?? [];
+        $city = trim((string) ($data['city'] ?? ''));
+        $neighborhood = trim((string) ($data['neighborhood'] ?? ''));
+        $address = trim((string) ($data['address'] ?? ''));
+        $phone = trim((string) ($data['phone'] ?? ''));
+        $note = trim((string) ($data['note'] ?? ''));
+
+        if (empty($movementIds)) {
+            return $this->json(['message' => 'Veuillez sélectionner au moins un mouvement.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($city === '') {
+            return $this->json(['message' => 'La ville est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($cityRepository->count(['name' => $city]) === 0) {
+            return $this->json(['message' => 'Veuillez choisir une ville valide.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($neighborhood === '') {
+            return $this->json(['message' => 'Le quartier est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($address === '') {
+            return $this->json(['message' => 'L’adresse est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+        if ($phone === '') {
+            return $this->json(['message' => 'Le téléphone est obligatoire.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $movements = $stockMovementRepository->findEntryMovementsByIdsForPickupRequest($movementIds);
+        if (empty($movements)) {
+            return $this->json(['message' => 'Mouvements introuvables.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $productsById = [];
+        foreach ($movements as $m) {
+            foreach ($m->getItems() as $item) {
+                $product = $item->getVariant()?->getProduct();
+                if ($product instanceof StockProduct && $product->getId() !== null) {
+                    $productsById[(int) $product->getId()] = $product;
+                }
+            }
+        }
+
+        $productIds = array_keys($productsById);
+        if (empty($productIds)) {
+            return $this->json(['message' => 'Aucun produit trouvé pour les mouvements sélectionnés.'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $alreadyPending = $pickupRequestRepository->findProductIdsWithPendingRequests($productIds);
+        $alreadyPendingSet = array_fill_keys($alreadyPending, true);
+
+        $created = 0;
+        $skipped = 0;
+        foreach ($productsById as $pid => $product) {
+            if (isset($alreadyPendingSet[$pid])) {
+                $skipped++;
+                continue;
+            }
+
+            $pickupRequest = new PickupRequest();
+            $pickupRequest->setProduct($product);
+            $pickupRequest->setProductNameSnapshot($product->getName());
+            $pickupRequest->setCity($city);
+            $pickupRequest->setNeighborhood($neighborhood);
+            $pickupRequest->setAddress($address);
+            $pickupRequest->setPhone($phone);
+            $pickupRequest->setNote($note !== '' ? $note : null);
+            $pickupRequest->setHasLabels(true);
+            $pickupRequest->setCreatedBy($user);
+            $pickupRequest->setStatus('pending');
+
+            $entityManager->persist($pickupRequest);
+            $created++;
+        }
+
+        $entityManager->flush();
+
+        return $this->json([
+            'message' => 'Demande de ramassage enregistrée avec succès.',
+            'created' => $created,
+            'skipped' => $skipped
+        ]);
     }
 
     // ─────────────────────────────────────────────

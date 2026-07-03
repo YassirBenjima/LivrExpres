@@ -631,7 +631,10 @@ export default function StockProductsPage({ navigate, showNotification }) {
                         onChange={val => setPickupForm(prev => ({ ...prev, city: val }))}
                         options={[
                           { value: '', label: 'Choisir une ville' },
-                          ...cities.map(c => ({ value: c, label: c }))
+                          ...cities.map(c => {
+                            const val = (typeof c === 'object' && c !== null) ? (c.name || c.label || c.value || '') : c;
+                            return { value: val, label: val };
+                          })
                         ]}
                         className="w-full"
                       />
