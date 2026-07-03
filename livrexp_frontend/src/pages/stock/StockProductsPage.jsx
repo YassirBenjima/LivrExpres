@@ -370,9 +370,9 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                               setActiveDropdownId(null);
                                               setDeleteProduct({ id: p.id, name: p.name });
                                             }}
-                                            className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                            className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
                                           >
-                                            <span className="kt-menu-icon">
+                                            <span className="kt-menu-icon text-destructive">
                                               <i className="ki-filled ki-trash"></i>
                                             </span>
                                             <span className="kt-menu-title text-destructive">Supprimer</span>
@@ -586,129 +586,160 @@ export default function StockProductsPage({ navigate, showNotification }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999 
           }}
         >
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl max-w-lg w-full overflow-hidden my-8">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
-              <h3 className="text-base font-semibold text-foreground">Demande de ramassage</h3>
+          <div className="kt-modal-content w-full max-w-2xl" id="pickup_request_modal">
+            <div className="kt-modal-header">
+              <h3 className="kt-modal-title">
+                Nouvelle demande de ramassage
+              </h3>
               <button 
-                onClick={() => setPickupProduct(null)}
-                className="text-muted-foreground hover:text-foreground"
+                className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" 
+                onClick={() => setPickupProduct(null)} 
+                type="button"
               >
-                <i className="ki-filled ki-cross text-lg"></i>
+                <i className="ki-filled ki-cross"></i>
               </button>
             </div>
-            <form onSubmit={handlePickupSubmit} className="p-5 space-y-4">
-              <p className="text-xs text-secondary-foreground">
-                Créer une demande de ramassage pour le produit <span className="font-semibold text-foreground">{pickupProduct.name}</span>.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-1 block">Ville *</label>
-                  <KtSelect
-                    value={pickupForm.city}
-                    onChange={val => setPickupForm(prev => ({ ...prev, city: val }))}
-                    options={[
-                      { value: '', label: 'Choisir une ville' },
-                      ...cities.map(c => ({ value: c, label: c }))
-                    ]}
-                    className="w-full"
-                  />
+
+            <div className="kt-modal-body px-5 py-5">
+              <form onSubmit={handlePickupSubmit}>
+                <div className="grid grid-cols-1 gap-4">
+                  
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <label className="text-sm font-medium text-mono text-foreground">Produit</label>
+                    <label className="kt-input">
+                      <input 
+                        type="text" 
+                        readOnly 
+                        disabled 
+                        value={pickupProduct.name} 
+                        className="bg-transparent border-0 outline-none w-full"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Ville</label>
+                      <KtSelect
+                        value={pickupForm.city}
+                        onChange={val => setPickupForm(prev => ({ ...prev, city: val }))}
+                        options={[
+                          { value: '', label: 'Choisir une ville' },
+                          ...cities.map(c => ({ value: c, label: c }))
+                        ]}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Quartier</label>
+                      <label className="kt-input">
+                        <input 
+                          type="text" 
+                          required 
+                          placeholder="Quartier"
+                          value={pickupForm.neighborhood}
+                          onChange={e => setPickupForm(prev => ({ ...prev, neighborhood: e.target.value }))}
+                          className="bg-transparent border-0 outline-none w-full"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <label className="text-sm font-medium text-mono text-foreground">Adresse</label>
+                    <label className="kt-input">
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Adresse"
+                        value={pickupForm.address}
+                        onChange={e => setPickupForm(prev => ({ ...prev, address: e.target.value }))}
+                        className="bg-transparent border-0 outline-none w-full"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Téléphone</label>
+                      <label className="kt-input">
+                        <input 
+                          type="text" 
+                          required 
+                          placeholder="Téléphone"
+                          value={pickupForm.phone}
+                          onChange={e => setPickupForm(prev => ({ ...prev, phone: e.target.value }))}
+                          className="bg-transparent border-0 outline-none w-full"
+                        />
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Téléphone (Fournisseur)</label>
+                      <label className="kt-input">
+                        <input 
+                          type="text" 
+                          placeholder="Téléphone (Fournisseur)"
+                          value={pickupForm.supplierPhone}
+                          onChange={e => setPickupForm(prev => ({ ...prev, supplierPhone: e.target.value }))}
+                          className="bg-transparent border-0 outline-none w-full"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <label className="text-sm font-medium text-mono text-foreground">Note &amp; Remarque</label>
+                    <label className="kt-input">
+                      <input 
+                        type="text" 
+                        placeholder="Note & Remarque"
+                        value={pickupForm.note}
+                        onChange={e => setPickupForm(prev => ({ ...prev, note: e.target.value }))}
+                        className="bg-transparent border-0 outline-none w-full"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <label className="text-sm font-medium text-mono text-foreground">Vous avez les étiquettes</label>
+                    <KtSelect
+                      value={pickupForm.hasLabels ? 'yes' : 'no'}
+                      onChange={val => setPickupForm(prev => ({ ...prev, hasLabels: val === 'yes' }))}
+                      options={[
+                        { value: 'yes', label: 'Oui' },
+                        { value: 'no', label: 'Non' }
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button 
+                      className="kt-btn kt-btn-outline" 
+                      onClick={() => setPickupProduct(null)} 
+                      type="button"
+                      disabled={pickupLoading}
+                    >
+                      Annuler
+                    </button>
+                    <button 
+                      className="kt-btn kt-btn-primary" 
+                      type="submit"
+                      disabled={pickupLoading}
+                    >
+                      {pickupLoading ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                  </div>
+
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-1 block">Quartier *</label>
-                  <input
-                    type="text"
-                    required
-                    value={pickupForm.neighborhood}
-                    onChange={e => setPickupForm(prev => ({ ...prev, neighborhood: e.target.value }))}
-                    placeholder="Nom du quartier"
-                    className="kt-input w-full h-10 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground mb-1 block">Adresse complète *</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={pickupForm.address}
-                  onChange={e => setPickupForm(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Adresse exacte de ramassage"
-                  className="kt-input w-full p-2.5 text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-1 block">Téléphone *</label>
-                  <input
-                    type="text"
-                    required
-                    value={pickupForm.phone}
-                    onChange={e => setPickupForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Téléphone"
-                    className="kt-input w-full h-10 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-1 block">Téléphone fournisseur (Optionnel)</label>
-                  <input
-                    type="text"
-                    value={pickupForm.supplierPhone}
-                    onChange={e => setPickupForm(prev => ({ ...prev, supplierPhone: e.target.value }))}
-                    placeholder="Téléphone fournisseur"
-                    className="kt-input w-full h-10 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground mb-1 block">Note (Optionnel)</label>
-                <textarea
-                  rows={2}
-                  value={pickupForm.note}
-                  onChange={e => setPickupForm(prev => ({ ...prev, note: e.target.value }))}
-                  placeholder="Instructions de ramassage"
-                  className="kt-input w-full p-2.5 text-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-2.5 py-1">
-                <input
-                  type="checkbox"
-                  id="hasLabels"
-                  checked={pickupForm.hasLabels}
-                  onChange={e => setPickupForm(prev => ({ ...prev, hasLabels: e.target.checked }))}
-                  className="kt-checkbox size-4"
-                />
-                <label htmlFor="hasLabels" className="text-xs font-medium text-foreground cursor-pointer">
-                  J'ai déjà imprimé les étiquettes pour ce colis
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
-                <button 
-                  type="button" 
-                  onClick={() => setPickupProduct(null)} 
-                  className="kt-btn kt-btn-outline"
-                  disabled={pickupLoading}
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  className="kt-btn kt-btn-primary"
-                  disabled={pickupLoading}
-                >
-                  {pickupLoading ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>,
         document.body

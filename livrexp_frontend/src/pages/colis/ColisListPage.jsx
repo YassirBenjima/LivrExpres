@@ -385,9 +385,9 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                                setActiveDropdownId(null);
                                                setDeleteColis({ id: colis.id, trackingCode: colis.trackingCode });
                                              }}
-                                             className="kt-menu-link text-start w-full hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                             className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
                                            >
-                                             <span className="kt-menu-icon">
+                                             <span className="kt-menu-icon text-destructive">
                                                <i className="ki-filled ki-trash"></i>
                                              </span>
                                              <span className="kt-menu-title text-destructive">Supprimer</span>

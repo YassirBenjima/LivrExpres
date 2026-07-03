@@ -206,18 +206,18 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Ajouter un produit</span>
                       </a>
                     </div>
-                    <div className={`kt-menu-item ${activeMenu === 'stock_entry' ? 'active' : ''}`}>
-                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/entree"
-                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/entree'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Stock Entrée</span>
-                      </a>
-                    </div>
                     <div className={`kt-menu-item ${activeMenu === 'stock_colis' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/colis"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Colis du stock</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'stock_entry' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/entree"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/entree'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Stock Entrée</span>
                       </a>
                     </div>
                   </div>
