@@ -637,6 +637,8 @@ export default function StockProductsPage({ navigate, showNotification }) {
                           })
                         ]}
                         className="w-full"
+                        enableSearch={true}
+                        searchPlaceholder="Rechercher une ville..."
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-1.5">
