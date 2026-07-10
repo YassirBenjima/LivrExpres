@@ -135,3 +135,9 @@ input.kt-switch-sm:checked::before {
 .kt-menu-link.text-destructive .kt-menu-icon i {
   color: inherit !important;
 }
+
+/* Keep select dropdown options list compact (about 5 options visible with scroll) */
+.kt-select-options {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}

@@ -108,7 +108,13 @@ export default function KtSelect({
           )}
 
           {/* Options Container - Replicates .kt-select-options */}
-          <div className="kt-select-options max-h-[220px] overflow-y-auto">
+          <div 
+            className="kt-select-options overflow-y-auto"
+            style={{
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}
+          >
             {filteredOptions.length === 0 ? (
               <div className="py-3 px-4 text-sm text-zinc-400 text-center">
                 Aucun résultat
