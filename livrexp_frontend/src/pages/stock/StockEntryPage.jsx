@@ -24,6 +24,7 @@ export default function StockEntryPage({ showNotification }) {
   const [cities, setCities]             = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage]   = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
@@ -290,11 +291,13 @@ export default function StockEntryPage({ showNotification }) {
   );
 
   // Movements filter & pagination
-  const filtered = movements.filter(m => 
-    !searchQuery || 
-    m.reference?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    m.products_summary?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = movements.filter(m => {
+    const matchesSearch = !searchQuery || 
+      m.reference?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      m.products_summary?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !statusFilter || m.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated  = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -346,12 +349,30 @@ export default function StockEntryPage({ showNotification }) {
                     
                     {/* Custom Multiple Select Dropdown */}
                     <div className="relative w-[320px]" ref={dropdownRef}>
-                      <button
-                        type="button"
-                        className="kt-select-display kt-select w-full flex items-center justify-between"
+                      {/* Trigger — styled to match kt-input/kt-select look, NO kt-select class to avoid CSS conflicts */}
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setDropdownOpen(!dropdownOpen)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDropdownOpen(!dropdownOpen); }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          height: '34px',
+                          paddingLeft: '12px',
+                          paddingRight: '12px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #e4e4e7',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                          userSelect: 'none',
+                        }}
                       >
-                        <span className={selectedProductIds.length === 0 ? 'text-muted-foreground' : 'text-foreground'}>
+                        <span style={{ color: selectedProductIds.length === 0 ? '#a1a1aa' : '#09090b' }}>
                           {selectedProductIds.length === 0 
                             ? 'Sélectionner des produits' 
                             : selectedProductIds.length === 1 
@@ -359,63 +380,98 @@ export default function StockEntryPage({ showNotification }) {
                               : `${selectedProductIds.length} produits`
                           }
                         </span>
-                        <i className={`ki-filled ${dropdownOpen ? 'ki-up' : 'ki-down'} text-xs`}></i>
-                      </button>
+                        {/* Chevron icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginLeft: '8px', color: '#9f9fa9' }}>
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m2 5 6 6 6-6"/>
+                        </svg>
+                      </div>
 
                       {dropdownOpen && (
-                        <div className="absolute left-0 mt-1 w-full bg-background border border-border rounded-xl shadow-lg z-50 py-2">
-                          <div className="px-3 pb-2 border-b border-border mb-2">
-                            <label className="kt-input w-full">
-                              <i className="ki-filled ki-magnifier"></i>
-                              <input
-                                type="text"
-                                placeholder="Rechercher un produit..."
-                                value={productSearch}
-                                onChange={(e) => setProductSearch(e.target.value)}
-                                className="w-full bg-transparent border-0 outline-none"
-                              />
-                            </label>
+                        <div 
+                          className="absolute z-50 w-full rounded-xl shadow-lg overflow-hidden"
+                          style={{
+                            top: 'calc(100% + 4px)',
+                            left: 0,
+                            minWidth: '100%',
+                            backgroundColor: '#ffffff',
+                            color: '#09090b',
+                            border: '1px solid #e4e4e7'
+                          }}
+                        >
+                          {/* Search container */}
+                          <div 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '6px 12px',
+                              backgroundColor: '#ffffff',
+                              borderBottom: '1px solid #e4e4e7'
+                            }}
+                          >
+                            <input
+                              type="text"
+                              style={{
+                                border: 'none',
+                                outline: 'none',
+                                boxShadow: 'none',
+                                background: 'transparent',
+                                width: '100%',
+                                padding: '2px 0',
+                                fontSize: '13px',
+                                color: '#09090b',
+                              }}
+                              placeholder="Rechercher un produit..."
+                              value={productSearch}
+                              onChange={(e) => setProductSearch(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
                           </div>
-                          <div className="max-h-60 overflow-y-auto px-2 flex flex-col gap-1">
+
+                          {/* Options Container */}
+                          <div style={{ maxHeight: '200px', overflowY: 'auto', backgroundColor: '#ffffff' }}>
                             {filteredDropdownProducts.map(p => {
                               const isSelected = selectedProductIds.includes(p.id);
                               return (
-                                <label 
+                                <div
                                   key={p.id}
-                                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent cursor-pointer text-sm text-foreground"
+                                  role="option"
+                                  className="kt-select-option flex items-center gap-3 cursor-pointer"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedProductIds(prev => prev.filter(id => id !== p.id));
+                                      // Clean up quantities of removed product variants
+                                      const pEntry = productsForEntry.find(pe => pe.id === p.id);
+                                      if (pEntry) {
+                                        setQuantities(prev => {
+                                          const updated = { ...prev };
+                                          pEntry.variants.forEach(v => delete updated[v.id]);
+                                          return updated;
+                                        });
+                                      }
+                                    } else {
+                                      setSelectedProductIds(prev => [...prev, p.id]);
+                                    }
+                                  }}
                                 >
                                   <input
                                     type="checkbox"
-                                    className="kt-checkbox kt-checkbox-sm"
+                                    className="kt-checkbox kt-checkbox-sm pointer-events-none"
                                     checked={isSelected}
-                                    onChange={() => {
-                                      if (isSelected) {
-                                        setSelectedProductIds(prev => prev.filter(id => id !== p.id));
-                                        // Clean up quantities of removed product variants
-                                        const pEntry = productsForEntry.find(pe => pe.id === p.id);
-                                        if (pEntry) {
-                                          setQuantities(prev => {
-                                            const updated = { ...prev };
-                                            pEntry.variants.forEach(v => delete updated[v.id]);
-                                            return updated;
-                                          });
-                                        }
-                                      } else {
-                                        setSelectedProductIds(prev => [...prev, p.id]);
-                                      }
-                                    }}
+                                    readOnly
                                   />
-                                  <span>{p.name}</span>
-                                </label>
+                                  <span className="kt-select-option-text">{p.name}</span>
+                                </div>
                               );
                             })}
                             {filteredDropdownProducts.length === 0 && (
-                              <div className="text-center text-muted-foreground text-sm py-4">Aucun produit trouvé</div>
+                              <div style={{ padding: '12px 16px', fontSize: '13px', color: '#a1a1aa', textAlign: 'center' }}>Aucun produit trouvé</div>
                             )}
                           </div>
                         </div>
                       )}
                     </div>
+
 
                   </div>
                 </div>
@@ -510,6 +566,23 @@ export default function StockEntryPage({ showNotification }) {
                       />
                     </label>
                   </div>
+
+                  <div className="flex">
+                    <KtSelect
+                      value={statusFilter}
+                      onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
+                      placeholder="Tous les statuts"
+                      options={[
+                        { value: '', label: 'Tous les statuts' },
+                        ...Object.entries(STATUS_MAP).map(([key, val]) => ({
+                          value: key,
+                          label: val
+                        }))
+                      ]}
+                      className="w-48"
+                    />
+                  </div>
+
                   <div className="flex flex-wrap gap-2.5">
                     <button
                       className="kt-btn kt-btn-outline kt-btn-primary"
@@ -519,7 +592,14 @@ export default function StockEntryPage({ showNotification }) {
                     >
                       Demande de ramassage
                     </button>
-                    <button className="kt-btn kt-btn-outline" onClick={() => { setSearchQuery(''); setCurrentPage(1); }}>
+                    <button 
+                      className="kt-btn kt-btn-outline" 
+                      onClick={() => { 
+                        setSearchQuery(''); 
+                        setStatusFilter(''); 
+                        setCurrentPage(1); 
+                      }}
+                    >
                       Réinitialiser
                     </button>
                   </div>

@@ -228,6 +228,8 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                       onChange={(val) => { setSelectedEtat(val); setCurrentPage(1); }}
                       placeholder="État"
                       className="w-36"
+                      enableSearch={true}
+                      searchPlaceholder="Rechercher un état..."
                       options={[
                         { value: '', label: 'Tous les états' },
                         ...etatsPossibles.map(e => ({ value: e, label: e }))
@@ -239,6 +241,8 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                       onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
                       placeholder="Statut"
                       className="w-36"
+                      enableSearch={true}
+                      searchPlaceholder="Rechercher un statut..."
                       options={[
                         { value: '', label: 'Tous les statuts' },
                         ...statutsPossibles.map(s => ({ value: s, label: s }))

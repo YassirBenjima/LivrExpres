@@ -66,6 +66,7 @@ export default function KtSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={`kt-select-display kt-select${open ? ' active' : ''}`}
+        style={{ backgroundColor: '#ffffff' }}
         onClick={() => setOpen(prev => !prev)}
       >
         <span className={isPlaceholder ? 'kt-select-placeholder' : 'kt-select-option-text'}>
@@ -76,16 +77,25 @@ export default function KtSelect({
       {/* Dropdown Menu - Replicates .kt-select-dropdown */}
       {open && (
         <div
-          className="kt-select-dropdown absolute z-50 w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden"
+          className="kt-select-dropdown absolute z-50 w-full rounded-xl shadow-lg overflow-hidden"
           style={{
             top: 'calc(100% + 4px)',
             left: 0,
             minWidth: '100%',
+            backgroundColor: '#ffffff',
+            color: '#09090b',
+            border: '1px solid #e4e4e7'
           }}
         >
           {/* Search container */}
           {enableSearch && (
-            <div className="kt-select-search bg-white dark:bg-zinc-950 relative flex items-center">
+            <div 
+              className="kt-select-search relative flex items-center"
+              style={{
+                backgroundColor: '#ffffff',
+                borderBottom: '1px solid #e4e4e7'
+              }}
+            >
               <input
                 type="text"
                 style={{

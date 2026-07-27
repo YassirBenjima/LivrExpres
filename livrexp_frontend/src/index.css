@@ -141,3 +141,18 @@ input.kt-switch-sm:checked::before {
   max-height: 200px !important;
   overflow-y: auto !important;
 }
+
+/* Force white/dark backgrounds on select elements and dropdowns to prevent transparency issues */
+.kt-select,
+.kt-select-display.kt-select {
+  background-color: #ffffff !important;
+}
+
+.kt-select-dropdown {
+  background-color: #ffffff !important;
+}
+
+.kt-select-search {
+  background-color: #ffffff !important;
+}
+
