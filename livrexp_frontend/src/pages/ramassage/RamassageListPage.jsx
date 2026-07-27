@@ -154,45 +154,49 @@ export default function RamassageListPage({ navigate, showNotification }) {
           <div className="grid gap-5 lg:gap-7.5">
             <div className="kt-card kt-card-grid min-w-full">
               
-              {/* Header Filters */}
+              {/* Card Header & Filter Form */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
                   Affichage de {filtered.length} ramassages
                 </h3>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <label className="kt-input">
-                    <i className="ki-filled ki-magnifier"></i>
-                    <input 
-                      value={searchQuery}
-                      onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                      placeholder="Rechercher un ramassage" 
-                      type="text" 
+                <div className="flex flex-wrap gap-2 lg:gap-5">
+                  <div className="flex">
+                    <label className="kt-input">
+                      <i className="ki-filled ki-magnifier"></i>
+                      <input 
+                        value={searchQuery}
+                        onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        placeholder="Rechercher un ramassage" 
+                        type="text" 
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <KtSelect
+                      value={statusFilter}
+                      onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
+                      placeholder="Statut"
+                      className="w-36"
+                      options={[
+                        { value: '', label: 'Tous les statuts' },
+                        ...Object.entries(STATUS_MAP).map(([key, label]) => ({
+                          value: key,
+                          label
+                        }))
+                      ]}
                     />
-                  </label>
-                  <KtSelect
-                    value={statusFilter}
-                    onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
-                    placeholder="Tous les statuts"
-                    options={[
-                      { value: '', label: 'Tous les statuts' },
-                      ...Object.entries(STATUS_MAP).map(([key, label]) => ({
-                        value: key,
-                        label
-                      }))
-                    ]}
-                    className="w-44"
-                  />
-                  <button 
-                    className="kt-btn kt-btn-outline" 
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setStatusFilter('');
-                      setCurrentPage(1);
-                    }}
-                  >
-                    Réinitialiser
-                  </button>
+
+                    <button
+                      className="kt-btn kt-btn-outline"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setStatusFilter('');
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Réinitialiser
+                    </button>
+                  </div>
                 </div>
               </div>
 
