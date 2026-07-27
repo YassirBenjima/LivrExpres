@@ -32,11 +32,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
   const fetchPickups = async () => {
     setLoading(true);
     try {
-      let url = '/api/ramassage?';
-      if (searchQuery) url += `q=${encodeURIComponent(searchQuery)}&`;
-      if (statusFilter) url += `statut=${encodeURIComponent(statusFilter)}&`;
-
-      const res = await fetch(url, { headers });
+      const res = await fetch('/api/ramassage', { headers });
       if (res.ok) {
         const json = await res.json();
         setPickups(json.pickups || []);
@@ -94,14 +90,18 @@ export default function RamassageListPage({ navigate, showNotification }) {
 
   // Local search filter as fallback for immediate typing UX
   const filtered = pickups.filter(p => {
+    const matchesStatus = statusFilter ? p.status === statusFilter : true;
+    if (!matchesStatus) return false;
+
     if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     return (
-      (p.phone && p.phone.toLowerCase().includes(q)) ||
-      (p.city && p.city.toLowerCase().includes(q)) ||
-      (p.address && p.address.toLowerCase().includes(q)) ||
-      (p.productNameSnapshot && p.productNameSnapshot.toLowerCase().includes(q)) ||
-      (p.note && p.note.toLowerCase().includes(q))
+      (p.phone && String(p.phone).toLowerCase().includes(q)) ||
+      (p.city && String(p.city).toLowerCase().includes(q)) ||
+      (p.address && String(p.address).toLowerCase().includes(q)) ||
+      (p.productNameSnapshot && String(p.productNameSnapshot).toLowerCase().includes(q)) ||
+      (p.note && String(p.note).toLowerCase().includes(q)) ||
+      (p.type && String(p.type).toLowerCase().includes(q))
     );
   });
 

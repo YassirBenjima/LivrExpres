@@ -49,9 +49,9 @@ final class RamassageApiController extends AbstractController
                 'scheduledAt' => $pickup->getScheduledAt() ? $pickup->getScheduledAt()->format('Y-m-d\TH:i:s') : null,
                 'status' => $pickup->getStatus(),
                 'statusLabel' => self::STATUS_LABELS[$pickup->getStatus()] ?? $pickup->getStatus(),
-                'hasLabels' => $pickup->isHasLabels(),
+                'hasLabels' => $pickup->hasLabels(),
                 'assignedDriver' => $pickup->getAssignedDriver() ?: '-',
-                'createdBy' => $pickup->getCreatedBy() ? ($pickup->getCreatedBy()->getNom() ?: $pickup->getCreatedBy()->getEmail()) : '-',
+                'createdBy' => $pickup->getCreatedBy() ? ($pickup->getCreatedBy()->getFullName() ?: $pickup->getCreatedBy()->getEmail()) : '-',
             ];
         }, $pickups);
 

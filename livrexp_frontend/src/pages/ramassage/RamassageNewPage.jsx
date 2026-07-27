@@ -326,13 +326,41 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                               <td className="py-2 text-secondary-foreground font-normal">Étiquettes</td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <div className="flex items-center gap-2.5">
-                                  <input
-                                    className="kt-switch kt-switch-sm"
-                                    type="checkbox"
-                                    checked={form.has_labels}
-                                    onChange={e => handleChange('has_labels', e.target.checked)}
-                                  />
-                                  <span className="text-xs text-secondary-foreground">J'ai les étiquettes</span>
+                                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input 
+                                      type="checkbox"
+                                      style={{ display: 'none' }}
+                                      checked={form.has_labels}
+                                      onChange={e => handleChange('has_labels', e.target.checked)}
+                                    />
+                                    <div 
+                                      style={{
+                                        width: '36px',
+                                        height: '20px',
+                                        backgroundColor: form.has_labels ? 'var(--primary, #007bff)' : '#e4e4e7',
+                                        borderRadius: '9999px',
+                                        position: 'relative',
+                                        transition: 'background-color 0.2s ease',
+                                        border: '1px solid',
+                                        borderColor: form.has_labels ? 'var(--primary, #007bff)' : '#d4d4d8',
+                                      }}
+                                    >
+                                      <div 
+                                        style={{
+                                          width: '14px',
+                                          height: '14px',
+                                          backgroundColor: '#ffffff',
+                                          borderRadius: '50%',
+                                          position: 'absolute',
+                                          top: '2px',
+                                          left: form.has_labels ? '18px' : '2px',
+                                          transition: 'left 0.2s ease',
+                                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.15)',
+                                        }}
+                                      />
+                                    </div>
+                                  </label>
+                                  <span className="text-xs text-secondary-foreground font-normal">J'ai les étiquettes</span>
                                 </div>
                               </td>
                             </tr>
