@@ -163,72 +163,68 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
 
         {/* KPI Cards (Interactive Filters) */}
         <div className="kt-container-fixed">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pb-7.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7.5 pb-7.5">
             
+            {/* Total */}
             <div 
               onClick={() => setStatusFilter('all')}
               className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'all' ? 'ring-2 ring-primary border-primary' : ''}`}
             >
-              <div className="kt-card-content flex items-center justify-between p-5">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <i className="ki-filled ki-parcel text-2xl"></i>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.total || 0}</div>
-                    <div className="text-xs text-secondary-foreground font-medium">Total demandes</div>
-                  </div>
+              <div className="kt-card-content flex items-center gap-4 p-5">
+                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <i className="ki-filled ki-parcel text-xl text-primary"></i>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold text-mono">{stats.total || 0}</span>
+                  <span className="text-xs text-secondary-foreground font-medium">Total demandes</span>
                 </div>
               </div>
             </div>
 
+            {/* En attente */}
             <div 
               onClick={() => setStatusFilter('pending')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'pending' ? 'ring-2 ring-amber-500 border-amber-500' : ''}`}
+              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'pending' ? 'ring-2 ring-primary border-primary' : ''}`}
             >
-              <div className="kt-card-content flex items-center justify-between p-5">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                    <i className="ki-filled ki-time text-2xl"></i>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.pending || 0}</div>
-                    <div className="text-xs text-secondary-foreground font-medium">En attente</div>
-                  </div>
+              <div className="kt-card-content flex items-center gap-4 p-5">
+                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <i className="ki-filled ki-time text-xl text-primary"></i>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold text-mono">{stats.pending || 0}</span>
+                  <span className="text-xs text-secondary-foreground font-medium">En attente</span>
                 </div>
               </div>
             </div>
 
+            {/* Confirmés */}
             <div 
               onClick={() => setStatusFilter('confirmed')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'confirmed' ? 'ring-2 ring-blue-500 border-blue-500' : ''}`}
+              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'confirmed' ? 'ring-2 ring-primary border-primary' : ''}`}
             >
-              <div className="kt-card-content flex items-center justify-between p-5">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                    <i className="ki-filled ki-check-circle text-2xl"></i>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.confirmed || 0}</div>
-                    <div className="text-xs text-secondary-foreground font-medium">Confirmés</div>
-                  </div>
+              <div className="kt-card-content flex items-center gap-4 p-5">
+                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <i className="ki-filled ki-check-circle text-xl text-primary"></i>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold text-mono">{stats.confirmed || 0}</span>
+                  <span className="text-xs text-secondary-foreground font-medium">Confirmés</span>
                 </div>
               </div>
             </div>
 
+            {/* Ramassés */}
             <div 
               onClick={() => setStatusFilter('picked_up')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'picked_up' ? 'ring-2 ring-emerald-500 border-emerald-500' : ''}`}
+              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'picked_up' ? 'ring-2 ring-primary border-primary' : ''}`}
             >
-              <div className="kt-card-content flex items-center justify-between p-5">
-                <div className="flex items-center gap-4">
-                  <div className="size-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                    <i className="ki-filled ki-car text-2xl"></i>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-foreground">{stats.picked_up || 0}</div>
-                    <div className="text-xs text-secondary-foreground font-medium">Ramassés</div>
-                  </div>
+              <div className="kt-card-content flex items-center gap-4 p-5">
+                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <i className="ki-filled ki-car text-xl text-primary"></i>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-semibold text-mono">{stats.picked_up || 0}</span>
+                  <span className="text-xs text-secondary-foreground font-medium">Ramassés</span>
                 </div>
               </div>
             </div>
