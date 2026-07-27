@@ -106,26 +106,22 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
       case 'confirmed':
         return { 
           label: 'Confirmé', 
-          bg: 'bg-blue-500/20 text-blue-500 border-blue-500/40 font-semibold',
-          style: { backgroundColor: 'rgba(27, 132, 255, 0.2)', color: '#1b84ff', borderColor: 'rgba(27, 132, 255, 0.4)' }
+          style: { backgroundColor: '#1b84ff', color: '#ffffff', borderColor: '#1b84ff' }
         };
       case 'picked_up':
         return { 
           label: 'Ramassé', 
-          bg: 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40 font-semibold',
-          style: { backgroundColor: 'rgba(23, 198, 83, 0.2)', color: '#17c653', borderColor: 'rgba(23, 198, 83, 0.4)' }
+          style: { backgroundColor: '#17c653', color: '#ffffff', borderColor: '#17c653' }
         };
       case 'cancelled':
         return { 
           label: 'Annulé', 
-          bg: 'bg-rose-500/20 text-rose-500 border-rose-500/40 font-semibold',
-          style: { backgroundColor: 'rgba(248, 40, 90, 0.2)', color: '#f8285a', borderColor: 'rgba(248, 40, 90, 0.4)' }
+          style: { backgroundColor: '#f8285a', color: '#ffffff', borderColor: '#f8285a' }
         };
       default:
         return { 
           label: 'En attente', 
-          bg: 'bg-amber-500/20 text-amber-500 border-amber-500/40 font-semibold',
-          style: { backgroundColor: 'rgba(246, 192, 0, 0.2)', color: '#f6c000', borderColor: 'rgba(246, 192, 0, 0.4)' }
+          style: { backgroundColor: '#f6c000', color: '#181c32', borderColor: '#f6c000' }
         };
     }
   };
@@ -494,9 +490,9 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                                   className="fc-daygrid-event text-[11px] leading-tight p-1.5 rounded border cursor-grab active:cursor-grabbing hover:opacity-90 transition-opacity"
                                   title={`Glisser-déposer pour replanifier: ${evt.title}`}
                                 >
-                                  <strong className="block truncate font-semibold">{evt.title}</strong>
+                                  <strong className="block truncate font-bold text-[11px] leading-tight">{evt.title}</strong>
                                   {phone && (
-                                    <span className="block text-[10px] opacity-80 font-normal truncate">
+                                    <span className="block text-[10px] font-medium opacity-90 truncate leading-tight mt-0.5">
                                       {phone}
                                     </span>
                                   )}
