@@ -61,6 +61,25 @@ export default function RamassageNewPage({ navigate, showNotification }) {
     fetchCities();
   }, []);
 
+  const handleFillTestFields = () => {
+    let firstCity = 'Casablanca';
+    if (cities.length > 0) {
+      const c = cities[0];
+      firstCity = (typeof c === 'object' && c !== null) ? (c.name || c.label || c.value || 'Casablanca') : (c || 'Casablanca');
+    }
+    setForm({
+      phone: '0612345678',
+      supplier_phone: '0698765432',
+      city: firstCity,
+      neighborhood: 'Maârif',
+      address: '123 Boulevard d\'Anfa',
+      product_name: 'Vêtements & Accessoires Démo',
+      type: 'simple',
+      note: 'Ramassage de test rapide',
+      has_labels: true
+    });
+  };
+
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
@@ -138,6 +157,14 @@ export default function RamassageNewPage({ navigate, showNotification }) {
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
+                <button 
+                  type="button" 
+                  className="kt-btn kt-btn-outline" 
+                  onClick={handleFillTestFields}
+                  style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
+                >
+                  Remplir (Test)
+                </button>
                 <button
                   type="button"
                   className="kt-btn kt-btn-outline"
