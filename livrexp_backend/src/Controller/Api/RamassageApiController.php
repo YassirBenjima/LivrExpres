@@ -51,6 +51,7 @@ final class RamassageApiController extends AbstractController
                 'statusLabel' => self::STATUS_LABELS[$pickup->getStatus()] ?? $pickup->getStatus(),
                 'hasLabels' => $pickup->isHasLabels(),
                 'assignedDriver' => $pickup->getAssignedDriver() ?: '-',
+                'createdBy' => $pickup->getCreatedBy() ? ($pickup->getCreatedBy()->getNom() ?: $pickup->getCreatedBy()->getEmail()) : '-',
             ];
         }, $pickups);
 
