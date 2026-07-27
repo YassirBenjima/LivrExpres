@@ -19,6 +19,9 @@ import StockProductEditPage from './pages/stock/StockProductEditPage';
 import StockEntryPage from './pages/stock/StockEntryPage';
 import StockColisPage from './pages/stock/StockColisPage';
 import StockStickerPage from './pages/stock/StockStickerPage';
+import RamassageListPage from './pages/ramassage/RamassageListPage';
+import RamassageNewPage from './pages/ramassage/RamassageNewPage';
+import RamassagePlanningPage from './pages/ramassage/RamassagePlanningPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -205,6 +208,15 @@ function App() {
       case '/stock/colis':
         title = 'Colis du stock - LivrExpress';
         break;
+      case '/ramassage':
+        title = 'Liste des ramassages - LivrExpress';
+        break;
+      case '/ramassage/new':
+        title = 'Nouvelle demande de ramassage - LivrExpress';
+        break;
+      case '/ramassage/planning':
+        title = 'Planification des ramassages - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -306,6 +318,12 @@ function App() {
         return <StockEntryPage navigate={navigate} showNotification={showNotification} />;
       case '/stock/colis':
         return <StockColisPage navigate={navigate} showNotification={showNotification} />;
+      case '/ramassage':
+        return <RamassageListPage navigate={navigate} showNotification={showNotification} />;
+      case '/ramassage/new':
+        return <RamassageNewPage navigate={navigate} showNotification={showNotification} />;
+      case '/ramassage/planning':
+        return <RamassagePlanningPage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':

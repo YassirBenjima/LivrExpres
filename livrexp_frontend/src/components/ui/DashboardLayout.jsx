@@ -10,6 +10,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
   const [selectedLangFlag, setSelectedLangFlag] = useState('/assets/media/flags/france.svg');
   const [isColisMenuOpen, setIsColisMenuOpen] = useState(activeMenu.startsWith('colis'));
   const [isStockMenuOpen, setIsStockMenuOpen] = useState(activeMenu.startsWith('stock'));
+  const [isRamassageMenuOpen, setIsRamassageMenuOpen] = useState(activeMenu.startsWith('ramassage'));
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -225,15 +226,44 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               </div>
 
               {/* Ramassage */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/ramassage/">
+              <div className={`kt-menu-item ${activeMenu.startsWith('ramassage') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => setIsRamassageMenuOpen(!isRamassageMenuOpen)}
+                >
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-delivery text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Ramassage
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Ramassage</span>
+                  <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                    <i className={`ki-filled ${isRamassageMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
-                </a>
+                </div>
+                {isRamassageMenuOpen && (
+                  <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
+                    <div className={`kt-menu-item ${activeMenu === 'ramassage_list' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste des ramassages</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'ramassage_new' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage/new"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Nouvelle demande</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'ramassage_planning' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage/planning"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage/planning'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Planification</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Bon de Livraison */}
@@ -401,6 +431,22 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   )}
                 </>
               )}
+              {activeMenu.startsWith('ramassage') && (
+                <>
+                  <a 
+                    href="/ramassage" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/ramassage');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    Ramassage
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {activeMenu === 'dashboard' ? 'Tableau de bord'
                   : activeMenu === 'colis_list' ? 'Liste des colis'
@@ -414,6 +460,9 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   : activeMenu === 'stock_products_edit' ? 'Modifier le produit'
                   : activeMenu === 'stock_entry' ? 'Stock Entrée'
                   : activeMenu === 'stock_colis' ? 'Colis du stock'
+                  : activeMenu === 'ramassage_list' ? 'Liste des ramassages'
+                  : activeMenu === 'ramassage_new' ? 'Nouvelle demande de ramassage'
+                  : activeMenu === 'ramassage_planning' ? 'Planification des ramassages'
                   : activeMenu === 'ramassage' ? 'Ramassage'
                   : activeMenu === 'bon_livraison' ? 'Bon de Livraison'
                   : activeMenu === 'suivi' ? 'Suivi'
