@@ -134,13 +134,11 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2.5">
-                <i className="ki-filled ki-calendar text-2xl text-primary"></i>
-                Planification des ramassages
-              </h1>
-              <p className="text-sm text-secondary-foreground">
-                Consultez et organisez vos demandes de ramassage interactives
-              </p>
+              <h1 className="text-xl font-medium leading-none text-mono">Planification des ramassages</h1>
+              <div className="flex items-center flex-wrap gap-1.5 font-medium">
+                <span className="text-base text-secondary-foreground">Total événements:</span>
+                <span className="text-base text-foreground font-medium">{events.length}</span>
+              </div>
             </div>
             <div className="flex items-center gap-2.5">
               <button 
