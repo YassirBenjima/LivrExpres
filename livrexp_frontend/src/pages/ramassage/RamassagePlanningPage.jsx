@@ -441,6 +441,8 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                           <div className="flex flex-col gap-1 overflow-y-auto max-h-[72px]">
                             {dayEvents.slice(0, 2).map((evt) => {
                               const badge = getStatusBadge(evt.extendedProps?.status);
+                              const phone = evt.extendedProps?.phone;
+
                               return (
                                 <div 
                                   key={evt.id}
@@ -454,10 +456,15 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                                     e.stopPropagation();
                                     setSelectedEvent(evt);
                                   }}
-                                  className={`text-[11px] leading-tight p-1 rounded-md border font-medium truncate cursor-grab active:cursor-grabbing hover:opacity-90 ${badge.bg}`}
+                                  className={`fc-daygrid-event text-[11px] leading-tight p-1.5 rounded border cursor-grab active:cursor-grabbing hover:opacity-90 transition-opacity ${badge.bg}`}
                                   title={`Glisser-déposer pour replanifier: ${evt.title}`}
                                 >
-                                  {evt.title}
+                                  <strong className="block truncate font-semibold">{evt.title}</strong>
+                                  {phone && (
+                                    <span className="block text-[10px] opacity-80 font-normal truncate">
+                                      {phone}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })}
