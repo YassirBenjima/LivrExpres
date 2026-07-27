@@ -367,13 +367,31 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                       const dd = String(cell.date.getDate()).padStart(2, '0');
                       const cellDateStr = `${yyyy}-${mm}-${dd}`;
 
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+
+                      const cellDate = new Date(cell.date);
+                      cellDate.setHours(0, 0, 0, 0);
+                      const isPast = cellDate < today;
+
                       const handleDragOver = (e) => {
                         e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
+                        if (isPast) {
+                          e.dataTransfer.dropEffect = 'none';
+                        } else {
+                          e.dataTransfer.dropEffect = 'move';
+                        }
                       };
 
                       const handleDrop = async (e) => {
                         e.preventDefault();
+                        if (isPast) {
+                          if (showNotification) {
+                            showNotification('Impossible de replanifier vers une date passée', 'warning');
+                          }
+                          return;
+                        }
+
                         const eventId = e.dataTransfer.getData('text/plain');
                         if (!eventId) return;
 
