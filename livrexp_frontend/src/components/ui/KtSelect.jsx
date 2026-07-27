@@ -58,7 +58,7 @@ export default function KtSelect({
     <div
       ref={containerRef}
       className={`kt-select-wrapper relative ${className}`}
-      style={{ zIndex: open ? 100 : undefined }}
+      style={{ zIndex: open ? 9999 : undefined }}
     >
       {/* Trigger Button - Replicates .kt-select-display.kt-select */}
       <div
@@ -143,8 +143,8 @@ export default function KtSelect({
                       setOpen(false);
                     }}
                     style={{
-                      backgroundColor: isSelected ? 'var(--accent)' : undefined,
-                      color: isSelected ? 'var(--accent-foreground)' : undefined,
+                      backgroundColor: isSelected ? '#f4f4f5' : '#ffffff',
+                      color: '#09090b',
                     }}
                   >
                     <span className="kt-select-option-text">{option.label}</span>

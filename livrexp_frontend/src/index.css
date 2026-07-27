@@ -142,17 +142,49 @@ input.kt-switch-sm:checked::before {
   overflow-y: auto !important;
 }
 
-/* Force white/dark backgrounds on select elements and dropdowns to prevent transparency issues */
-.kt-select,
-.kt-select-display.kt-select {
-  background-color: #ffffff !important;
+/* Comprehensive select and dropdown styling overrides (Light & Dark mode) */
+.kt-select-dropdown,
+[data-kt-select-dropdown="true"],
+.kt-select-options,
+.kt-dropdown-menu,
+div.kt-select-dropdown {
+  background-color: var(--card, #ffffff) !important;
+  color: var(--card-foreground, #09090b) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid var(--border, #e4e4e7) !important;
 }
 
-.kt-select-dropdown {
-  background-color: #ffffff !important;
+.dark .kt-select-dropdown,
+.dark [data-kt-select-dropdown="true"],
+.dark .kt-select-options,
+.dark .kt-dropdown-menu,
+.dark div.kt-select-dropdown {
+  background-color: #18181b !important; /* zinc-900 */
+  color: #f4f4f5 !important;
+  border-color: #27272a !important;
 }
 
-.kt-select-search {
-  background-color: #ffffff !important;
+.kt-select-option,
+.kt-select-dropdown .kt-select-option,
+div.kt-select-option {
+  background-color: transparent !important;
+  color: inherit !important;
+  transition: background-color 0.15s ease;
 }
+
+.kt-select-option:hover,
+.kt-select-option.highlighted,
+.kt-select-option[aria-selected="true"],
+.kt-select-dropdown .kt-select-option:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .kt-select-option:hover,
+.dark .kt-select-option.highlighted,
+.dark .kt-select-option[aria-selected="true"],
+.dark .kt-select-dropdown .kt-select-option:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+
 

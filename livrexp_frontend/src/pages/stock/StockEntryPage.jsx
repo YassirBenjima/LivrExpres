@@ -348,13 +348,14 @@ export default function StockEntryPage({ showNotification }) {
                   <div className="flex flex-wrap gap-2 lg:gap-5 items-center">
                     
                     {/* Custom Multiple Select Dropdown */}
-                    <div className="relative w-[320px]" ref={dropdownRef}>
+                    <div className="relative w-[320px]" ref={dropdownRef} style={{ zIndex: dropdownOpen ? 9999 : undefined }}>
                       {/* Trigger — styled to match kt-input/kt-select look, NO kt-select class to avoid CSS conflicts */}
                       <div
                         role="button"
                         tabIndex={0}
                         onClick={() => setDropdownOpen(!dropdownOpen)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDropdownOpen(!dropdownOpen); }}
+                        className="bg-card text-card-foreground border border-border"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -363,8 +364,6 @@ export default function StockEntryPage({ showNotification }) {
                           height: '34px',
                           paddingLeft: '12px',
                           paddingRight: '12px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e4e4e7',
                           borderRadius: '6px',
                           cursor: 'pointer',
                           fontSize: '13px',
@@ -372,7 +371,7 @@ export default function StockEntryPage({ showNotification }) {
                           userSelect: 'none',
                         }}
                       >
-                        <span style={{ color: selectedProductIds.length === 0 ? '#a1a1aa' : '#09090b' }}>
+                        <span style={{ color: selectedProductIds.length === 0 ? 'var(--muted-foreground, #a1a1aa)' : 'inherit' }}>
                           {selectedProductIds.length === 0 
                             ? 'Sélectionner des produits' 
                             : selectedProductIds.length === 1 
@@ -388,14 +387,15 @@ export default function StockEntryPage({ showNotification }) {
 
                       {dropdownOpen && (
                         <div 
-                          className="absolute z-50 w-full rounded-xl shadow-lg overflow-hidden"
+                          className="absolute z-50 w-full rounded-xl shadow-lg overflow-hidden bg-card text-card-foreground border border-border"
                           style={{
                             top: 'calc(100% + 4px)',
                             left: 0,
                             minWidth: '100%',
-                            backgroundColor: '#ffffff',
-                            color: '#09090b',
-                            border: '1px solid #e4e4e7'
+                            backgroundColor: 'var(--card, #ffffff)',
+                            color: 'var(--card-foreground, #09090b)',
+                            border: '1px solid var(--border, #e4e4e7)',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)'
                           }}
                         >
                           {/* Search container */}
@@ -436,7 +436,8 @@ export default function StockEntryPage({ showNotification }) {
                                 <div
                                   key={p.id}
                                   role="option"
-                                  className="kt-select-option flex items-center gap-3 cursor-pointer"
+                                  className={`kt-select-option flex items-center gap-3 cursor-pointer p-2 px-3 hover:bg-zinc-100 ${isSelected ? 'bg-zinc-100 font-medium' : ''}`}
+                                  style={{ backgroundColor: isSelected ? '#f4f4f5' : '#ffffff', color: '#09090b' }}
                                   onClick={() => {
                                     if (isSelected) {
                                       setSelectedProductIds(prev => prev.filter(id => id !== p.id));
@@ -460,12 +461,12 @@ export default function StockEntryPage({ showNotification }) {
                                     checked={isSelected}
                                     readOnly
                                   />
-                                  <span className="kt-select-option-text">{p.name}</span>
+                                  <span className="kt-select-option-text" style={{ color: '#09090b' }}>{p.name}</span>
                                 </div>
                               );
                             })}
                             {filteredDropdownProducts.length === 0 && (
-                              <div style={{ padding: '12px 16px', fontSize: '13px', color: '#a1a1aa', textAlign: 'center' }}>Aucun produit trouvé</div>
+                              <div style={{ padding: '12px 16px', fontSize: '13px', color: '#a1a1aa', textAlign: 'center', backgroundColor: '#ffffff' }}>Aucun produit trouvé</div>
                             )}
                           </div>
                         </div>
