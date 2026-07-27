@@ -168,7 +168,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
             {/* Total */}
             <div 
               onClick={() => setStatusFilter('all')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'all' ? 'ring-2 ring-primary border-primary' : ''}`}
+              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
             >
               <div className="kt-card-content flex items-center gap-4 p-5">
                 <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -184,7 +184,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
             {/* En attente */}
             <div 
               onClick={() => setStatusFilter('pending')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'pending' ? 'ring-2 ring-primary border-primary' : ''}`}
+              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
             >
               <div className="kt-card-content flex items-center gap-4 p-5">
                 <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -200,7 +200,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
             {/* Confirmés */}
             <div 
               onClick={() => setStatusFilter('confirmed')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'confirmed' ? 'ring-2 ring-primary border-primary' : ''}`}
+              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
             >
               <div className="kt-card-content flex items-center gap-4 p-5">
                 <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -216,7 +216,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
             {/* Ramassés */}
             <div 
               onClick={() => setStatusFilter('picked_up')}
-              className={`kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 ${statusFilter === 'picked_up' ? 'ring-2 ring-primary border-primary' : ''}`}
+              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
             >
               <div className="kt-card-content flex items-center gap-4 p-5">
                 <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
