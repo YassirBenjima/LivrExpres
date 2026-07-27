@@ -159,7 +159,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                 <h3 className="kt-card-title text-sm">
                   Affichage de {filtered.length} ramassages
                 </h3>
-                <form className="flex flex-wrap gap-2 lg:gap-5" onSubmit={handleSearchSubmit}>
+                <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
                     <label className="kt-input">
                       <i className="ki-filled ki-magnifier"></i>
@@ -175,7 +175,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                     <KtSelect
                       value={statusFilter}
                       onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
-                      placeholder="Tous les statuts"
+                      placeholder="Statut"
                       options={[
                         { value: '', label: 'Tous les statuts' },
                         ...Object.entries(STATUS_MAP).map(([key, label]) => ({
@@ -185,10 +185,6 @@ export default function RamassageListPage({ navigate, showNotification }) {
                       ]}
                       className="w-44"
                     />
-                    <button className="kt-btn kt-btn-outline kt-btn-primary" type="submit">
-                      <i className="ki-filled ki-setting-4"></i>
-                      Filtrer
-                    </button>
                     <button 
                       className="kt-btn kt-btn-outline" 
                       type="button"
@@ -201,7 +197,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                       Réinitialiser
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
 
               {/* Table Body */}
