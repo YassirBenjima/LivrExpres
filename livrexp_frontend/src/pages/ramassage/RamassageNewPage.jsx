@@ -42,10 +42,13 @@ export default function RamassageNewPage({ navigate, showNotification }) {
     const fetchCities = async () => {
       setLoadingCities(true);
       try {
-        const res = await fetch('/api/cities');
+        let res = await fetch('/api/cities');
+        if (!res.ok) {
+          res = await fetch('/api/ville');
+        }
         if (res.ok) {
           const json = await res.json();
-          const list = Array.isArray(json) ? json : (json.cities || []);
+          const list = Array.isArray(json) ? json : (json.cities || json.villes || []);
           setCities(list);
         }
       } catch (e) {
