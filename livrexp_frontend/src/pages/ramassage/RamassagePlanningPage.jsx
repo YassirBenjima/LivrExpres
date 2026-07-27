@@ -362,9 +362,57 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                       const dayEvents = getEventsForDate(cell.date);
                       const isToday = cell.date.toDateString() === new Date().toDateString();
 
+                      const yyyy = cell.date.getFullYear();
+                      const mm = String(cell.date.getMonth() + 1).padStart(2, '0');
+                      const dd = String(cell.date.getDate()).padStart(2, '0');
+                      const cellDateStr = `${yyyy}-${mm}-${dd}`;
+
+                      const handleDragOver = (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      };
+
+                      const handleDrop = async (e) => {
+                        e.preventDefault();
+                        const eventId = e.dataTransfer.getData('text/plain');
+                        if (!eventId) return;
+
+                        // Optimistic UI update
+                        setEvents(prev => prev.map(evt => {
+                          if (String(evt.id) === String(eventId)) {
+                            return { ...evt, start: `${cellDateStr}T09:00:00` };
+                          }
+                          return evt;
+                        }));
+
+                        try {
+                          const res = await fetch(`/api/ramassage/${eventId}/calendar-move`, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Accept': 'application/json',
+                              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                            },
+                            body: JSON.stringify({ newDate: cellDateStr })
+                          });
+
+                          if (res.ok) {
+                            if (showNotification) showNotification('Ramassage replanifié avec succès', 'success');
+                          } else {
+                            fetchPlanningData();
+                            if (showNotification) showNotification('Erreur lors de la replanification', 'error');
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          fetchPlanningData();
+                        }
+                      };
+
                       return (
                         <div 
                           key={idx}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
                           onClick={() => {
                             if (dayEvents.length > 0) {
                               setSelectedEvent(dayEvents[0]);
@@ -396,12 +444,18 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                               return (
                                 <div 
                                   key={evt.id}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.stopPropagation();
+                                    e.dataTransfer.setData('text/plain', String(evt.id));
+                                    e.dataTransfer.effectAllowed = 'move';
+                                  }}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedEvent(evt);
                                   }}
-                                  className={`text-[11px] leading-tight p-1 rounded-md border font-medium truncate ${badge.bg}`}
-                                  title={evt.title}
+                                  className={`text-[11px] leading-tight p-1 rounded-md border font-medium truncate cursor-grab active:cursor-grabbing hover:opacity-90 ${badge.bg}`}
+                                  title={`Glisser-déposer pour replanifier: ${evt.title}`}
                                 >
                                   {evt.title}
                                 </div>
