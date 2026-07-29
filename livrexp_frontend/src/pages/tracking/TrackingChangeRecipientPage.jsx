@@ -95,25 +95,50 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
     setSelectedIds([]);
   }, [activeTab, searchQuery, filterCity]);
 
+  // Helper to sync form prefill based on selected IDs
+  const syncFormPrefill = (nextIds, list = colisList) => {
+    if (nextIds.length === 1) {
+      const selected = list.find(c => c.id === nextIds[0]);
+      if (selected) {
+        setBulkRecipient(selected.recipient || '');
+        setBulkPhoneNumber(selected.phoneNumber || '');
+        setBulkCity(selected.city || '');
+        setBulkAddress(selected.address || '');
+        setBulkNeighborhood(selected.neighborhood || '');
+        return;
+      }
+    }
+    setBulkRecipient('');
+    setBulkPhoneNumber('');
+    setBulkCity('');
+    setBulkAddress('');
+    setBulkNeighborhood('');
+  };
+
   // Handle single row checkbox toggle
   const handleSelectRow = (colis) => {
+    let nextIds;
     if (selectedIds.includes(colis.id)) {
-      const nextIds = selectedIds.filter(id => id !== colis.id);
-      setSelectedIds(nextIds);
+      nextIds = selectedIds.filter(id => id !== colis.id);
     } else {
-      setSelectedIds([...selectedIds, colis.id]);
+      nextIds = [...selectedIds, colis.id];
     }
+    setSelectedIds(nextIds);
+    syncFormPrefill(nextIds);
   };
 
   // Select all visible row toggle
   const handleSelectAll = (e) => {
+    let nextIds;
     if (e.target.checked) {
       const pageIds = paginatedColis.map(c => c.id);
-      setSelectedIds(Array.from(new Set([...selectedIds, ...pageIds])));
+      nextIds = Array.from(new Set([...selectedIds, ...pageIds]));
     } else {
       const pageIdsSet = new Set(paginatedColis.map(c => c.id));
-      setSelectedIds(selectedIds.filter(id => !pageIdsSet.has(id)));
+      nextIds = selectedIds.filter(id => !pageIdsSet.has(id));
     }
+    setSelectedIds(nextIds);
+    syncFormPrefill(nextIds);
   };
 
   // Bulk recipient update submit
