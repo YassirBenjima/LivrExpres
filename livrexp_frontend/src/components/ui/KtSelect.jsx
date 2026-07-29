@@ -65,8 +65,7 @@ export default function KtSelect({
         role="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`kt-select-display kt-select${open ? ' active' : ''}`}
-        style={{ backgroundColor: '#ffffff' }}
+        className={`kt-select-display kt-select bg-background text-foreground border-border${open ? ' active' : ''}`}
         onClick={() => setOpen(prev => !prev)}
       >
         <span className={isPlaceholder ? 'kt-select-placeholder' : 'kt-select-option-text'}>
@@ -77,24 +76,17 @@ export default function KtSelect({
       {/* Dropdown Menu - Replicates .kt-select-dropdown */}
       {open && (
         <div
-          className="kt-select-dropdown absolute z-50 w-full rounded-xl shadow-lg overflow-hidden"
+          className="kt-select-dropdown absolute z-50 w-full rounded-xl shadow-lg overflow-hidden bg-background text-foreground border border-border"
           style={{
             top: 'calc(100% + 4px)',
             left: 0,
-            minWidth: '100%',
-            backgroundColor: '#ffffff',
-            color: '#09090b',
-            border: '1px solid #e4e4e7'
+            minWidth: '100%'
           }}
         >
           {/* Search container */}
           {enableSearch && (
             <div 
-              className="kt-select-search relative flex items-center"
-              style={{
-                backgroundColor: '#ffffff',
-                borderBottom: '1px solid #e4e4e7'
-              }}
+              className="kt-select-search relative flex items-center bg-background border-b border-border px-3"
             >
               <input
                 type="text"
@@ -107,7 +99,7 @@ export default function KtSelect({
                   padding: '6px 0',
                   fontSize: '14px',
                 }}
-                className="text-zinc-800 dark:text-zinc-200"
+                className="text-foreground placeholder:text-muted-foreground"
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -126,7 +118,7 @@ export default function KtSelect({
             }}
           >
             {filteredOptions.length === 0 ? (
-              <div className="py-3 px-4 text-sm text-zinc-400 text-center">
+              <div className="py-3 px-4 text-sm text-muted-foreground text-center">
                 Aucun résultat
               </div>
             ) : (
@@ -137,14 +129,12 @@ export default function KtSelect({
                     key={option.value}
                     role="option"
                     aria-selected={isSelected}
-                    className={`kt-select-option${isSelected ? ' highlighted' : ''}`}
+                    className={`kt-select-option px-3 py-2 text-sm cursor-pointer transition-colors ${
+                      isSelected ? 'bg-accent font-medium text-accent-foreground' : 'hover:bg-accent/50 text-foreground'
+                    }`}
                     onClick={() => {
                       onChange(option.value);
                       setOpen(false);
-                    }}
-                    style={{
-                      backgroundColor: isSelected ? '#f4f4f5' : '#ffffff',
-                      color: '#09090b',
                     }}
                   >
                     <span className="kt-select-option-text">{option.label}</span>
