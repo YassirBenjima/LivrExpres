@@ -590,8 +590,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   : activeMenu === 'suivi' ? 'Suivi'
                   : activeMenu === 'retour' ? 'Retour'
                   : activeMenu === 'facturation' ? 'Facturation'
-                  : activeMenu === 'affiliate' ? 'Affilié'
-                  : activeMenu === 'api' ? 'API'
+                  : activeMenu === 'facturation_crbt' ? 'Liste CRBT'
+                  : activeMenu === 'affiliate' ? 'Affiliate'
+                  : activeMenu === 'api_docs' ? 'Documentation API'
+                  : activeMenu === 'profile' ? 'Profil'
                   : 'Tableau de bord'}
               </span>
             </div>
