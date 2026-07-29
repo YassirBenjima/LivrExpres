@@ -109,10 +109,19 @@ export default function RamassageListPage({ navigate, showNotification }) {
   const paginated  = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const SkeletonRow = () => (
-    <tr className="animate-pulse">
-      {[...Array(10)].map((_, i) => (
-        <td key={i} className="py-4">
-          <div className="h-4 bg-muted rounded w-3/4 my-1"></div>
+    <tr>
+      {[...Array(11)].map((_, i) => (
+        <td key={i}>
+          <div
+            style={{
+              height: '14px',
+              borderRadius: '6px',
+              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.4s infinite',
+              width: i === 0 ? '110px' : i === 1 ? '50px' : i === 7 ? '70px' : i === 10 ? '30px' : '85%',
+            }}
+          />
         </td>
       ))}
     </tr>

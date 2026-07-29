@@ -11,6 +11,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
   const [isColisMenuOpen, setIsColisMenuOpen] = useState(activeMenu.startsWith('colis'));
   const [isStockMenuOpen, setIsStockMenuOpen] = useState(activeMenu.startsWith('stock'));
   const [isRamassageMenuOpen, setIsRamassageMenuOpen] = useState(activeMenu.startsWith('ramassage'));
+  const [isBonLivraisonMenuOpen, setIsBonLivraisonMenuOpen] = useState(activeMenu.startsWith('bon_livraison'));
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -267,15 +268,37 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               </div>
 
               {/* Bon de Livraison */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/bon-livraison/">
+              <div className={`kt-menu-item ${activeMenu.startsWith('bon_livraison') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => setIsBonLivraisonMenuOpen(!isBonLivraisonMenuOpen)}
+                >
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-directbox-default text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Bon de Livraison
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Bon de Livraison</span>
+                  <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                    <i className={`ki-filled ${isBonLivraisonMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
-                </a>
+                </div>
+                {isBonLivraisonMenuOpen && (
+                  <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
+                    <div className={`kt-menu-item ${activeMenu === 'bon_livraison_list' || activeMenu === 'bon_livraison' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/bon-livraison"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/bon-livraison'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste bons de livraison</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'bon_livraison_new' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/bon-livraison/new"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/bon-livraison/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Ajouter Bon de Livraison</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Suivi */}
@@ -447,6 +470,22 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
               )}
+              {activeMenu.startsWith('bon_livraison') && (
+                <>
+                  <a 
+                    href="/bon-livraison" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/bon-livraison');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    Bon de Livraison
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {activeMenu === 'dashboard' ? 'Tableau de bord'
                   : activeMenu === 'colis_list' ? 'Liste des colis'
@@ -464,7 +503,8 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   : activeMenu === 'ramassage_new' ? 'Nouvelle demande de ramassage'
                   : activeMenu === 'ramassage_planning' ? 'Planification des ramassages'
                   : activeMenu === 'ramassage' ? 'Ramassage'
-                  : activeMenu === 'bon_livraison' ? 'Bon de Livraison'
+                  : activeMenu === 'bon_livraison_list' || activeMenu === 'bon_livraison' ? 'Liste bons de livraison'
+                  : activeMenu === 'bon_livraison_new' ? 'Ajouter Bon de Livraison'
                   : activeMenu === 'suivi' ? 'Suivi'
                   : activeMenu === 'retour' ? 'Retour'
                   : activeMenu === 'facturation' ? 'Facturation'

@@ -161,70 +161,127 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* KPI Cards (Interactive Filters) */}
+        {/* KPI Cards (Creative Vibrant Design) */}
         <div className="kt-container-fixed">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7.5 pb-7.5">
             
-            {/* Total */}
+            {/* Card 1: Total */}
             <div 
               onClick={() => setStatusFilter('all')}
-              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="kt-card cursor-pointer transition-all duration-300 relative overflow-hidden group hover:shadow-lg hover:-translate-y-1"
+              style={{
+                border: statusFilter === 'all' ? '2px solid #6366f1' : '1px solid var(--tw-border-opacity, rgba(229, 231, 235, 0.5))',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              }}
             >
-              <div className="kt-card-content flex items-center gap-4 p-5">
-                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <i className="ki-filled ki-parcel text-xl text-primary"></i>
+              <div className="kt-card-content p-5 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Total demandes</span>
+                    <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.total || 0}</span>
+                  </div>
+                  <div 
+                    className="size-12 shrink-0 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform"
+                    style={{ backgroundColor: '#6366f1', color: '#ffffff' }}
+                  >
+                    <i className="ki-filled ki-parcel text-2xl text-white"></i>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-semibold text-mono">{stats.total || 0}</span>
-                  <span className="text-xs text-secondary-foreground font-medium">Total demandes</span>
+                <div className="mt-4 w-full bg-indigo-500/20 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: '100%' }}></div>
                 </div>
               </div>
             </div>
 
-            {/* En attente */}
+            {/* Card 2: En attente */}
             <div 
               onClick={() => setStatusFilter('pending')}
-              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="kt-card cursor-pointer transition-all duration-300 relative overflow-hidden group hover:shadow-lg hover:-translate-y-1"
+              style={{
+                border: statusFilter === 'pending' ? '2px solid #f59e0b' : '1px solid var(--tw-border-opacity, rgba(229, 231, 235, 0.5))',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              }}
             >
-              <div className="kt-card-content flex items-center gap-4 p-5">
-                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <i className="ki-filled ki-time text-xl text-primary"></i>
+              <div className="kt-card-content p-5 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">En attente</span>
+                    <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.pending || 0}</span>
+                  </div>
+                  <div 
+                    className="size-12 shrink-0 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform"
+                    style={{ backgroundColor: '#f59e0b', color: '#ffffff' }}
+                  >
+                    <i className="ki-filled ki-time text-2xl text-white"></i>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-semibold text-mono">{stats.pending || 0}</span>
-                  <span className="text-xs text-secondary-foreground font-medium">En attente</span>
+                <div className="mt-4 w-full bg-amber-500/20 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-amber-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.total ? Math.round(((stats.pending || 0) / stats.total) * 100) : 0}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
 
-            {/* Confirmés */}
+            {/* Card 3: Confirmés */}
             <div 
               onClick={() => setStatusFilter('confirmed')}
-              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="kt-card cursor-pointer transition-all duration-300 relative overflow-hidden group hover:shadow-lg hover:-translate-y-1"
+              style={{
+                border: statusFilter === 'confirmed' ? '2px solid #3b82f6' : '1px solid var(--tw-border-opacity, rgba(229, 231, 235, 0.5))',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              }}
             >
-              <div className="kt-card-content flex items-center gap-4 p-5">
-                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <i className="ki-filled ki-check-circle text-xl text-primary"></i>
+              <div className="kt-card-content p-5 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Confirmés</span>
+                    <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.confirmed || 0}</span>
+                  </div>
+                  <div 
+                    className="size-12 shrink-0 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform"
+                    style={{ backgroundColor: '#3b82f6', color: '#ffffff' }}
+                  >
+                    <i className="ki-filled ki-check-circle text-2xl text-white"></i>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-semibold text-mono">{stats.confirmed || 0}</span>
-                  <span className="text-xs text-secondary-foreground font-medium">Confirmés</span>
+                <div className="mt-4 w-full bg-blue-500/20 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.total ? Math.round(((stats.confirmed || 0) / stats.total) * 100) : 0}%` }}
+                  ></div>
                 </div>
               </div>
             </div>
 
-            {/* Ramassés */}
+            {/* Card 4: Ramassés */}
             <div 
               onClick={() => setStatusFilter('picked_up')}
-              className="kt-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+              className="kt-card cursor-pointer transition-all duration-300 relative overflow-hidden group hover:shadow-lg hover:-translate-y-1"
+              style={{
+                border: statusFilter === 'picked_up' ? '2px solid #10b981' : '1px solid var(--tw-border-opacity, rgba(229, 231, 235, 0.5))',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              }}
             >
-              <div className="kt-card-content flex items-center gap-4 p-5">
-                <div className="size-[50px] shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <i className="ki-filled ki-car text-xl text-primary"></i>
+              <div className="kt-card-content p-5 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Ramassés</span>
+                    <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.picked_up || 0}</span>
+                  </div>
+                  <div 
+                    className="size-12 shrink-0 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform"
+                    style={{ backgroundColor: '#10b981', color: '#ffffff' }}
+                  >
+                    <i className="ki-filled ki-car text-2xl text-white"></i>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-semibold text-mono">{stats.picked_up || 0}</span>
-                  <span className="text-xs text-secondary-foreground font-medium">Ramassés</span>
+                <div className="mt-4 w-full bg-emerald-500/20 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${stats.total ? Math.round(((stats.picked_up || 0) / stats.total) * 100) : 0}%` }}
+                  ></div>
                 </div>
               </div>
             </div>

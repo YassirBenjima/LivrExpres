@@ -22,6 +22,8 @@ import StockStickerPage from './pages/stock/StockStickerPage';
 import RamassageListPage from './pages/ramassage/RamassageListPage';
 import RamassageNewPage from './pages/ramassage/RamassageNewPage';
 import RamassagePlanningPage from './pages/ramassage/RamassagePlanningPage';
+import BonLivraisonListPage from './pages/bon_livraison/BonLivraisonListPage';
+import BonLivraisonNewPage from './pages/bon_livraison/BonLivraisonNewPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -265,6 +267,10 @@ function App() {
   const productStickerMatch = normalizedRoute.match(/^\/stock\/produits\/([^/]+)\/sticker$/);
   const stickerProductId = productStickerMatch && !variantStickerMatch ? productStickerMatch[1] : null;
 
+  // Handle dynamic routing for bon de livraison editing
+  const bonLivraisonEditMatch = normalizedRoute.match(/^\/bon-livraison\/([^/]+)\/edit$/);
+  const editBonId = bonLivraisonEditMatch ? bonLivraisonEditMatch[1] : null;
+
   const renderContent = () => {
     if (editProductId) {
       return <StockProductEditPage productId={editProductId} navigate={navigate} showNotification={showNotification} />;
@@ -272,6 +278,10 @@ function App() {
 
     if (editColisId) {
       return <ColisEditPage colisId={editColisId} navigate={navigate} colisList={colisList} showNotification={showNotification} />;
+    }
+
+    if (editBonId) {
+      return <BonLivraisonNewPage bonId={editBonId} navigate={navigate} showNotification={showNotification} />;
     }
 
     if (stickerVariantId) {
@@ -324,6 +334,10 @@ function App() {
         return <RamassageNewPage navigate={navigate} showNotification={showNotification} />;
       case '/ramassage/planning':
         return <RamassagePlanningPage navigate={navigate} showNotification={showNotification} />;
+      case '/bon-livraison':
+        return <BonLivraisonListPage navigate={navigate} showNotification={showNotification} />;
+      case '/bon-livraison/new':
+        return <BonLivraisonNewPage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':
