@@ -211,7 +211,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
 
               {/* Table Body */}
               <div className="kt-card-content">
-                <div className="kt-scrollable-x-auto">
+                <div className="kt-scrollable-x-auto" style={activeDropdownId !== null ? { overflow: 'visible' } : {}}>
                   <table className="kt-table table-auto kt-table-border">
                     <thead>
                       <tr>
@@ -268,8 +268,8 @@ export default function RamassageListPage({ navigate, showNotification }) {
                               )}
                             </td>
                             <td className="text-foreground font-normal">{pickup.assignedDriver || '-'}</td>
-                            <td className="text-center relative">
-                              <div className="inline-block text-left">
+                            <td className="text-center relative" style={activeDropdownId === pickup.id ? { zIndex: 9999 } : {}}>
+                              <div className="relative inline-block text-left">
                                 <button
                                   onClick={() => setActiveDropdownId(activeDropdownId === pickup.id ? null : pickup.id)}
                                   className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
@@ -278,38 +278,50 @@ export default function RamassageListPage({ navigate, showNotification }) {
                                   <i className="ki-filled ki-dots-vertical text-lg"></i>
                                 </button>
                                 {activeDropdownId === pickup.id && (
-                                  <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)}></div>
-                                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-card border border-border z-50 py-1">
-                                      {pickup.status === 'pending' && (
-                                        <>
+                                  <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
+                                    {pickup.status === 'pending' && (
+                                      <>
+                                        <div className="kt-menu-item">
                                           <button
-                                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left"
+                                            type="button"
+                                            className="kt-menu-link text-start w-full"
                                             onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'confirmed'); }}
                                           >
-                                            <i className="ki-filled ki-check-circle text-base text-primary"></i>
-                                            Confirmer
+                                            <span className="kt-menu-icon">
+                                              <i className="ki-filled ki-check-circle text-primary"></i>
+                                            </span>
+                                            <span className="kt-menu-title">Confirmer</span>
                                           </button>
+                                        </div>
+                                        <div className="kt-menu-item">
                                           <button
-                                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-destructive hover:bg-accent text-left"
+                                            type="button"
+                                            className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
                                             onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'cancelled'); }}
                                           >
-                                            <i className="ki-filled ki-cross-circle text-base text-destructive"></i>
-                                            Annuler
+                                            <span className="kt-menu-icon text-destructive">
+                                              <i className="ki-filled ki-cross-circle text-destructive"></i>
+                                            </span>
+                                            <span className="kt-menu-title text-destructive">Annuler</span>
                                           </button>
-                                        </>
-                                      )}
-                                      {pickup.status === 'confirmed' && (
+                                        </div>
+                                      </>
+                                    )}
+                                    {pickup.status === 'confirmed' && (
+                                      <div className="kt-menu-item">
                                         <button
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left"
+                                          type="button"
+                                          className="kt-menu-link text-start w-full"
                                           onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'picked_up'); }}
                                         >
-                                          <i className="ki-filled ki-truck text-base text-success"></i>
-                                          Marquer ramassé
+                                          <span className="kt-menu-icon">
+                                            <i className="ki-filled ki-truck text-success"></i>
+                                          </span>
+                                          <span className="kt-menu-title">Marquer ramassé</span>
                                         </button>
-                                      )}
-                                    </div>
-                                  </>
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </td>

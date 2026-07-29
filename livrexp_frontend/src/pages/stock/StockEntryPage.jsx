@@ -609,7 +609,7 @@ export default function StockEntryPage({ showNotification }) {
 
               <div className="kt-card-content">
                 <div className="grid">
-                  <div className="kt-scrollable-x-auto">
+                  <div className="kt-scrollable-x-auto" style={activeDropdownId !== null ? { overflow: 'visible' } : {}}>
                     <table className="kt-table table-auto kt-table-border">
                       <thead>
                         <tr>
@@ -664,8 +664,8 @@ export default function StockEntryPage({ showNotification }) {
                                   {STATUS_MAP[m.status] || m.status}
                                 </span>
                               </td>
-                              <td className="text-center relative">
-                                <div className="inline-block text-left">
+                              <td className="text-center relative" style={activeDropdownId === m.id ? { zIndex: 9999 } : {}}>
+                                <div className="relative inline-block text-left">
                                   <button 
                                     onClick={() => setActiveDropdownId(activeDropdownId === m.id ? null : m.id)}
                                     className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
@@ -674,25 +674,32 @@ export default function StockEntryPage({ showNotification }) {
                                     <i className="ki-filled ki-dots-vertical text-lg"></i>
                                   </button>
                                   {activeDropdownId === m.id && (
-                                    <>
-                                      <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)}></div>
-                                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border z-50 py-1">
+                                    <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
+                                      <div className="kt-menu-item">
                                         <button
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left opacity-60 cursor-not-allowed"
+                                          type="button"
+                                          className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
                                           disabled
                                         >
-                                          <i className="ki-filled ki-eye text-base text-muted-foreground"></i>
-                                          Détails
-                                        </button>
-                                        <button
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left opacity-60 cursor-not-allowed"
-                                          disabled
-                                        >
-                                          <i className="ki-filled ki-pencil text-base text-muted-foreground"></i>
-                                          Modifier
+                                          <span className="kt-menu-icon">
+                                            <i className="ki-filled ki-eye"></i>
+                                          </span>
+                                          <span className="kt-menu-title">Détails</span>
                                         </button>
                                       </div>
-                                    </>
+                                      <div className="kt-menu-item">
+                                        <button
+                                          type="button"
+                                          className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
+                                          disabled
+                                        >
+                                          <span className="kt-menu-icon">
+                                            <i className="ki-filled ki-pencil"></i>
+                                          </span>
+                                          <span className="kt-menu-title">Modifier</span>
+                                        </button>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </td>

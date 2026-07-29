@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
 export default function BonLivraisonListPage({ navigate, showNotification }) {
   const [bons, setBons] = useState([]);
@@ -54,6 +55,22 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
       fetchBons();
     }, 0);
   };
+
+  const toggleDropdown = (id) => {
+    setOpenDropdownId(prev => prev === id ? null : id);
+  };
+
+  useEffect(() => {
+    const handleDocumentClick = (e) => {
+      if (openDropdownId !== null && !e.target.closest('.kt-menu-toggle')) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [openDropdownId]);
 
   const confirmDelete = (bon) => {
     setBonToDelete(bon);
@@ -157,15 +174,17 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
                     </label>
                   </div>
                   <div className="flex flex-wrap gap-2.5">
-                    <select 
-                      className="kt-select w-36"
+                    <KtSelect
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <option value="">Tous les statuts</option>
-                      <option value="enregistre">Enregistré</option>
-                      <option value="annule">Annulé</option>
-                    </select>
+                      onChange={(val) => setStatusFilter(val)}
+                      placeholder="Statut"
+                      className="w-36"
+                      options={[
+                        { value: '', label: 'Tous les statuts' },
+                        { value: 'enregistre', label: 'Enregistré' },
+                        { value: 'annule', label: 'Annulé' }
+                      ]}
+                    />
                     <button className="kt-btn kt-btn-outline kt-btn-primary" type="submit">
                       <i className="ki-filled ki-setting-4"></i>
                       Filtrer
@@ -184,7 +203,7 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
               {/* Card Content / Data Table */}
               <div className="kt-card-content">
                 <div id="bon_livraison_table">
-                  <div className="kt-scrollable-x-auto">
+                  <div className="kt-scrollable-x-auto" style={openDropdownId !== null ? { overflow: 'visible' } : {}}>
                     <table className="kt-table table-auto kt-table-border">
                       <thead>
                         <tr>
@@ -262,56 +281,52 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
                                   )}
                                 </div>
                               </td>
-                              <td className="text-center relative">
-                                <div className="relative inline-block">
+                              <td className="text-center relative" style={openDropdownId === bon.id ? { zIndex: 9999 } : {}}>
+                                <div className="relative inline-block text-left">
                                   <button 
-                                    onClick={() => setOpenDropdownId(openDropdownId === bon.id ? null : bon.id)}
-                                    className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                                    className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                                    onClick={() => toggleDropdown(bon.id)}
                                   >
                                     <i className="ki-filled ki-dots-vertical text-lg"></i>
                                   </button>
                                   
                                   {openDropdownId === bon.id && (
-                                    <>
-                                      <div 
-                                        className="fixed inset-0 z-10" 
-                                        onClick={() => setOpenDropdownId(null)}
-                                      ></div>
-                                      <div className="absolute end-0 top-full mt-1 w-[175px] bg-background border border-border rounded-lg shadow-xl z-20 py-1 text-start">
-                                        <div className="kt-menu-item">
-                                          <a 
-                                            className="kt-menu-link flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent cursor-pointer"
-                                            href={`/api/bon-livraison/${bon.id}/download`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                          >
-                                            <span className="kt-menu-icon"><i className="ki-filled ki-file-down"></i></span>
-                                            <span className="kt-menu-title">Télécharger</span>
-                                          </a>
-                                        </div>
-                                        <div className="kt-menu-item">
-                                          <button 
-                                            className="kt-menu-link w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-start"
-                                            onClick={() => {
-                                              setOpenDropdownId(null);
-                                              navigate(`/bon-livraison/${bon.id}/edit`);
-                                            }}
-                                          >
-                                            <span className="kt-menu-icon"><i className="ki-filled ki-pencil"></i></span>
-                                            <span className="kt-menu-title">Modifier</span>
-                                          </button>
-                                        </div>
-                                        <div className="kt-menu-item">
-                                          <button 
-                                            className="kt-menu-link w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-start text-destructive"
-                                            onClick={() => confirmDelete(bon)}
-                                          >
-                                            <span className="kt-menu-icon"><i className="ki-filled ki-trash"></i></span>
-                                            <span className="kt-menu-title">Supprimer</span>
-                                          </button>
-                                        </div>
+                                    <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
+                                      <div className="kt-menu-item">
+                                        <a 
+                                          className="kt-menu-link text-start w-full"
+                                          href={`/api/bon-livraison/${bon.id}/download`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          <span className="kt-menu-icon"><i className="ki-filled ki-file-down"></i></span>
+                                          <span className="kt-menu-title">Télécharger</span>
+                                        </a>
                                       </div>
-                                    </>
+                                      <div className="kt-menu-item">
+                                        <button 
+                                          type="button"
+                                          className="kt-menu-link text-start w-full"
+                                          onClick={() => {
+                                            setOpenDropdownId(null);
+                                            navigate(`/bon-livraison/${bon.id}/edit`);
+                                          }}
+                                        >
+                                          <span className="kt-menu-icon"><i className="ki-filled ki-pencil"></i></span>
+                                          <span className="kt-menu-title">Modifier</span>
+                                        </button>
+                                      </div>
+                                      <div className="kt-menu-item">
+                                        <button 
+                                          type="button"
+                                          className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                          onClick={() => confirmDelete(bon)}
+                                        >
+                                          <span className="kt-menu-icon text-destructive"><i className="ki-filled ki-trash"></i></span>
+                                          <span className="kt-menu-title text-destructive">Supprimer</span>
+                                        </button>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </td>

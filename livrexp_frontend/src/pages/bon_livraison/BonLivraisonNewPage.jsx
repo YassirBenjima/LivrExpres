@@ -139,6 +139,16 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
     }
   };
 
+  const SkeletonRow = () => (
+    <tr className="animate-pulse">
+      {[...Array(7)].map((_, i) => (
+        <td key={i} className="py-4">
+          <div className="h-4 bg-muted rounded w-3/4 my-1"></div>
+        </td>
+      ))}
+    </tr>
+  );
+
   const allVisibleSelected = availableColis.length > 0 && availableColis.every(c => selectedColisIds.includes(c.id));
 
   return (
@@ -277,11 +287,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                       </thead>
                       <tbody>
                         {loading ? (
-                          <tr>
-                            <td colSpan="7" className="text-secondary-foreground text-center py-8">
-                              Chargement des colis disponibles...
-                            </td>
-                          </tr>
+                          [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
                         ) : availableColis.length === 0 ? (
                           <tr>
                             <td colSpan="7" className="text-secondary-foreground text-center py-8">

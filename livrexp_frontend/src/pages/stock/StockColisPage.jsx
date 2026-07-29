@@ -13,6 +13,7 @@ export default function StockColisPage({ navigate, showNotification }) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedIds, setSelectedIds]   = useState([]);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [dropdownPos, setDropdownPos] = useState(null);
   const [deleteColis, setDeleteColis]   = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [pickupLoading, setPickupLoading] = useState(false);
@@ -408,39 +409,65 @@ export default function StockColisPage({ navigate, showNotification }) {
                               <td className="text-center relative">
                                 <div className="inline-block text-left">
                                   <button 
-                                    onClick={() => setActiveDropdownId(activeDropdownId === colis.id ? null : colis.id)}
                                     className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                                    onClick={(e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 190 });
+                                      setActiveDropdownId(activeDropdownId === colis.id ? null : colis.id);
+                                    }}
                                   >
                                     <i className="ki-filled ki-dots-vertical text-lg"></i>
                                   </button>
-                                  {activeDropdownId === colis.id && (
-                                    <>
-                                      <div className="fixed inset-0 z-40" onClick={() => setActiveDropdownId(null)}></div>
-                                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border z-50 py-1">
+                                  {activeDropdownId === colis.id && dropdownPos && createPortal(
+                                    <div 
+                                      className="kt-menu-dropdown kt-menu-default fixed w-[190px]" 
+                                      style={{ 
+                                        position: 'fixed',
+                                        top: `${dropdownPos.top - window.scrollY}px`, 
+                                        left: `${dropdownPos.left - window.scrollX}px`, 
+                                        zIndex: 99999, 
+                                        display: 'block' 
+                                      }}
+                                    >
+                                      <div className="kt-menu-item">
                                         <button
+                                          type="button"
+                                          className="kt-menu-link text-start w-full"
                                           onClick={() => { setActiveDropdownId(null); navigate(`/colis/${colis.id}/edit`); }}
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left"
                                         >
-                                          <i className="ki-filled ki-pencil text-base text-muted-foreground"></i>
-                                          Modifier
-                                        </button>
-                                        <button
-                                          onClick={() => { setActiveDropdownId(null); setDeleteColis(colis); }}
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-destructive hover:bg-accent text-left"
-                                        >
-                                          <i className="ki-filled ki-trash text-base text-destructive"></i>
-                                          Supprimer
-                                        </button>
-                                        <div className="border-t border-border my-1"></div>
-                                        <button
-                                          onClick={() => { setActiveDropdownId(null); handleSinglePickupRequest(colis.id); }}
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-foreground hover:bg-accent text-left"
-                                        >
-                                          <i className="ki-filled ki-delivery-2 text-base text-muted-foreground"></i>
-                                          Demander un ramassage
+                                          <span className="kt-menu-icon">
+                                            <i className="ki-filled ki-pencil"></i>
+                                          </span>
+                                          <span className="kt-menu-title">Modifier</span>
                                         </button>
                                       </div>
-                                    </>
+                                      <div className="kt-menu-item">
+                                        <button
+                                          type="button"
+                                          className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                          onClick={() => { setActiveDropdownId(null); setDeleteColis(colis); }}
+                                        >
+                                          <span className="kt-menu-icon text-destructive">
+                                            <i className="ki-filled ki-trash"></i>
+                                          </span>
+                                          <span className="kt-menu-title text-destructive">Supprimer</span>
+                                        </button>
+                                      </div>
+                                      <div className="kt-menu-separator"></div>
+                                      <div className="kt-menu-item">
+                                        <button
+                                          type="button"
+                                          className="kt-menu-link text-start w-full"
+                                          onClick={() => { setActiveDropdownId(null); handleSinglePickupRequest(colis.id); }}
+                                        >
+                                          <span className="kt-menu-icon">
+                                            <i className="ki-filled ki-delivery-2"></i>
+                                          </span>
+                                          <span className="kt-menu-title">Demander un ramassage</span>
+                                        </button>
+                                      </div>
+                                    </div>,
+                                    document.body
                                   )}
                                 </div>
                               </td>

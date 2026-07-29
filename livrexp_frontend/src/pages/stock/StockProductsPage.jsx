@@ -261,7 +261,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
 
               <div className="kt-card-content">
                 <div className="grid">
-                  <div className="kt-scrollable-x-auto">
+                  <div className="kt-scrollable-x-auto" style={activeDropdownId !== null ? { overflow: 'visible' } : {}}>
                     <table className="kt-table table-auto kt-table-border">
                       <thead>
                         <tr>
