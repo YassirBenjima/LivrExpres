@@ -30,6 +30,8 @@ import RetourDemandeListPage from './pages/retour/RetourDemandeListPage';
 import RetourDemandeNewPage from './pages/retour/RetourDemandeNewPage';
 import RetourBonsListPage from './pages/retour/RetourBonsListPage';
 import FacturationCrbtPage from './pages/facturation/FacturationCrbtPage';
+import AffiliatePage from './pages/affiliate/AffiliatePage';
+import ApiDocsPage from './pages/api_docs/ApiDocsPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -243,6 +245,12 @@ function App() {
       case '/facturation/crbt':
         title = 'Facturation CRBT - LivrExpress';
         break;
+      case '/affiliate':
+        title = 'Affiliate - LivrExpress';
+        break;
+      case '/api-docs':
+        title = 'Documentation API - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -376,6 +384,10 @@ function App() {
       case '/facturation/crbt':
       case '/facturation':
         return <FacturationCrbtPage navigate={navigate} showNotification={showNotification} />;
+      case '/affiliate':
+        return <AffiliatePage navigate={navigate} showNotification={showNotification} />;
+      case '/api-docs':
+        return <ApiDocsPage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':

@@ -400,20 +400,22 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               </div>
 
               {/* Affiliate */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/affiliate/">
+              <div className={`kt-menu-item ${activeMenu === 'affiliate' ? 'active' : ''}`}>
+                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/affiliate"
+                  onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/affiliate'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-share text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Affilié
+                    Affiliate
                   </span>
                 </a>
               </div>
 
               {/* API */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/api-docs">
+              <div className={`kt-menu-item ${activeMenu === 'api_docs' ? 'active' : ''}`}>
+                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/api-docs"
+                  onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/api-docs'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-code text-lg"></i>
                   </span>
