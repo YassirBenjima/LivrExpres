@@ -310,22 +310,22 @@ final class RetourFacturationApiController extends AbstractController
         $data = [];
 
         foreach ($entries as $crbt) {
-            $statut = $crbt->getStatut();
+            $statut = $crbt->getStatus();
+            $colis = $crbt->getColis();
             $data[] = [
                 'id' => $crbt->getId(),
-                'code' => $crbt->getCode(),
-                'dateCreation' => $crbt->getDateCreation() ? $crbt->getDateCreation()->format('d/m/Y H:i') : '-',
-                'nbrColis' => $crbt->getNbrColis(),
-                'totalBrut' => (float) $crbt->getTotalBrut(),
-                'fraisLivraison' => (float) $crbt->getFraisLivraison(),
-                'fraisRefus' => (float) $crbt->getFraisRefus(),
-                'totalNet' => (float) $crbt->getTotalNet(),
+                'code' => $crbt->getReference() ?: ('CRBT-' . $crbt->getId()),
+                'dateCreation' => $crbt->getCreatedAt() ? $crbt->getCreatedAt()->format('d/m/Y H:i') : '-',
+                'nbrColis' => 1,
+                'totalBrut' => (float) ($colis ? $colis->getPrice() : $crbt->getMontant()),
+                'fraisLivraison' => 0.0,
+                'fraisRefus' => 0.0,
+                'totalNet' => (float) $crbt->getBalance(),
                 'statut' => $statut,
                 'statutLabel' => $statutLabels[$statut] ?? $statut,
                 'statutBadgeClass' => match ($statut) {
-                    Crbt::STATUT_PAYE => 'kt-badge-success',
-                    Crbt::STATUT_PAYE_BANQUE => 'kt-badge-info',
-                    Crbt::STATUT_ANNULE => 'kt-badge-destructive',
+                    Crbt::STATUS_PAYE => 'kt-badge-success',
+                    Crbt::STATUS_DISPONIBLE => 'kt-badge-info',
                     default => 'kt-badge-warning',
                 },
             ];
@@ -334,11 +334,11 @@ final class RetourFacturationApiController extends AbstractController
         return $this->json([
             'entries' => $data,
             'summary' => [
-                'totalNet' => (float) ($summary['totalNet'] ?? 0.0),
-                'totalBrut' => (float) ($summary['totalBrut'] ?? 0.0),
-                'fraisLivraison' => (float) ($summary['fraisLivraison'] ?? 0.0),
-                'fraisRefus' => (float) ($summary['fraisRefus'] ?? 0.0),
-                'nbrColis' => (int) ($summary['nbrColis'] ?? 0),
+                'totalNet' => (float) ($summary['disponible'] ?? 0.0) + (float) ($summary['paye'] ?? 0.0),
+                'totalBrut' => (float) ($summary['disponible'] ?? 0.0) + (float) ($summary['paye'] ?? 0.0) + (float) ($summary['en_attente'] ?? 0.0),
+                'fraisLivraison' => 0.0,
+                'fraisRefus' => 0.0,
+                'nbrColis' => count($entries),
             ],
             'statuts_possibles' => Crbt::getStatusesPossibles(),
             'statut_labels' => $statutLabels,
