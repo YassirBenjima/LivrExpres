@@ -64,10 +64,10 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification(data.message || 'Champ mis à jour avec succès.', 'success');
+        if (showNotification) showNotification('success', data.message || 'Champ mis à jour avec succès.');
         fetchProfile();
       } else {
-        if (showNotification) showNotification(data.message || 'Erreur lors de la mise à jour.', 'danger');
+        if (showNotification) showNotification('danger', data.message || 'Erreur lors de la mise à jour.');
       }
     } catch (err) {
       console.error('Erreur sauvegarde profil:', err);
@@ -94,10 +94,10 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification(data.message, 'success');
+        if (showNotification) showNotification('success', data.message);
         fetchProfile();
       } else {
-        if (showNotification) showNotification(data.message || 'Erreur téléversement avatar.', 'danger');
+        if (showNotification) showNotification('danger', data.message || 'Erreur téléversement avatar.');
       }
     } catch (err) {
       console.error('Erreur avatar:', err);
@@ -118,7 +118,7 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification(data.message, 'success');
+        if (showNotification) showNotification('success', data.message);
         fetchProfile();
       }
     } catch (err) {
@@ -142,10 +142,10 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification(data.message, 'success');
+        if (showNotification) showNotification('success', data.message);
         setPasswordState({ current_password: '', new_password: '', confirm_password: '' });
       } else {
-        if (showNotification) showNotification(data.message || 'Erreur mot de passe.', 'danger');
+        if (showNotification) showNotification('danger', data.message || 'Erreur mot de passe.');
       }
     } catch (err) {
       console.error('Erreur mot de passe:', err);

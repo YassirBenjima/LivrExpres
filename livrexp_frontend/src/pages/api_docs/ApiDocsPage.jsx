@@ -54,7 +54,7 @@ export default function ApiDocsPage({ navigate, showNotification }) {
       if (res.ok) {
         const json = await res.json();
         setApiKey(json.api_key);
-        if (showNotification) showNotification(json.message || 'Nouvelle clé API générée.', 'success');
+        if (showNotification) showNotification('success', json.message || 'Nouvelle clé API générée.');
       }
     } catch (err) {
       console.error('Erreur génération clé API:', err);
@@ -67,7 +67,7 @@ export default function ApiDocsPage({ navigate, showNotification }) {
     if (!apiKey) return;
     navigator.clipboard.writeText(apiKey);
     setCopiedKey(true);
-    if (showNotification) showNotification('Clé API copiée !', 'success');
+    if (showNotification) showNotification('success', 'Clé API copiée !');
     setTimeout(() => setCopiedKey(false), 2000);
   };
 

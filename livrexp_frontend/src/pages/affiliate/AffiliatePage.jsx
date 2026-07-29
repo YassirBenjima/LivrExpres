@@ -41,7 +41,7 @@ export default function AffiliatePage({ navigate, showNotification }) {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedLink(type);
-    if (showNotification) showNotification('Lien copié dans le presse-papier !', 'success');
+    if (showNotification) showNotification('success', 'Lien copié dans le presse-papier !');
     setTimeout(() => setCopiedLink(''), 2000);
   };
 
