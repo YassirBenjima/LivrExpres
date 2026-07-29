@@ -143,7 +143,16 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
     <tr className="animate-pulse">
       {[...Array(7)].map((_, i) => (
         <td key={i} className="py-4">
-          <div className="h-4 bg-muted rounded w-3/4 my-1"></div>
+          <div
+            style={{
+              height: '14px',
+              borderRadius: '6px',
+              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.4s infinite',
+              width: i === 0 ? '20px' : i === 1 ? '110px' : i === 6 ? '70px' : '90%',
+            }}
+          />
         </td>
       ))}
     </tr>
