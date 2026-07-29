@@ -665,7 +665,12 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                         <a
                           href="/profile"
                           className="flex items-center gap-2 px-2.5 py-2 text-sm text-foreground hover:bg-accent rounded-md mx-1"
-                          onClick={() => setIsUserMenuOpen(false)}
+                          onClick={e => {
+                            e.preventDefault();
+                            setIsUserMenuOpen(false);
+                            window.history.pushState({}, '', '/profile');
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }}
                         >
                           <i className="ki-filled ki-profile-circle text-base"></i>
                           Mon Profil

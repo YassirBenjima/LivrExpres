@@ -32,6 +32,7 @@ import RetourBonsListPage from './pages/retour/RetourBonsListPage';
 import FacturationCrbtPage from './pages/facturation/FacturationCrbtPage';
 import AffiliatePage from './pages/affiliate/AffiliatePage';
 import ApiDocsPage from './pages/api_docs/ApiDocsPage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -251,6 +252,9 @@ function App() {
       case '/api-docs':
         title = 'Documentation API - LivrExpress';
         break;
+      case '/profile':
+        title = 'Mon Profil - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -388,6 +392,8 @@ function App() {
         return <AffiliatePage navigate={navigate} showNotification={showNotification} />;
       case '/api-docs':
         return <ApiDocsPage navigate={navigate} showNotification={showNotification} />;
+      case '/profile':
+        return <ProfilePage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':
