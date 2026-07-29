@@ -24,6 +24,8 @@ import RamassageNewPage from './pages/ramassage/RamassageNewPage';
 import RamassagePlanningPage from './pages/ramassage/RamassagePlanningPage';
 import BonLivraisonListPage from './pages/bon_livraison/BonLivraisonListPage';
 import BonLivraisonNewPage from './pages/bon_livraison/BonLivraisonNewPage';
+import TrackingChangeRecipientPage from './pages/tracking/TrackingChangeRecipientPage';
+import TrackingWhatsappTemplatePage from './pages/tracking/TrackingWhatsappTemplatePage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -219,6 +221,12 @@ function App() {
       case '/ramassage/planning':
         title = 'Planification des ramassages - LivrExpress';
         break;
+      case '/suivi/changement-destinataire':
+        title = 'Changement destinataire - LivrExpress';
+        break;
+      case '/suivi/modele-whatsapp':
+        title = 'Suivi par Whatsapp - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -338,6 +346,10 @@ function App() {
         return <BonLivraisonListPage navigate={navigate} showNotification={showNotification} />;
       case '/bon-livraison/new':
         return <BonLivraisonNewPage navigate={navigate} showNotification={showNotification} />;
+      case '/suivi/changement-destinataire':
+        return <TrackingChangeRecipientPage navigate={navigate} showNotification={showNotification} />;
+      case '/suivi/modele-whatsapp':
+        return <TrackingWhatsappTemplatePage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':

@@ -1,0 +1,524 @@
+import React, { useState, useEffect } from 'react';
+import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
+
+export default function TrackingChangeRecipientPage({ navigate, showNotification }) {
+  const [colisList, setColisList] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('same'); // 'same' | 'newcity'
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedCityData, setSelectedCityData] = useState({}); // id -> city string for dataset
+
+  // Search & Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCity, setFilterCity] = useState('');
+
+  // Bulk update form state
+  const [bulkRecipient, setBulkRecipient] = useState('');
+  const [bulkPhoneNumber, setBulkPhoneNumber] = useState('');
+  const [bulkCity, setBulkCity] = useState('');
+  const [bulkAddress, setBulkAddress] = useState('');
+  const [bulkNeighborhood, setBulkNeighborhood] = useState('');
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const fetchCities = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/cities', {
+        headers: {
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCities(data.map(c => typeof c === 'string' ? c : (c.name || c.label)));
+      }
+    } catch (err) {
+      console.error('Erreur chargement des villes:', err);
+    }
+  };
+
+  const fetchColis = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const params = new URLSearchParams();
+      params.append('tab', activeTab);
+      if (searchQuery) params.append('q', searchQuery);
+      if (filterCity) params.append('city', filterCity);
+
+      const res = await fetch(`/api/suivi/changement-destinataire?${params.toString()}`, {
+        headers: {
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setColisList(data.colis_list || data || []);
+        if (data.cities && Array.isArray(data.cities) && data.cities.length > 0) {
+          setCities(data.cities);
+        }
+      } else {
+        // Fallback to general colis if backend route not ready
+        const fallbackRes = await fetch('/api/colis', {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          setColisList(Array.isArray(fallbackData) ? fallbackData : (fallbackData.colis_list || []));
+        }
+      }
+    } catch (err) {
+      console.error('Erreur chargement colis suivi:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
+
+  useEffect(() => {
+    fetchColis();
+    setSelectedIds([]);
+  }, [activeTab, searchQuery, filterCity]);
+
+  // Handle single row checkbox toggle
+  const handleSelectRow = (colis) => {
+    if (selectedIds.includes(colis.id)) {
+      const nextIds = selectedIds.filter(id => id !== colis.id);
+      setSelectedIds(nextIds);
+    } else {
+      setSelectedIds([...selectedIds, colis.id]);
+    }
+  };
+
+  // Select all visible row toggle
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const pageIds = paginatedColis.map(c => c.id);
+      setSelectedIds(Array.from(new Set([...selectedIds, ...pageIds])));
+    } else {
+      const pageIdsSet = new Set(paginatedColis.map(c => c.id));
+      setSelectedIds(selectedIds.filter(id => !pageIdsSet.has(id)));
+    }
+  };
+
+  // Bulk recipient update submit
+  const handleBulkSubmit = async (e) => {
+    e.preventDefault();
+    if (selectedIds.length === 0) return;
+
+    setBulkSubmitting(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const payload = {
+        colis_ids: selectedIds,
+        tab: activeTab,
+        recipient: bulkRecipient,
+        phoneNumber: bulkPhoneNumber,
+        city: bulkCity,
+        address: bulkAddress,
+        neighborhood: bulkNeighborhood
+      };
+
+      const res = await fetch('/api/suivi/changement-destinataire/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showNotification?.('success', data.message || `${selectedIds.length} colis mis à jour.`);
+        setBulkRecipient('');
+        setBulkPhoneNumber('');
+        setBulkCity('');
+        setBulkAddress('');
+        setBulkNeighborhood('');
+        setSelectedIds([]);
+        fetchColis();
+      } else {
+        showNotification?.('error', data.message || 'Erreur lors de la mise à jour groupée.');
+      }
+    } catch (err) {
+      showNotification?.('error', 'Erreur de communication avec le serveur.');
+    } finally {
+      setBulkSubmitting(false);
+    }
+  };
+
+  // Filtered List Client-Side logic
+  const filteredColis = colisList.filter(colis => {
+    const matchesSearch = !searchQuery ? true : [
+      colis.trackingCode,
+      colis.productNature,
+      colis.recipient,
+      colis.phoneNumber,
+      colis.city,
+      colis.address
+    ].some(v => v?.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCity = !filterCity ? true : colis.city?.toLowerCase() === filterCity.toLowerCase();
+
+    return matchesSearch && matchesCity;
+  });
+
+  const totalColis = filteredColis.length;
+
+  // Pagination
+  const totalPages = Math.ceil(totalColis / itemsPerPage);
+  const paginatedColis = filteredColis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const allVisibleSelected = paginatedColis.length > 0 && paginatedColis.every(c => selectedIds.includes(c.id));
+
+  const perPageOptions = [
+    { value: '5', label: '5' },
+    { value: '10', label: '10' },
+  ];
+  if (totalColis > 10) perPageOptions.push({ value: '20', label: '20' });
+  if (totalColis >= 50) perPageOptions.push({ value: '50', label: '50' });
+
+  const SkeletonRow = () => (
+    <tr className="animate-pulse">
+      {[...Array(9)].map((_, i) => (
+        <td key={i} className="py-4">
+          <div
+            style={{
+              height: '14px',
+              borderRadius: '6px',
+              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.4s infinite',
+              width: i === 0 ? '20px' : i === 1 ? '110px' : i === 5 ? '70px' : '85%',
+            }}
+          />
+        </td>
+      ))}
+    </tr>
+  );
+
+  return (
+    <DashboardLayout activeMenu="suivi_changement_destinataire">
+      <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
+
+        {/* Page Title & Stats */}
+        <div className="kt-container-fixed">
+          <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+            <div className="flex flex-col justify-center gap-2">
+              <h1 className="text-xl font-medium leading-none text-mono">Changement destinataire</h1>
+              <div className="flex items-center flex-wrap gap-1.5 font-medium">
+                <span className="text-base text-secondary-foreground">Total colis :</span>
+                <span className="text-base text-foreground font-medium">{totalColis}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs: Même ville / Autre ville */}
+        <div className="kt-container-fixed mb-5">
+          <div className="flex border-b border-border gap-6">
+            <button
+              onClick={() => { setActiveTab('same'); setCurrentPage(1); }}
+              className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'same'
+                  ? 'border-primary text-primary font-semibold'
+                  : 'border-transparent text-secondary-foreground hover:text-foreground'
+              }`}
+            >
+              Même ville
+            </button>
+            <button
+              onClick={() => { setActiveTab('newcity'); setCurrentPage(1); }}
+              className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
+                activeTab === 'newcity'
+                  ? 'border-primary text-primary font-semibold'
+                  : 'border-transparent text-secondary-foreground hover:text-foreground'
+              }`}
+            >
+              Autre ville
+            </button>
+          </div>
+        </div>
+
+        {/* Bulk Recipient Form Card */}
+        <div className="kt-container-fixed">
+          <div className="kt-card border border-border/60 mb-5">
+            <div className="kt-card-content p-4">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm font-semibold text-foreground">Mise à jour groupée destinataire</div>
+                    <span className="kt-badge kt-badge-info kt-badge-outline rounded-[30px]">
+                      <span className="kt-badge-dot size-1.5"></span>
+                      <span>{selectedIds.length}</span>&nbsp;sélectionné(s)
+                    </span>
+                  </div>
+                  <div className="text-2sm text-secondary-foreground">
+                    Sélectionnez des colis puis mettez à jour les informations du destinataire.
+                  </div>
+                </div>
+
+                <form className="flex flex-wrap items-end gap-3" onSubmit={handleBulkSubmit}>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-2sm text-secondary-foreground font-medium">Destinataire</label>
+                    <input 
+                      className="kt-input w-56" 
+                      placeholder="Nom du destinataire" 
+                      type="text"
+                      value={bulkRecipient}
+                      onChange={(e) => setBulkRecipient(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-2sm text-secondary-foreground font-medium">Téléphone</label>
+                    <input 
+                      className="kt-input w-44" 
+                      placeholder="Numéro de téléphone" 
+                      type="text"
+                      value={bulkPhoneNumber}
+                      onChange={(e) => setBulkPhoneNumber(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-2sm text-secondary-foreground font-medium">Ville</label>
+                    <KtSelect
+                      value={bulkCity}
+                      onChange={(val) => setBulkCity(val)}
+                      placeholder="Choisir une ville"
+                      enableSearch
+                      searchPlaceholder="Chercher une ville..."
+                      className="w-56"
+                      options={[
+                        { value: '', label: 'Choisir une ville' },
+                        ...cities.map(c => ({ value: c, label: c }))
+                      ]}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-2sm text-secondary-foreground font-medium">Adresse</label>
+                    <input 
+                      className="kt-input w-72" 
+                      placeholder="Adresse" 
+                      type="text"
+                      value={bulkAddress}
+                      onChange={(e) => setBulkAddress(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-2sm text-secondary-foreground font-medium">Quartier</label>
+                    <input 
+                      className="kt-input w-44" 
+                      placeholder="Quartier" 
+                      type="text"
+                      value={bulkNeighborhood}
+                      onChange={(e) => setBulkNeighborhood(e.target.value)}
+                    />
+                  </div>
+
+                  <button 
+                    className="kt-btn kt-btn-primary" 
+                    type="submit" 
+                    disabled={selectedIds.length === 0 || bulkSubmitting}
+                  >
+                    <i className="ki-filled ki-user-edit"></i>
+                    {bulkSubmitting ? 'Mise à jour...' : 'Mettre à jour'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="kt-container-fixed">
+          <div className="grid gap-5 lg:gap-7.5">
+            <div className="kt-card kt-card-grid min-w-full">
+              
+              {/* Table Header Filter */}
+              <div className="kt-card-header flex-wrap gap-2">
+                <h3 className="kt-card-title text-sm">Affichage de {filteredColis.length} colis</h3>
+                <div className="flex flex-wrap gap-2 lg:gap-5">
+                  <div className="flex">
+                    <label className="kt-input">
+                      <i className="ki-filled ki-magnifier"></i>
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        placeholder="Code de suivi, destinataire, ville..."
+                        type="text"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <KtSelect
+                      value={filterCity}
+                      onChange={(val) => { setFilterCity(val); setCurrentPage(1); }}
+                      placeholder="Choisir une ville"
+                      enableSearch
+                      searchPlaceholder="Chercher une ville..."
+                      className="w-56"
+                      options={[
+                        { value: '', label: 'Choisir une ville' },
+                        ...cities.map(c => ({ value: c, label: c }))
+                      ]}
+                    />
+
+                    <button
+                      className="kt-btn kt-btn-outline"
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setFilterCity('');
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Réinitialiser
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table Content */}
+              <div className="kt-card-content">
+                <div className="kt-scrollable-x-auto">
+                  <table className="kt-table table-auto kt-table-border">
+                    <thead>
+                      <tr>
+                        <th className="w-[50px]">
+                          <input 
+                            className="kt-checkbox kt-checkbox-sm" 
+                            type="checkbox"
+                            checked={allVisibleSelected}
+                            onChange={handleSelectAll}
+                          />
+                        </th>
+                        <th className="min-w-[150px]">Code de suivi</th>
+                        <th className="min-w-[180px]">Nom du produit</th>
+                        <th className="min-w-[160px]">Date de ramassage</th>
+                        <th className="min-w-[180px]">Destinataire</th>
+                        <th className="min-w-[120px]">Statut</th>
+                        <th className="min-w-[140px]">Ville</th>
+                        <th className="min-w-[120px]">Prix</th>
+                        <th className="min-w-[220px]">Commentaire</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                      ) : paginatedColis.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="text-center text-secondary-foreground py-8">
+                            Aucun enregistrement correspondant
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedColis.map((colis) => {
+                          const isChecked = selectedIds.includes(colis.id);
+                          const statutLabel = colis.statutLabel || colis.statut || 'En attente';
+                          const statutBadgeClass = statutLabel === 'Terminé' ? 'kt-badge-success'
+                            : statutLabel === 'En cours' ? 'kt-badge-primary'
+                            : statutLabel === 'Reporté' ? 'kt-badge-info'
+                            : statutLabel === 'Échec' ? 'kt-badge-destructive'
+                            : 'kt-badge-warning';
+
+                          return (
+                            <tr key={colis.id} className={isChecked ? 'bg-accent/30' : ''}>
+                              <td>
+                                <input
+                                  className="kt-checkbox kt-checkbox-sm"
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleSelectRow(colis)}
+                                />
+                              </td>
+                              <td className="text-foreground font-medium text-mono">{colis.trackingCode}</td>
+                              <td className="text-foreground font-normal">{colis.productNature}</td>
+                              <td className="text-foreground font-normal">{colis.createdAt || '-'}</td>
+                              <td className="text-foreground font-normal">{colis.recipient || '-'}</td>
+                              <td>
+                                <span className={`kt-badge ${statutBadgeClass} kt-badge-outline rounded-[30px]`}>
+                                  <span className="kt-badge-dot size-1.5"></span>
+                                  {statutLabel}
+                                </span>
+                              </td>
+                              <td className="text-foreground font-normal">{colis.city}</td>
+                              <td className="text-foreground font-medium">
+                                {(colis.price || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
+                              </td>
+                              <td className="text-foreground font-normal">{colis.comment || '-'}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Table Footer / Pagination */}
+                <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    Afficher
+                    <KtSelect
+                      value={String(itemsPerPage)}
+                      onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
+                      className="w-16"
+                      options={perPageOptions}
+                    />
+                    par page
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <span>
+                      Affichage de {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalColis, currentPage * itemsPerPage)} sur {totalColis} colis
+                    </span>
+                    {totalPages > 1 && (
+                      <div className="flex gap-1">
+                        <button 
+                          className="kt-btn kt-btn-sm kt-btn-outline px-2"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        >
+                          Précédent
+                        </button>
+                        <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
+                        <button 
+                          className="kt-btn kt-btn-sm kt-btn-outline px-2"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        >
+                          Suivant
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </DashboardLayout>
+  );
+}

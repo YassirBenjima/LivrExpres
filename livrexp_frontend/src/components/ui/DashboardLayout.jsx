@@ -12,6 +12,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
   const [isStockMenuOpen, setIsStockMenuOpen] = useState(activeMenu.startsWith('stock'));
   const [isRamassageMenuOpen, setIsRamassageMenuOpen] = useState(activeMenu.startsWith('ramassage'));
   const [isBonLivraisonMenuOpen, setIsBonLivraisonMenuOpen] = useState(activeMenu.startsWith('bon_livraison'));
+  const [isSuiviMenuOpen, setIsSuiviMenuOpen] = useState(activeMenu.startsWith('suivi'));
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -302,15 +303,37 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               </div>
 
               {/* Suivi */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/suivi/changement-destinataire">
+              <div className={`kt-menu-item ${activeMenu.startsWith('suivi') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => setIsSuiviMenuOpen(!isSuiviMenuOpen)}
+                >
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-route text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Suivi
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Suivi</span>
+                  <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                    <i className={`ki-filled ${isSuiviMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
-                </a>
+                </div>
+                {isSuiviMenuOpen && (
+                  <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
+                    <div className={`kt-menu-item ${activeMenu === 'suivi_changement_destinataire' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/suivi/changement-destinataire"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/suivi/changement-destinataire'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Changement destinataire</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'suivi_whatsapp_template' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/suivi/modele-whatsapp"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/suivi/modele-whatsapp'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Suivi par Whatsapp</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Retour */}
