@@ -13,6 +13,8 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
   const [isRamassageMenuOpen, setIsRamassageMenuOpen] = useState(activeMenu.startsWith('ramassage'));
   const [isBonLivraisonMenuOpen, setIsBonLivraisonMenuOpen] = useState(activeMenu.startsWith('bon_livraison'));
   const [isSuiviMenuOpen, setIsSuiviMenuOpen] = useState(activeMenu.startsWith('suivi'));
+  const [isRetourMenuOpen, setIsRetourMenuOpen] = useState(activeMenu.startsWith('retour'));
+  const [isFacturationMenuOpen, setIsFacturationMenuOpen] = useState(activeMenu.startsWith('facturation'));
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -337,27 +339,64 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               </div>
 
               {/* Retour */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/retour/demande/">
+              <div className={`kt-menu-item ${activeMenu.startsWith('retour') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => setIsRetourMenuOpen(!isRetourMenuOpen)}
+                >
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-delivery-time text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Retour
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Retour</span>
+                  <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                    <i className={`ki-filled ${isRetourMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
-                </a>
+                </div>
+                {isRetourMenuOpen && (
+                  <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
+                    <div className={`kt-menu-item ${activeMenu === 'retour_demandes' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/retour/demandes"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/retour/demandes'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Demande de retour</span>
+                      </a>
+                    </div>
+                    <div className={`kt-menu-item ${activeMenu === 'retour_bons' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/retour/bons"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/retour/bons'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Bons de retour</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Facturation */}
-              <div className="kt-menu-item">
-                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/facturation/crbt/">
+              <div className={`kt-menu-item ${activeMenu.startsWith('facturation') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => setIsFacturationMenuOpen(!isFacturationMenuOpen)}
+                >
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-bill text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Facturation
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Facturation</span>
+                  <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                    <i className={`ki-filled ${isFacturationMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
-                </a>
+                </div>
+                {isFacturationMenuOpen && (
+                  <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
+                    <div className={`kt-menu-item ${activeMenu === 'facturation_crbt' ? 'active' : ''}`}>
+                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/facturation/crbt"
+                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/facturation/crbt'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste CRBT</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Affiliate */}

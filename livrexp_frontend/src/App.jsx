@@ -26,6 +26,10 @@ import BonLivraisonListPage from './pages/bon_livraison/BonLivraisonListPage';
 import BonLivraisonNewPage from './pages/bon_livraison/BonLivraisonNewPage';
 import TrackingChangeRecipientPage from './pages/tracking/TrackingChangeRecipientPage';
 import TrackingWhatsappTemplatePage from './pages/tracking/TrackingWhatsappTemplatePage';
+import RetourDemandeListPage from './pages/retour/RetourDemandeListPage';
+import RetourDemandeNewPage from './pages/retour/RetourDemandeNewPage';
+import RetourBonsListPage from './pages/retour/RetourBonsListPage';
+import FacturationCrbtPage from './pages/facturation/FacturationCrbtPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -227,6 +231,18 @@ function App() {
       case '/suivi/modele-whatsapp':
         title = 'Suivi par Whatsapp - LivrExpress';
         break;
+      case '/retour/demandes':
+        title = 'Demandes de retour - LivrExpress';
+        break;
+      case '/retour/demandes/new':
+        title = 'Nouvelle demande de retour - LivrExpress';
+        break;
+      case '/retour/bons':
+        title = 'Bons de retour - LivrExpress';
+        break;
+      case '/facturation/crbt':
+        title = 'Facturation CRBT - LivrExpress';
+        break;
       case '/login':
         title = 'Connexion - LivrExpress';
         break;
@@ -350,6 +366,16 @@ function App() {
         return <TrackingChangeRecipientPage navigate={navigate} showNotification={showNotification} />;
       case '/suivi/modele-whatsapp':
         return <TrackingWhatsappTemplatePage navigate={navigate} showNotification={showNotification} />;
+      case '/retour/demandes':
+      case '/retour/demande':
+        return <RetourDemandeListPage navigate={navigate} showNotification={showNotification} />;
+      case '/retour/demandes/new':
+        return <RetourDemandeNewPage navigate={navigate} showNotification={showNotification} />;
+      case '/retour/bons':
+        return <RetourBonsListPage navigate={navigate} showNotification={showNotification} />;
+      case '/facturation/crbt':
+      case '/facturation':
+        return <FacturationCrbtPage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':

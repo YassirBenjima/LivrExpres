@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
@@ -15,6 +16,7 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
   const [submitting, setSubmitting] = useState(false);
   const [deleteTemplateId, setDeleteTemplateId] = useState(null);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [dropdownPos, setDropdownPos] = useState(null);
 
   const allowedPlaceholders = ['@name', '@product', '@address', '@numLivreur'];
   const messageHardLimit = 2000;
@@ -48,6 +50,12 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
   useEffect(() => {
     fetchTemplates();
   }, [searchQuery, statusFilter]);
+
+  useEffect(() => {
+    const handleDocumentClick = () => setActiveDropdownId(null);
+    window.addEventListener('click', handleDocumentClick);
+    return () => window.removeEventListener('click', handleDocumentClick);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -354,48 +362,81 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
                                 <button
                                   type="button"
                                   className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                                  onClick={() => setActiveDropdownId(activeDropdownId === tmpl.id ? null : tmpl.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 180 });
+                                    setActiveDropdownId(activeDropdownId === tmpl.id ? null : tmpl.id);
+                                  }}
                                 >
                                   <i className="ki-filled ki-dots-vertical text-lg"></i>
                                 </button>
 
-                                {activeDropdownId === tmpl.id && (
-                                  <div className="kt-menu-dropdown kt-menu-default absolute right-0 top-full mt-1 w-[180px] z-50 bg-background border border-border rounded-xl shadow-lg p-1.5">
+                                {activeDropdownId === tmpl.id && dropdownPos && createPortal(
+                                  <div
+                                    className="kt-menu-dropdown kt-menu-default fixed w-[180px]"
+                                    style={{
+                                      position: 'fixed',
+                                      top: `${dropdownPos.top - window.scrollY}px`,
+                                      left: `${dropdownPos.left - window.scrollX}px`,
+                                      zIndex: 99999,
+                                      display: 'block'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     {isDefault ? (
-                                      <div className="px-3 py-2 text-xs text-secondary-foreground">
-                                        Modèle par défaut verrouillé
-                                      </div>
+                                      <>
+                                        <div className="kt-menu-item">
+                                          <button className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed" type="button" disabled>
+                                            <span className="kt-menu-icon"><i className="ki-filled ki-lock-2"></i></span>
+                                            <span className="kt-menu-title text-xs">Modif. verrouillée</span>
+                                          </button>
+                                        </div>
+                                        <div className="kt-menu-item">
+                                          <button className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed" type="button" disabled>
+                                            <span className="kt-menu-icon"><i className="ki-filled ki-lock-2"></i></span>
+                                            <span className="kt-menu-title text-xs">Statut verrouillé</span>
+                                          </button>
+                                        </div>
+                                      </>
                                     ) : (
                                       <>
-                                        <button
-                                          type="button"
-                                          className="kt-menu-link text-start w-full px-3 py-1.5 hover:bg-accent rounded-lg flex items-center gap-2 text-sm"
-                                          onClick={() => handleEdit(tmpl)}
-                                        >
-                                          <i className="ki-filled ki-pencil"></i>
-                                          <span>Modifier</span>
-                                        </button>
+                                        <div className="kt-menu-item">
+                                          <button
+                                            type="button"
+                                            className="kt-menu-link text-start w-full"
+                                            onClick={() => handleEdit(tmpl)}
+                                          >
+                                            <span className="kt-menu-icon"><i className="ki-filled ki-pencil"></i></span>
+                                            <span className="kt-menu-title">Modifier</span>
+                                          </button>
+                                        </div>
 
-                                        <button
-                                          type="button"
-                                          className="kt-menu-link text-start w-full px-3 py-1.5 hover:bg-accent rounded-lg flex items-center gap-2 text-sm"
-                                          onClick={() => handleToggleStatus(tmpl)}
-                                        >
-                                          <i className="ki-filled ki-arrows-circle"></i>
-                                          <span>{isActive ? 'Désactiver' : 'Activer'}</span>
-                                        </button>
+                                        <div className="kt-menu-item">
+                                          <button
+                                            type="button"
+                                            className="kt-menu-link text-start w-full"
+                                            onClick={() => handleToggleStatus(tmpl)}
+                                          >
+                                            <span className="kt-menu-icon"><i className="ki-filled ki-arrows-circle"></i></span>
+                                            <span className="kt-menu-title">{isActive ? 'Désactiver' : 'Activer'}</span>
+                                          </button>
+                                        </div>
 
-                                        <button
-                                          type="button"
-                                          className="kt-menu-link text-start w-full px-3 py-1.5 text-destructive hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg flex items-center gap-2 text-sm"
-                                          onClick={() => { setActiveDropdownId(null); setDeleteTemplateId(tmpl.id); }}
-                                        >
-                                          <i className="ki-filled ki-trash text-destructive"></i>
-                                          <span>Supprimer</span>
-                                        </button>
+                                        <div className="kt-menu-item">
+                                          <button
+                                            type="button"
+                                            className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                            onClick={() => { setActiveDropdownId(null); setDeleteTemplateId(tmpl.id); }}
+                                          >
+                                            <span className="kt-menu-icon text-destructive"><i className="ki-filled ki-trash"></i></span>
+                                            <span className="kt-menu-title text-destructive">Supprimer</span>
+                                          </button>
+                                        </div>
                                       </>
                                     )}
-                                  </div>
+                                  </div>,
+                                  document.body
                                 )}
                               </div>
                             </td>
