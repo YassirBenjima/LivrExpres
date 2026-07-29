@@ -176,24 +176,6 @@ export default function ProfilePage({ navigate, showNotification }) {
     <DashboardLayout activeMenu="profile">
       <main className="grow pt-5 profile-content-shift" id="content" role="content">
 
-        {/* Hero / Navigation Tabs */}
-        <div className="flex items-center flex-wrap md:flex-nowrap lg:items-end justify-between border-b border-b-border gap-3 lg:gap-6 mb-3 lg:mb-5">
-          <div className="kt-container-fixed" id="hero_container">
-            <div className="grid">
-              <div className="kt-scrollable-x-auto">
-                <div className="kt-menu gap-3">
-                  <div className="kt-menu-item border-b-2 border-b-primary here">
-                    <a className="kt-menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="/profile">
-                      <span className="kt-menu-title text-nowrap text-sm text-primary font-medium">
-                        Général
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Header Title */}
         <div className="kt-container-fixed">
