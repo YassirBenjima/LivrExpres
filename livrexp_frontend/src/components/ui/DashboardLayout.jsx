@@ -56,7 +56,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
       {/* Sidebar */}
       <div 
         id="sidebar" 
-        className={`kt-sidebar bg-background border-e border-e-border fixed top-0 bottom-0 z-20 flex flex-col items-stretch shrink-0 transition-all duration-300 lg:flex ${
+        className={`kt-sidebar bg-background border-e border-e-border fixed top-0 bottom-0 z-20 flex flex-col items-stretch shrink-0 transition-[width] duration-300 lg:flex ${
           isMobileSidebarOpen ? 'flex w-[250px]' : 'hidden lg:flex'
         }`}
       >
@@ -683,16 +683,34 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                           </span>
                           <button
                             onClick={toggleTheme}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                              themeMode === 'dark' ? 'bg-primary' : 'bg-muted'
-                            }`}
+                            type="button"
                             role="switch"
                             aria-checked={themeMode === 'dark'}
+                            style={{
+                              width: '36px',
+                              height: '20px',
+                              backgroundColor: themeMode === 'dark' ? '#3b82f6' : 'rgb(228, 228, 231)',
+                              borderRadius: '9999px',
+                              position: 'relative',
+                              transition: 'background-color 0.2s',
+                              border: themeMode === 'dark' ? '1px solid #3b82f6' : '1px solid rgb(212, 212, 216)',
+                              cursor: 'pointer',
+                              padding: 0,
+                              outline: 'none'
+                            }}
                           >
-                            <span
-                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
-                                themeMode === 'dark' ? 'translate-x-4' : 'translate-x-0'
-                              }`}
+                            <div
+                              style={{
+                                width: '14px',
+                                height: '14px',
+                                backgroundColor: 'rgb(255, 255, 255)',
+                                borderRadius: '50%',
+                                position: 'absolute',
+                                top: '2px',
+                                left: themeMode === 'dark' ? '18px' : '2px',
+                                transition: 'left 0.2s',
+                                boxShadow: 'rgba(0, 0, 0, 0.15) 0px 1px 3px'
+                              }}
                             />
                           </button>
                         </div>
