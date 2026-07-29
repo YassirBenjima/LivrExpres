@@ -16,6 +16,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
   const [isRetourMenuOpen, setIsRetourMenuOpen] = useState(activeMenu.startsWith('retour'));
   const [isFacturationMenuOpen, setIsFacturationMenuOpen] = useState(activeMenu.startsWith('facturation'));
   const [user, setUser] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -26,6 +27,23 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         // Ignore
       }
     }
+    // Fetch real avatar from profile API
+    const token = localStorage.getItem('auth_token');
+    fetch('/api/profile', {
+      headers: {
+        'Accept': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setAvatarUrl(data.user.avatarUrl || null);
+          // Also update display name from profile
+          setUser(prev => prev ? { ...prev, name: data.user.fullName, email: data.user.email } : prev);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -599,18 +617,18 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                   onClick={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsLangMenuOpen(false); }}
                   className="cursor-pointer shrink-0 focus:outline-none"
                 >
-                  {user?.avatar ? (
+                  {avatarUrl ? (
                     <img
-                      alt=""
-                      className="size-9 rounded-full border-2 border-green-500 shrink-0 object-cover"
-                      src={user.avatar}
+                      alt="Avatar"
+                      className="size-9 rounded-full ring-2 ring-border shadow-sm shrink-0 object-cover hover:ring-primary/50 transition-all"
+                      src={avatarUrl}
                     />
                   ) : (
                     <div
-                      className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-green-500"
-                      style={{ backgroundColor: '#EA4335' }}
+                      className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
+                      style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                     >
-                      {user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
+                      {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
                     </div>
                   )}
                 </button>
@@ -629,14 +647,14 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                       {/* User info header */}
                       <div className="flex items-center justify-between px-2.5 py-2 gap-1.5">
                         <div className="flex items-center gap-2">
-                          {user?.avatar ? (
-                            <img alt="" className="size-9 shrink-0 rounded-full border-2 border-green-500 object-cover" src={user.avatar} />
+                          {avatarUrl ? (
+                            <img alt="Avatar" className="size-9 shrink-0 rounded-full ring-2 ring-border shadow-sm object-cover" src={avatarUrl} />
                           ) : (
                             <div
-                              className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm border-2 border-green-500"
-                              style={{ backgroundColor: '#EA4335' }}
+                              className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm"
+                              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                             >
-                              {user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
+                              {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
                             </div>
                           )}
                           <div className="flex flex-col gap-1">
