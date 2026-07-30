@@ -440,49 +440,38 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
 
       {/* OTP Validation Modal */}
       {otpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-card text-card-foreground border border-border rounded-xl shadow-2xl overflow-hidden w-full max-w-md animate-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="flex items-start justify-between p-5 border-b border-border bg-emerald-500/5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
-                  <i className="ki-filled ki-shield-check"></i>
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">
-                    Validation OTP Livraison
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Sécurisez la remise du colis au destinataire
-                  </p>
-                </div>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-background rounded-xl border border-border shadow-2xl max-w-md w-full p-6 m-4">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <i className="ki-filled ki-shield-check text-green-600 text-xl"></i>
+                Validation OTP Livraison WhatsApp
+              </h3>
               <button 
-                type="button"
                 onClick={() => setOtpModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+                className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
                 disabled={otpLoading}
               >
                 <i className="ki-filled ki-cross text-lg"></i>
               </button>
             </div>
 
-            <form onSubmit={handleVerifyOtpSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleVerifyOtpSubmit} className="py-4 flex flex-col gap-4">
               {otpError && (
-                <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg flex items-center gap-2">
-                  <i className="ki-filled ki-information-2 text-base shrink-0"></i>
+                <div className="p-3 text-xs bg-red-500/10 border border-red-500/30 text-red-600 rounded flex items-center gap-2">
+                  <i className="ki-filled ki-information-2 text-base"></i>
                   <span>{otpError}</span>
                 </div>
               )}
 
               <div>
-                <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                  Numéro de suivi / N° de commande
+                <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
+                  Code de suivi / N° de commande *
                 </label>
                 <input
                   type="text"
-                  className="kt-input h-10 text-sm font-medium w-full"
-                  placeholder="Ex: CMD-2026-965196"
+                  className="kt-input text-sm w-full"
+                  placeholder="N° de commande ou code de suivi"
                   required
                   value={otpTrackingCode}
                   onChange={(e) => setOtpTrackingCode(e.target.value)}
@@ -490,44 +479,38 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-foreground">
-                    Code de sécurité (4 chiffres)
-                  </label>
-                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                    <i className="ki-filled ki-message-text text-xs"></i> Envoyé via WhatsApp
-                  </span>
-                </div>
+                <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
+                  Code OTP WhatsApp (4 chiffres) *
+                </label>
                 <input
                   type="text"
                   maxLength={4}
-                  className="kt-input h-12 text-2xl font-mono font-bold text-center tracking-[0.5em] w-full border-2 border-emerald-500/30 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-lg placeholder:tracking-[0.5em] placeholder:text-muted-foreground/40"
-                  placeholder="••••"
+                  className="kt-input text-lg font-mono text-center tracking-widest w-full"
+                  placeholder="Code OTP (4 chiffres)"
                   required
                   value={otpInput}
                   onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                 />
-                <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed bg-muted/50 p-2.5 rounded-lg border border-border/50">
-                  💡 Demandez au client le code à 4 chiffres qu'il a reçu sur son téléphone par notification WhatsApp.
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Ce code à 4 chiffres a été envoyé automatiquement au destinataire par WhatsApp.
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
                 <button 
                   type="button" 
                   onClick={() => setOtpModalOpen(false)} 
-                  className="kt-btn kt-btn-outline h-9 px-4 text-xs"
+                  className="kt-btn kt-btn-outline"
                   disabled={otpLoading}
                 >
                   Annuler
                 </button>
                 <button 
                   type="submit" 
-                  className="kt-btn h-9 px-4 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all flex items-center gap-1.5"
+                  className="kt-btn kt-btn-primary bg-emerald-600 hover:bg-emerald-700 text-white"
                   disabled={otpLoading}
                 >
-                  <i className="ki-filled ki-check-circle text-sm"></i>
-                  {otpLoading ? 'Vérification en cours...' : 'Valider la livraison'}
+                  {otpLoading ? 'Vérification...' : 'Valider & Marquer Livré'}
                 </button>
               </div>
             </form>
