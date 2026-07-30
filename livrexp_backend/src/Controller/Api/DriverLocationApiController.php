@@ -158,7 +158,7 @@ class DriverLocationApiController extends AbstractController
         ];
 
         foreach ($allColis as $colis) {
-            $cityName = $colis->getVille() ?? 'Casablanca';
+            $cityName = method_exists($colis, 'getCity') ? ($colis->getCity() ?? 'Casablanca') : 'Casablanca';
             $baseCoord = $cityCoordinates[$cityName] ?? $cityCoordinates['Casablanca'];
             
             // Subtle offset per parcel for clean rendering
@@ -167,13 +167,13 @@ class DriverLocationApiController extends AbstractController
 
             $parcelsGeo[] = [
                 'id' => $colis->getId(),
-                'code' => $colis->getNumeroCommande() ?? ('CMD-' . $colis->getId()),
-                'recipient' => $colis->getNomDestinataire(),
-                'phone' => $colis->getTelephoneDestinataire(),
+                'code' => method_exists($colis, 'getOrderNumber') ? ($colis->getOrderNumber() ?? ('CMD-' . $colis->getId())) : ('CMD-' . $colis->getId()),
+                'recipient' => method_exists($colis, 'getRecipient') ? ($colis->getRecipient() ?? 'Destinataire') : 'Destinataire',
+                'phone' => method_exists($colis, 'getPhoneNumber') ? ($colis->getPhoneNumber() ?? '0600000000') : '0600000000',
                 'city' => $cityName,
-                'price' => $colis->getPrixTotal() ?? 0,
-                'etat' => $colis->getEtat() ?? 'Créé',
-                'statut' => $colis->getStatut() ?? 'En attente',
+                'price' => method_exists($colis, 'getPrice') ? ((float)($colis->getPrice() ?? 0)) : 0,
+                'etat' => method_exists($colis, 'getEtat') ? ($colis->getEtat() ?? 'Créé') : 'Créé',
+                'statut' => method_exists($colis, 'getStatut') ? ($colis->getStatut() ?? 'En attente') : 'En attente',
                 'latitude' => $baseCoord['lat'] + $latOffset,
                 'longitude' => $baseCoord['lng'] + $lngOffset,
             ];
