@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
 export default function DispatchMapPage({ navigate, currentUser }) {
   const [drivers, setDrivers] = useState([]);
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [leafletReady, setLeafletReady] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('ALL');
+  const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Live GPS tracking state for current driver
-  const [isGpsActive, setIsGpsActive] = useState(false);
+  // Persistent GPS tracking state (Saved once in localStorage)
+  const [isGpsActive, setIsGpsActive] = useState(() => {
+    return localStorage.getItem('livrexp_gps_enabled') === 'true';
+  });
+
   const [currentCoords, setCurrentCoords] = useState(null);
   const [gpsError, setGpsError] = useState(null);
   const watchIdRef = useRef(null);
@@ -19,26 +23,30 @@ export default function DispatchMapPage({ navigate, currentUser }) {
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
 
-  // Dynamically load Leaflet CSS & JS script
+  // Load Leaflet CSS and JS dynamically
   useEffect(() => {
     if (window.L) {
       setLeafletReady(true);
       return;
     }
 
-    if (!document.getElementById('leaflet-css')) {
+    const cssId = 'leaflet-css-cdn';
+    if (!document.getElementById(cssId)) {
       const link = document.createElement('link');
-      link.id = 'leaflet-css';
+      link.id = cssId;
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
     }
 
-    if (!document.getElementById('leaflet-js')) {
+    const jsId = 'leaflet-js-cdn';
+    if (!document.getElementById(jsId)) {
       const script = document.createElement('script');
-      script.id = 'leaflet-js';
+      script.id = jsId;
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => setLeafletReady(true);
+      script.onload = () => {
+        setLeafletReady(true);
+      };
       document.head.appendChild(script);
     } else {
       const interval = setInterval(() => {
@@ -51,7 +59,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
     }
   }, []);
 
-  // Fetch driver locations & parcels from backend API
+  // Fetch Driver & Parcel GPS locations from backend
   const fetchMapData = async () => {
     try {
       const response = await fetch('/api/driver/locations');
@@ -61,7 +69,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
         setParcels(data.parcels || []);
       }
     } catch (err) {
-      console.error('Error loading dispatch map data:', err);
+      console.error('Error fetching map data:', err);
     } finally {
       setLoading(false);
     }
@@ -69,11 +77,18 @@ export default function DispatchMapPage({ navigate, currentUser }) {
 
   useEffect(() => {
     fetchMapData();
-    const interval = setInterval(fetchMapData, 15000); // refresh every 15 sec
+    const interval = setInterval(fetchMapData, 12000);
     return () => clearInterval(interval);
   }, []);
 
-  // Geolocation watch driver position
+  // Toggle GPS & Save once in localStorage
+  const toggleGps = () => {
+    const nextState = !isGpsActive;
+    setIsGpsActive(nextState);
+    localStorage.setItem('livrexp_gps_enabled', nextState ? 'true' : 'false');
+  };
+
+  // Watch position when GPS is active
   useEffect(() => {
     if (isGpsActive) {
       if ('geolocation' in navigator) {
@@ -83,7 +98,6 @@ export default function DispatchMapPage({ navigate, currentUser }) {
             setCurrentCoords({ latitude, longitude });
             setGpsError(null);
 
-            // Send GPS to backend API
             try {
               await fetch('/api/driver/location', {
                 method: 'POST',
@@ -91,17 +105,17 @@ export default function DispatchMapPage({ navigate, currentUser }) {
                 body: JSON.stringify({ latitude, longitude })
               });
             } catch (e) {
-              console.error('Failed to post GPS location:', e);
+              console.error('Failed to update driver GPS:', e);
             }
           },
           (err) => {
-            console.warn('Geolocation warning:', err.message);
-            setGpsError('Accès GPS indisponible ou refusé');
+            console.warn('GPS Warning:', err.message);
+            setGpsError('Position GPS indisponible. Activez la géolocalisation sur votre navigateur/appareil.');
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
-        setGpsError('La géolocalisation n\'est pas supportée par votre navigateur');
+        setGpsError('La géolocalisation n\'est pas prise en charge par ce navigateur.');
       }
     } else {
       if (watchIdRef.current !== null) {
@@ -118,84 +132,40 @@ export default function DispatchMapPage({ navigate, currentUser }) {
     };
   }, [isGpsActive]);
 
-  // Initialize & Update Leaflet Map
+  // Render & Update Leaflet Map
   useEffect(() => {
     if (!leafletReady || !mapContainerRef.current || !window.L) return;
 
     const L = window.L;
 
-    // Create Leaflet map instance if not existing
+    // Initialize Map
     if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current).setView([33.5731, -7.5898], 11);
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: true,
+        scrollWheelZoom: true
+      }).setView([33.5731, -7.5898], 11);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
       markersGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
+
+      // Invalidate size to ensure full container rendering without gray tiles
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
     }
 
     const map = mapInstanceRef.current;
     const markersGroup = markersGroupRef.current;
     markersGroup.clearLayers();
 
-    // Custom Driver HTML Icon
-    const createDriverIcon = (name, isLive) => {
-      return L.divIcon({
-        className: 'custom-driver-pin',
-        html: `
-          <div style="
-            background: ${isLive ? '#059669' : '#2563eb'};
-            color: white;
-            padding: 5px 9px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border: 2px solid white;
-            white-space: nowrap;
-          ">
-            <span>🚚</span>
-            <span>${name.split(' ')[0]}</span>
-            ${isLive ? '<span style="width: 7px; height: 7px; background: #34d399; border-radius: 50%; display: inline-block;"></span>' : ''}
-          </div>
-        `,
-        iconSize: [120, 30],
-        iconAnchor: [60, 15]
-      });
-    };
-
-    // Custom Parcel HTML Icon
-    const createParcelIcon = (code) => {
-      return L.divIcon({
-        className: 'custom-parcel-pin',
-        html: `
-          <div style="
-            background: #d97706;
-            color: white;
-            padding: 3px 7px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            border: 1px solid white;
-            white-space: nowrap;
-          ">
-            📦 ${code}
-          </div>
-        `,
-        iconSize: [80, 24],
-        iconAnchor: [40, 12]
-      });
-    };
-
     // Filter drivers
     const filteredDrivers = drivers.filter(d => {
-      const matchCity = selectedCity === 'ALL' || d.city.toLowerCase() === selectedCity.toLowerCase();
+      const matchCity = !selectedCity || d.city.toLowerCase() === selectedCity.toLowerCase();
       const matchQuery = !searchQuery || d.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || d.phone.includes(searchQuery);
       return matchCity && matchQuery;
     });
@@ -203,37 +173,62 @@ export default function DispatchMapPage({ navigate, currentUser }) {
     // Render Driver Markers
     filteredDrivers.forEach(driver => {
       if (driver.latitude && driver.longitude) {
-        const marker = L.marker([driver.latitude, driver.longitude], {
-          icon: createDriverIcon(driver.fullName, driver.isLive)
+        const isLive = driver.isLive;
+        
+        const driverDivIcon = L.divIcon({
+          className: 'custom-driver-marker',
+          html: `
+            <div style="
+              background-color: ${isLive ? '#10b981' : '#3b82f6'};
+              color: #ffffff;
+              padding: 4px 10px;
+              border-radius: 9999px;
+              font-size: 11px;
+              font-weight: 600;
+              box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+              border: 2px solid #ffffff;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              white-space: nowrap;
+            ">
+              <span style="font-size: 12px;">🚚</span>
+              <span>${driver.fullName}</span>
+              ${isLive ? '<span style="width:6px; height:6px; background:#ffffff; border-radius:50%; display:inline-block;"></span>' : ''}
+            </div>
+          `,
+          iconSize: [140, 32],
+          iconAnchor: [70, 16]
         });
 
+        const marker = L.marker([driver.latitude, driver.longitude], { icon: driverDivIcon });
+
         const popupContent = `
-          <div style="font-family: inherit; padding: 4px; min-width: 180px;">
-            <div style="font-weight: 700; font-size: 13px; color: #111827; margin-bottom: 2px;">
+          <div style="font-family: inherit; padding: 6px; min-width: 190px;">
+            <div style="font-weight: 700; font-size: 13px; color: #181c32; margin-bottom: 4px;">
               🚚 ${driver.fullName}
             </div>
-            <div style="font-size: 11px; color: #4b5563; margin-bottom: 6px;">
-              📍 Ville: <strong>${driver.city}</strong>
+            <div style="font-size: 11px; color: #5e6278; margin-bottom: 4px;">
+              📍 Ville : <strong>${driver.city}</strong>
             </div>
-            <div style="font-size: 11px; color: #047857; margin-bottom: 6px; font-weight: 600;">
+            <div style="font-size: 11px; color: #10b981; font-weight: 600; margin-bottom: 6px;">
               📦 Colis en tournée : ${driver.activeParcels}
             </div>
-            <div style="font-size: 10px; color: #6b7280; margin-bottom: 8px;">
+            <div style="font-size: 10px; color: #a1a5b7; margin-bottom: 8px;">
               🕒 Dernière sync : ${driver.lastUpdated}
             </div>
             <a href="tel:${driver.phone}" style="
-              display: inline-block;
-              background: #059669;
-              color: white;
+              display: block;
+              background-color: #10b981;
+              color: #ffffff;
               text-decoration: none;
               font-size: 11px;
               font-weight: 600;
-              padding: 4px 10px;
+              padding: 6px 12px;
               border-radius: 6px;
-              width: 100%;
               text-align: center;
             ">
-              📞 Appeler (${driver.phone})
+              Appeler (${driver.phone})
             </a>
           </div>
         `;
@@ -245,41 +240,60 @@ export default function DispatchMapPage({ navigate, currentUser }) {
 
     // Filter & Render Parcels
     const filteredParcels = parcels.filter(p => {
-      const matchCity = selectedCity === 'ALL' || p.city.toLowerCase() === selectedCity.toLowerCase();
+      const matchCity = !selectedCity || p.city.toLowerCase() === selectedCity.toLowerCase();
       const matchQuery = !searchQuery || p.code.toLowerCase().includes(searchQuery.toLowerCase()) || p.recipient.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCity && matchQuery;
     });
 
     filteredParcels.forEach(parcel => {
       if (parcel.latitude && parcel.longitude) {
-        const marker = L.marker([parcel.latitude, parcel.longitude], {
-          icon: createParcelIcon(parcel.code)
-        });
-
-        const popupContent = `
-          <div style="font-family: inherit; padding: 4px; min-width: 170px;">
-            <div style="font-weight: 700; font-size: 12px; color: #d97706; margin-bottom: 2px;">
+        const parcelDivIcon = L.divIcon({
+          className: 'custom-parcel-marker',
+          html: `
+            <div style="
+              background-color: #f59e0b;
+              color: #ffffff;
+              padding: 3px 8px;
+              border-radius: 6px;
+              font-size: 10px;
+              font-weight: 600;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+              border: 1.5px solid #ffffff;
+              white-space: nowrap;
+            ">
               📦 ${parcel.code}
             </div>
-            <div style="font-size: 11px; color: #1f2937; margin-bottom: 4px;">
-              👤 Client : <strong>${parcel.recipient}</strong>
+          `,
+          iconSize: [90, 26],
+          iconAnchor: [45, 13]
+        });
+
+        const marker = L.marker([parcel.latitude, parcel.longitude], { icon: parcelDivIcon });
+
+        const popupContent = `
+          <div style="font-family: inherit; padding: 6px; min-width: 170px;">
+            <div style="font-weight: 700; font-size: 12px; color: #f59e0b; margin-bottom: 4px;">
+              📦 ${parcel.code}
             </div>
-            <div style="font-size: 11px; color: #4b5563; margin-bottom: 4px;">
+            <div style="font-size: 11px; color: #181c32; margin-bottom: 4px;">
+              👤 Destinataire : <strong>${parcel.recipient}</strong>
+            </div>
+            <div style="font-size: 11px; color: #5e6278; margin-bottom: 4px;">
               📍 Ville : <strong>${parcel.city}</strong>
             </div>
-            <div style="font-size: 11px; font-weight: 700; color: #059669; margin-bottom: 6px;">
-              💵 Prix : ${parcel.price} DH
+            <div style="font-size: 11px; font-weight: 700; color: #10b981; margin-bottom: 6px;">
+              💵 Prix : ${parcel.price} MAD
             </div>
             <span style="
               display: inline-block;
-              background: #f3f4f6;
-              color: #374151;
+              background-color: #f4f4f5;
+              color: #3f3f46;
               font-size: 10px;
               font-weight: 600;
-              padding: 2px 6px;
+              padding: 3px 8px;
               border-radius: 4px;
             ">
-              Statut: ${parcel.statut}
+              ${parcel.statut}
             </span>
           </div>
         `;
@@ -293,162 +307,121 @@ export default function DispatchMapPage({ navigate, currentUser }) {
 
   return (
     <DashboardLayout navigate={navigate} activeItem="dispatch-map">
-      <div className="container-fixed p-4 md:p-6 space-y-6">
-        
-        {/* Header & Title */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <i className="ki-filled ki-map text-emerald-600 text-2xl"></i>
-              Carte de Suivi Livreurs & Dispatch En Direct
+      {/* Top Header Controls */}
+      <div className="kt-container-fixed mb-5">
+        <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-5 border-b border-border">
+          <div className="flex flex-col justify-center gap-2">
+            <h1 className="text-xl font-medium leading-none text-mono">
+              Carte Suivi GPS
             </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Visualisez la géolocalisation GPS en temps réel des livreurs et les colis en cours de livraison.
-            </p>
-          </div>
-
-          {/* GPS Live Broadcasting Toggle Widget */}
-          <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-xs">
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <span className={`w-2.5 h-2.5 rounded-full ${isGpsActive ? 'bg-emerald-500 animate-ping' : 'bg-zinc-400'}`}></span>
-                Suivi GPS Livreur
+            <div className="flex items-center flex-wrap gap-1.5 font-medium">
+              <span className="text-base text-secondary-foreground">
+                Livreurs actifs :
               </span>
-              <span className="text-[11px] text-muted-foreground">
-                {isGpsActive ? 'Position transmise en direct' : 'Mode désactivé'}
+              <span className="text-base text-foreground font-medium me-4">
+                {drivers.filter(d => d.isLive).length || drivers.length}
+              </span>
+              <span className="text-base text-secondary-foreground">
+                Colis en cours :
+              </span>
+              <span className="text-base text-foreground font-medium">
+                {parcels.length}
               </span>
             </div>
+          </div>
 
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsGpsActive(!isGpsActive)}
-              className={`kt-btn kt-btn-sm font-medium transition-all ${
-                isGpsActive 
-                  ? 'bg-red-600 hover:bg-red-700 text-white' 
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              onClick={toggleGps}
+              className={`kt-btn font-medium text-xs px-4 py-2 transition-all ${
+                isGpsActive
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                  : 'kt-btn-outline text-foreground'
               }`}
             >
-              {isGpsActive ? 'Arrêter GPS' : '📍 Activer Mon GPS'}
+              <i className={`ki-filled ${isGpsActive ? 'ki-check-circle' : 'ki-geolocation'} text-sm me-1.5`}></i>
+              {isGpsActive ? 'GPS Actif (En direct)' : 'Activer Mon GPS'}
             </button>
           </div>
         </div>
+      </div>
 
-        {gpsError && (
-          <div className="p-3 text-xs bg-amber-500/10 border border-amber-500/30 text-amber-700 rounded-lg flex items-center gap-2">
-            <i className="ki-filled ki-information-2 text-base shrink-0"></i>
-            <span>{gpsError}</span>
-          </div>
-        )}
-
-        {/* Top KPI Metrics Bar */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 shadow-xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl shrink-0">
-              <i className="ki-filled ki-truck"></i>
+      {/* Main Container */}
+      <div className="kt-container-fixed">
+        <div className="grid gap-5 lg:gap-7.5">
+          {gpsError && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+              <i className="ki-filled ki-information-2 text-base shrink-0"></i>
+              <span>{gpsError}</span>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-foreground">
-                {drivers.filter(d => d.isLive).length || drivers.length}
+          )}
+
+          <div className="kt-card kt-card-grid min-w-full">
+            {/* Filter Bar */}
+            <div className="kt-card-header flex-wrap gap-3">
+              <h3 className="kt-card-title text-sm">
+                Vue carte en temps réel
+              </h3>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex">
+                  <label className="kt-input">
+                    <i className="ki-filled ki-magnifier"></i>
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher livreur ou N° colis..."
+                      type="text"
+                    />
+                  </label>
+                </div>
+
+                <KtSelect
+                  value={selectedCity}
+                  onChange={(val) => setSelectedCity(val)}
+                  placeholder="Filtrer par ville"
+                  className="w-48"
+                  options={[
+                    { value: '', label: 'Toutes les villes' },
+                    { value: 'Casablanca', label: 'Casablanca' },
+                    { value: 'Rabat', label: 'Rabat' },
+                    { value: 'Marrakech', label: 'Marrakech' },
+                    { value: 'Tanger', label: 'Tanger' },
+                    { value: 'Agadir', label: 'Agadir' },
+                    { value: 'Fès', label: 'Fès' },
+                    { value: 'Meknès', label: 'Meknès' }
+                  ]}
+                />
+
+                {(selectedCity || searchQuery) && (
+                  <button
+                    className="kt-btn kt-btn-outline"
+                    onClick={() => { setSelectedCity(''); setSearchQuery(''); }}
+                  >
+                    Réinitialiser
+                  </button>
+                )}
               </div>
-              <div className="text-xs text-muted-foreground">Livreurs en tournée</div>
             </div>
-          </div>
 
-          <div className="bg-card border border-border rounded-xl p-4 shadow-xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl shrink-0">
-              <i className="ki-filled ki-box"></i>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-foreground">{parcels.length}</div>
-              <div className="text-xs text-muted-foreground">Colis sur la carte</div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl p-4 shadow-xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl shrink-0">
-              <i className="ki-filled ki-geolocation"></i>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-foreground">8 Villes</div>
-              <div className="text-xs text-muted-foreground">Couverture GPS Maroc</div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl p-4 shadow-xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-xl shrink-0">
-              <i className="ki-filled ki-pulse"></i>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-emerald-600 text-sm flex items-center gap-1 mt-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Temps Réel
-              </div>
-              <div className="text-xs text-muted-foreground">Sync automatique (15s)</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filter Controls Bar */}
-        <div className="bg-card border border-border rounded-xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <label className="text-xs font-semibold text-foreground whitespace-nowrap">Filtrer par ville :</label>
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="kt-input text-xs h-9 font-medium"
-            >
-              <option value="ALL">Toutes les villes (Maroc)</option>
-              <option value="Casablanca">Casablanca</option>
-              <option value="Rabat">Rabat</option>
-              <option value="Marrakech">Marrakech</option>
-              <option value="Tanger">Tanger</option>
-              <option value="Agadir">Agadir</option>
-              <option value="Fès">Fès</option>
-              <option value="Meknès">Meknès</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 w-full md:w-72">
-            <div className="relative w-full">
-              <i className="ki-filled ki-magnifier absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs"></i>
-              <input
-                type="text"
-                placeholder="Rechercher livreur ou N° colis..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="kt-input h-9 text-xs pl-8 w-full"
+            {/* Interactive Leaflet Map Container */}
+            <div className="kt-card-content p-0 relative">
+              <div
+                ref={mapContainerRef}
+                style={{ height: '620px', width: '100%', borderRadius: '0 0 12px 12px' }}
+                className="bg-muted/10 z-10"
               />
+
+              {!leafletReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-xs z-20">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <i className="ki-filled ki-loading animate-spin text-lg"></i>
+                    Chargement de la carte interactive...
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Leaflet Interactive Map View */}
-        <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden relative" style={{ height: '580px' }}>
-          <div ref={mapContainerRef} className="w-full h-full z-10 flex items-center justify-center bg-muted/20">
-            {!leafletReady && (
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                <i className="ki-filled ki-loading animate-spin text-lg"></i>
-                Chargement de la carte interactive Leaflet...
-              </div>
-            )}
-          </div>
-
-          {/* Floating Map Legend Overlay */}
-          <div className="absolute bottom-4 right-4 z-[999] bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border border-border rounded-xl p-3 shadow-xl text-xs space-y-1.5">
-            <div className="font-semibold text-foreground mb-1 border-b border-border pb-1">Légende de la carte :</div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>
-              <span className="text-muted-foreground">Livreur GPS Actif</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
-              <span className="text-muted-foreground">Livreur En Tournée</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-600 inline-block"></span>
-              <span className="text-muted-foreground">Colis En Cours</span>
-            </div>
-          </div>
-        </div>
-
       </div>
     </DashboardLayout>
   );
