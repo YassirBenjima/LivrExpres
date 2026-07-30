@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_CLIENT')]
 final class ColisApiController extends AbstractController
 {
     #[Route('/api/colis', name: 'api_colis_list', methods: ['GET'])]

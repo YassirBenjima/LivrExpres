@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('IS_AUTHENTICATED_FULLY')]
+#[IsGranted('ROLE_CLIENT')]
 final class AffiliateAndDocsApiController extends AbstractController
 {
     #[Route('/api/affiliate', name: 'api_affiliate_info', methods: ['GET'])]

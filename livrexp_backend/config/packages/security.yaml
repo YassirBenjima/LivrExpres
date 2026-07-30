@@ -31,10 +31,22 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
+        - { path: ^/api/stock, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/facturation, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/retour, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/ramassage, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/colis, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/suivi, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/affiliate, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/api-docs, roles: [ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/bon-livraison, roles: [ROLE_LIVREUR, ROLE_CLIENT, ROLE_SUPERVISEUR, ROLE_ADMIN, ROLE_SUPER_ADMIN] }
+        - { path: ^/api/profile, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/dashboard, roles: PUBLIC_ACCESS }
 
     role_hierarchy:
-        ROLE_SUPER_ADMIN: [ROLE_SUPERVISEUR, ROLE_CLIENT]
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_SUPERVISEUR, ROLE_CLIENT]
+        ROLE_ADMIN: [ROLE_SUPERVISEUR, ROLE_CLIENT]
+        ROLE_SUPERVISEUR: [ROLE_CLIENT]
 
 when@test:
     security:
