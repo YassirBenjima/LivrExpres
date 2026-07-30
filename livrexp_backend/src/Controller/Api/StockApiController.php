@@ -41,7 +41,7 @@ final class StockApiController extends AbstractController
         
         $qb = $repo->createQueryBuilder('p')->orderBy('p.id', 'DESC');
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
-            $qb->andWhere('p.createdBy = :user OR p.createdBy IS NULL')
+            $qb->andWhere('p.createdBy = :user')
                ->setParameter('user', $user);
         }
         $all = $qb->getQuery()->getResult();

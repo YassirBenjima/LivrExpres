@@ -39,7 +39,7 @@ class DashboardController extends AbstractController
             ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR]);
 
         if ($isClientOnly && $user instanceof User) {
-            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+            $qb->andWhere('c.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -58,13 +58,13 @@ class DashboardController extends AbstractController
         // Recent items
         $recentColisQb = $colisRepo->createQueryBuilder('c')->orderBy('c.createdAt', 'DESC')->setMaxResults(5);
         if ($isClientOnly && $user instanceof User) {
-            $recentColisQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+            $recentColisQb->andWhere('c.createdBy = :user')->setParameter('user', $user);
         }
         $recentColis = $recentColisQb->getQuery()->getResult();
 
         $recentBonsQb = $bonLivraisonRepo->createQueryBuilder('b')->orderBy('b.createdAt', 'DESC')->setMaxResults(5);
         if ($isClientOnly && $user instanceof User) {
-            $recentBonsQb->andWhere('b.createdBy = :user OR b.createdBy IS NULL')->setParameter('user', $user);
+            $recentBonsQb->andWhere('b.createdBy = :user')->setParameter('user', $user);
         }
         $recentBons = $recentBonsQb->getQuery()->getResult();
 
@@ -75,7 +75,7 @@ class DashboardController extends AbstractController
             ->orderBy('dateStr', 'DESC')
             ->setMaxResults(7);
         if ($isClientOnly && $user instanceof User) {
-            $volumeQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+            $volumeQb->andWhere('c.createdBy = :user')->setParameter('user', $user);
         }
         $volumeStats = array_reverse($volumeQb->getQuery()->getResult());
 
@@ -143,7 +143,7 @@ class DashboardController extends AbstractController
             ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR]);
 
         if ($isClientOnly && $user instanceof User) {
-            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+            $qb->andWhere('c.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -162,7 +162,7 @@ class DashboardController extends AbstractController
         // Recent items
         $recentColisQb = $colisRepo->createQueryBuilder('c')->orderBy('c.createdAt', 'DESC')->setMaxResults(5);
         if ($isClientOnly && $user instanceof User) {
-            $recentColisQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+            $recentColisQb->andWhere('c.createdBy = :user')->setParameter('user', $user);
         }
         $recentColis = $recentColisQb->getQuery()->getResult();
 
@@ -187,7 +187,7 @@ class DashboardController extends AbstractController
             ->orderBy('dateStr', 'DESC')
             ->setMaxResults(7);
         if ($isClientOnly && $user instanceof User) {
-            $volumeQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+            $volumeQb->andWhere('c.createdBy = :user')->setParameter('user', $user);
         }
         $volumeStats = array_reverse($volumeQb->getQuery()->getResult());
 

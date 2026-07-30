@@ -28,7 +28,7 @@ final class ReturnRequestRepository extends ServiceEntityRepository
             ->orderBy('rr.createdAt', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('rr.createdBy = :user OR rr.createdBy IS NULL')
+            $qb->andWhere('rr.createdBy = :user')
                ->setParameter('user', $user);
         }
 

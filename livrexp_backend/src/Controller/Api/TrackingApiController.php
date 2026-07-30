@@ -31,7 +31,7 @@ final class TrackingApiController extends AbstractController
         $user = $this->getUser();
         $qb = $colisRepository->createQueryBuilder('c')->orderBy('c.id', 'DESC');
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
-            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+            $qb->andWhere('c.createdBy = :user')
                ->setParameter('user', $user);
         }
         $colisEntities = $qb->getQuery()->getResult();

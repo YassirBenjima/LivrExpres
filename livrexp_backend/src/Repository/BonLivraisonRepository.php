@@ -28,7 +28,7 @@ final class BonLivraisonRepository extends ServiceEntityRepository
             ->orderBy('bl.createdAt', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('bl.createdBy = :user OR bl.createdBy IS NULL')
+            $qb->andWhere('bl.createdBy = :user')
                ->setParameter('user', $user);
         }
 

@@ -67,6 +67,10 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        if ($request->hasSession()) {
+            $request->getSession()->migrate(true);
+        }
+
         if (str_contains($request->headers->get('Content-Type', ''), 'application/json') || str_starts_with($request->getPathInfo(), '/api/')) {
             $user = $token->getUser();
             $response = new \Symfony\Component\HttpFoundation\JsonResponse([

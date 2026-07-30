@@ -33,7 +33,7 @@ final class StockMovementRepository extends ServiceEntityRepository
             ->orderBy('m.id', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('m.createdBy = :user OR m.createdBy IS NULL')
+            $qb->andWhere('m.createdBy = :user')
                ->setParameter('user', $user);
         }
 

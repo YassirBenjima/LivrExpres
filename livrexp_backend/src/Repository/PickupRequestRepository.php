@@ -81,7 +81,7 @@ final class PickupRequestRepository extends ServiceEntityRepository
             ->orderBy('pr.id', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+            $qb->andWhere('pr.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -110,7 +110,7 @@ final class PickupRequestRepository extends ServiceEntityRepository
             ->groupBy('pr.status');
 
         if ($user !== null) {
-            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+            $qb->andWhere('pr.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -142,7 +142,7 @@ final class PickupRequestRepository extends ServiceEntityRepository
             ->orderBy('pr.createdAt', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+            $qb->andWhere('pr.createdBy = :user')
                ->setParameter('user', $user);
         }
 

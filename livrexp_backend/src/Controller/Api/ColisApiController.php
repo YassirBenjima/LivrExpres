@@ -23,7 +23,7 @@ final class ColisApiController extends AbstractController
             ->orderBy('c.id', 'DESC');
 
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
-            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+            $qb->andWhere('c.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -433,7 +433,7 @@ final class ColisApiController extends AbstractController
     {
         if (!$this->isGranted('ROLE_SUPERVISEUR')) {
             $user = $this->getUser();
-            if ($colis->getCreatedBy() !== null && $colis->getCreatedBy() !== $user) {
+            if ($colis->getCreatedBy() !== $user) {
                 return $this->json(['message' => 'Accès refusé à ce colis.'], JsonResponse::HTTP_FORBIDDEN);
             }
         }

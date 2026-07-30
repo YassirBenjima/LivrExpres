@@ -33,7 +33,7 @@ final class CrbtRepository extends ServiceEntityRepository
             ->orderBy('c.createdAt', 'DESC');
 
         if ($user !== null) {
-            $qb->andWhere('colis.createdBy = :user OR colis.createdBy IS NULL')
+            $qb->andWhere('colis.createdBy = :user')
                ->setParameter('user', $user);
         }
 
@@ -115,7 +115,7 @@ final class CrbtRepository extends ServiceEntityRepository
             ->setParameter('types', [Colis::PAYMENT_COD, Colis::PAYMENT_CRBT]);
 
         if ($user !== null) {
-            $qb->andWhere('colis.createdBy = :user OR colis.createdBy IS NULL')
+            $qb->andWhere('colis.createdBy = :user')
                ->setParameter('user', $user);
         }
 
