@@ -34,6 +34,7 @@ import FacturationCrbtPage from './pages/facturation/FacturationCrbtPage';
 import AffiliatePage from './pages/affiliate/AffiliatePage';
 import ApiDocsPage from './pages/api_docs/ApiDocsPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -448,6 +449,7 @@ function App() {
 
   return (
     <>
+      <OfflineBanner />
       <style>{`
         .custom-toast-container {
           position: fixed;
