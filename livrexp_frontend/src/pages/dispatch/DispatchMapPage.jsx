@@ -306,7 +306,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
   }, [leafletReady, drivers, parcels, selectedCity, searchQuery]);
 
   return (
-    <DashboardLayout navigate={navigate} activeItem="dispatch-map">
+    <DashboardLayout navigate={navigate} activeMenu="dispatch-map">
       {/* Top Header Controls */}
       <div className="kt-container-fixed mb-5">
         <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-5 border-b border-border">
