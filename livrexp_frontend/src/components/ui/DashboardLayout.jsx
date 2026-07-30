@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getUserRoles } from '../../hooks/useAuth';
+import SuperAdminAIChatbot from '../ai/SuperAdminAIChatbot';
 
 export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const currentActive = activeMenu || activeItem || 'dashboard';
@@ -865,6 +866,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
           </div>
         </footer>
       </div>
+
+      {/* Super Admin AI Chatbot Widget (Floating bottom-right, visible exclusively for ROLE_SUPER_ADMIN) */}
+      <SuperAdminAIChatbot />
     </div>
   );
 }

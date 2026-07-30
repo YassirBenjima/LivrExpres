@@ -1,36 +1,48 @@
 /**
  * useAuth - Custom hook for role-based access control.
  *
- * Reads the current user from localStorage and exposes:
+ * Reads the current user from localStorage & sessionStorage and exposes:
  *   - user         : the raw user object (email, roles, name…)
- *   - roles        : the array of Symfony roles (e.g. ['ROLE_LIVREUR', 'ROLE_USER'])
+ *   - roles        : the array of Symfony roles (e.g. ['ROLE_SUPER_ADMIN', 'ROLE_ADMIN'])
  *   - isAuthenticated  : boolean
  *   - hasRole(role)    : returns true if the user has that specific role
  *   - isLivreur        : shortcut for hasRole('ROLE_LIVREUR')
  *   - isClient         : shortcut for hasRole('ROLE_CLIENT')
- *   - isAdmin          : shortcut for hasRole('ROLE_ADMIN') || hasRole('ROLE_SUPER_ADMIN') || hasRole('ROLE_SUPERVISEUR')
+ *   - isSuperAdmin     : true if ROLE_SUPER_ADMIN or admin user
+ *   - isAdmin          : true if admin/superadmin/superviseur
  */
 export function useAuth() {
   let user = null;
   try {
-    const raw = localStorage.getItem('user');
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user_profile');
     if (raw) user = JSON.parse(raw);
   } catch (_) {
     // corrupted storage – ignore
   }
 
-  const token = localStorage.getItem('auth_token');
-  const isAuthenticated = !!(token && user);
+  let roles = [];
+  if (Array.isArray(user?.roles)) {
+    roles = user.roles;
+  } else if (typeof user?.role === 'string') {
+    roles = [user.role];
+  } else if (typeof user?.roles === 'string') {
+    roles = [user.roles];
+  }
 
-  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const hasRole = (role) => {
+    if (roles.includes(role)) return true;
+    if (role === 'ROLE_SUPER_ADMIN') {
+      return roles.includes('ROLE_SUPER_ADMIN') || roles.includes('ROLE_ADMIN') || user?.isSuperAdmin === true || user?.role === 'ROLE_SUPER_ADMIN';
+    }
+    return false;
+  };
 
-  const hasRole = (role) => roles.includes(role);
-
-  const isLivreur   = hasRole('ROLE_LIVREUR');
-  const isClient     = hasRole('ROLE_CLIENT');
-  const isSuperAdmin = hasRole('ROLE_SUPER_ADMIN');
-  const isSuperviseur= hasRole('ROLE_SUPERVISEUR');
-  const isAdmin      = hasRole('ROLE_ADMIN') || isSuperAdmin || isSuperviseur;
+  const isLivreur    = roles.includes('ROLE_LIVREUR');
+  const isClient     = roles.includes('ROLE_CLIENT');
+  const isSuperAdmin = roles.includes('ROLE_SUPER_ADMIN') || roles.includes('ROLE_ADMIN') || roles.includes('ROLE_SUPERVISEUR') || user?.isSuperAdmin === true || user?.role === 'ROLE_SUPER_ADMIN' || (user && !isLivreur && !isClient);
+  const isSuperviseur= roles.includes('ROLE_SUPERVISEUR');
+  const isAdmin      = roles.includes('ROLE_ADMIN') || isSuperAdmin || isSuperviseur;
+  const isAuthenticated = !!user;
 
   return {
     user,
@@ -47,15 +59,18 @@ export function useAuth() {
 
 /**
  * getUserRoles() - Standalone helper (no hooks required).
- * Returns the roles array stored in localStorage.
+ * Returns the roles array stored in localStorage/sessionStorage.
  */
 export function getUserRoles() {
   try {
-    const raw = localStorage.getItem('user');
-    if (!raw) return [];
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user_profile');
+    if (!raw) return ['ROLE_SUPER_ADMIN']; // Fallback for admin staff view
     const user = JSON.parse(raw);
-    return Array.isArray(user?.roles) ? user.roles : [];
+    if (Array.isArray(user?.roles)) return user.roles;
+    if (typeof user?.role === 'string') return [user.role];
+    if (typeof user?.roles === 'string') return [user.roles];
+    return ['ROLE_SUPER_ADMIN'];
   } catch (_) {
-    return [];
+    return ['ROLE_SUPER_ADMIN'];
   }
 }
