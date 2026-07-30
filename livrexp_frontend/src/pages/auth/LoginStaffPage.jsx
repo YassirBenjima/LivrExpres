@@ -40,31 +40,30 @@ export default function LoginStaffPage({ navigate }) {
 
     try {
       const data = await authService.login(email, password, rememberMe);
-      setApiSuccess('Authentification Staff réussie ! Redirection...');
       
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-      } else if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }
-
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
-    } catch (error) {
-      console.warn('API connection failed, simulating login flow...', error);
-      setTimeout(() => {
-        if (email === 'staff@kt.com' && password === 'staff123') {
-          setApiSuccess('Authentification de démonstration réussie ! Redirection...');
-          localStorage.setItem('auth_token', 'demo_staff_token_123456');
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1000);
+      if (data.success || data.user) {
+        const userPayload = data.user || {};
+        localStorage.setItem('user', JSON.stringify(userPayload));
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
         } else {
-          setApiError('Identifiants Staff invalides.');
-          setIsLoading(false);
+          localStorage.setItem('auth_token', 'session');
         }
-      }, 1500);
+        setApiSuccess('Authentification Staff réussie ! Redirection...');
+        setTimeout(() => {
+          if (userPayload.roles?.includes('ROLE_LIVREUR')) {
+            navigate('/bon-livraison');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 1000);
+      } else {
+        setApiError(data.message || 'Identifiants Staff invalides.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setApiError(error.message || 'Identifiants Staff invalides ou erreur serveur.');
+      setIsLoading(false);
     }
   };
 

@@ -30,3 +30,7 @@ Thumbs.db
 
 # ---- Docker ----
 *.log
+
+# ---- Local Documentation / Secrets ----
+TEST_ACCOUNTS.md
+

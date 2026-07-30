@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getUserRoles } from './hooks/useAuth';
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LoginStaffPage from './pages/auth/LoginStaffPage';
@@ -63,6 +64,21 @@ function App() {
   const navigate = (path) => {
     window.history.pushState({}, '', path);
     setCurrentRoute(path);
+  };
+
+  // Routes accessible to ROLE_LIVREUR
+  const LIVREUR_ALLOWED_ROUTES = [
+    '/dashboard',
+    '/bon-livraison',
+    '/bon-livraison/new',
+    '/profile',
+  ];
+
+  // Returns true if the path is allowed for ROLE_LIVREUR
+  const isAllowedForLivreur = (path) => {
+    return LIVREUR_ALLOWED_ROUTES.some(allowed =>
+      path === allowed || path.startsWith(allowed + '/')
+    );
   };
 
 
@@ -141,6 +157,16 @@ function App() {
     } else if (!authed && isProtectedRoute) {
       navigate('/login');
     }
+
+    // ── RBAC: guard ROLE_LIVREUR ─────────────────────────────────────────────
+    const roles = getUserRoles();
+    const isLivreur = roles.includes('ROLE_LIVREUR');
+    if (authed && isLivreur && !isAuthRoute && !isAllowedForLivreur(currentRoute)) {
+      // Redirect livreur away from forbidden pages
+      navigate('/bon-livraison');
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Trigger fetch when entering a protected route to keep data up-to-date
     if (authed && isProtectedRoute && !loading) {

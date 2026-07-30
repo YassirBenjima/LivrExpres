@@ -82,6 +82,7 @@ final class SeedTestDataCommand extends Command
             [
                 ['Client', $result['users']['client']['email'], $result['users']['client']['password']],
                 ['Superviseur', $result['users']['staff']['email'], $result['users']['staff']['password']],
+                ['Livreur', $result['users']['livreur']['email'], $result['users']['livreur']['password']],
             ]
         );
 

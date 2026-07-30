@@ -23,13 +23,11 @@ export default function LoginPage({ navigate }) {
       const data = await authService.login(email, password, rememberMe);
 
       if (data.success || data.user) {
-        // Store user info from backend response
         const userPayload = data.user || {};
         localStorage.setItem('user', JSON.stringify(userPayload));
         if (data.token) {
           localStorage.setItem('auth_token', data.token);
         } else {
-          // Session-based auth: mark as authenticated
           localStorage.setItem('auth_token', 'session');
         }
         setApiSuccess('Connexion réussie ! Redirection...');

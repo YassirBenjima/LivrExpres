@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { getUserRoles } from '../../hooks/useAuth';
 
 export default function DashboardLayout({ children, activeMenu = 'dashboard' }) {
+  // ── Role-based access control ────────────────────────────────────────────
+  const userRoles = getUserRoles();
+  const isLivreur    = userRoles.includes('ROLE_LIVREUR');
+  const isSuperAdmin = userRoles.includes('ROLE_SUPER_ADMIN');
+  const isSuperviseur= userRoles.includes('ROLE_SUPERVISEUR');
+  const isAdmin      = userRoles.includes('ROLE_ADMIN') || isSuperAdmin || isSuperviseur;
+  // ROLE_CLIENT or any authenticated user who is not a livreur or admin sees the full client view
+  const isClientOrFull = !isLivreur;
+  // ─────────────────────────────────────────────────────────────────────────
   const [themeMode, setThemeMode] = useState(localStorage.getItem('kt-theme') || 'light');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -127,12 +137,12 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
               {/* User Section Heading */}
               <div className="kt-menu-item pt-2.25 pb-px">
                 <span className="kt-menu-heading uppercase text-xs font-medium text-muted-foreground ps-[10px] pe-[10px]">
-                  Utilisateur
+                  {isLivreur ? 'Mes Livraisons' : 'Utilisateur'}
                 </span>
               </div>
 
-              {/* Colis */}
-              <div className={`kt-menu-item ${isColisMenuOpen ? 'here show' : ''}`}>
+              {/* Colis — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${isColisMenuOpen ? 'here show' : ''}`}>
                 <div 
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsColisMenuOpen(!isColisMenuOpen)}
@@ -197,10 +207,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Stock */}
-              <div className={`kt-menu-item ${isStockMenuOpen ? 'here show' : ''}`}>
+              {/* Stock — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${isStockMenuOpen ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsStockMenuOpen(!isStockMenuOpen)}
@@ -245,10 +255,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Ramassage */}
-              <div className={`kt-menu-item ${activeMenu.startsWith('ramassage') ? 'here show' : ''}`}>
+              {/* Ramassage — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu.startsWith('ramassage') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsRamassageMenuOpen(!isRamassageMenuOpen)}
@@ -286,9 +296,9 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Bon de Livraison */}
+              {/* Bon de Livraison — always visible (ROLE_LIVREUR primary section) */}
               <div className={`kt-menu-item ${activeMenu.startsWith('bon_livraison') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
@@ -322,8 +332,8 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                 )}
               </div>
 
-              {/* Suivi */}
-              <div className={`kt-menu-item ${activeMenu.startsWith('suivi') ? 'here show' : ''}`}>
+              {/* Suivi — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu.startsWith('suivi') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsSuiviMenuOpen(!isSuiviMenuOpen)}
@@ -354,10 +364,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Retour */}
-              <div className={`kt-menu-item ${activeMenu.startsWith('retour') ? 'here show' : ''}`}>
+              {/* Retour — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu.startsWith('retour') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsRetourMenuOpen(!isRetourMenuOpen)}
@@ -388,10 +398,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Facturation */}
-              <div className={`kt-menu-item ${activeMenu.startsWith('facturation') ? 'here show' : ''}`}>
+              {/* Facturation — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu.startsWith('facturation') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsFacturationMenuOpen(!isFacturationMenuOpen)}
@@ -415,10 +425,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
-              {/* Affiliate */}
-              <div className={`kt-menu-item ${activeMenu === 'affiliate' ? 'active' : ''}`}>
+              {/* Affiliate — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu === 'affiliate' ? 'active' : ''}`}>
                 <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/affiliate"
                   onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/affiliate'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
@@ -428,10 +438,10 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     Affiliate
                   </span>
                 </a>
-              </div>
+              </div>}
 
-              {/* API */}
-              <div className={`kt-menu-item ${activeMenu === 'api_docs' ? 'active' : ''}`}>
+              {/* API — hidden from ROLE_LIVREUR */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu === 'api_docs' ? 'active' : ''}`}>
                 <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/api-docs"
                   onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/api-docs'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
@@ -441,7 +451,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                     API
                   </span>
                 </a>
-              </div>
+              </div>}
 
             </div>
           </div>
@@ -668,12 +678,16 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
                             </span>
                           </div>
                         </div>
-                        {user?.roles?.includes('ROLE_SUPER_ADMIN') ? (
+                        {isSuperAdmin ? (
                           <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
-                        ) : user?.roles?.includes('ROLE_ADMIN') ? (
+                        ) : isSuperviseur ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">Superviseur</span>
+                        ) : isAdmin ? (
                           <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">Admin</span>
+                        ) : isLivreur ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Livreur</span>
                         ) : (
-                          <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Utilisateur</span>
+                          <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Client</span>
                         )}
                       </div>
 

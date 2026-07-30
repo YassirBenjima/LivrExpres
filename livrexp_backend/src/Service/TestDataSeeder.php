@@ -26,6 +26,7 @@ final class TestDataSeeder
 {
     public const CLIENT_EMAIL = 'test.client@livrexp.test';
     public const STAFF_EMAIL = 'test.superviseur@livrexp.test';
+    public const LIVREUR_EMAIL = 'test.livreur@livrexp.test';
     public const DEFAULT_PASSWORD = 'Test1234!';
 
     private const COLIS_ORDER_PREFIX = '900';
@@ -46,7 +47,8 @@ final class TestDataSeeder
 
     public function isSeeded(): bool
     {
-        return $this->userRepository->findOneBy(['email' => self::CLIENT_EMAIL]) !== null;
+        return $this->userRepository->findOneBy(['email' => self::CLIENT_EMAIL]) !== null
+            && $this->userRepository->findOneBy(['email' => self::LIVREUR_EMAIL]) !== null;
     }
 
     /**
@@ -57,6 +59,7 @@ final class TestDataSeeder
         $city = $this->resolveCity();
         $client = $this->createClientUser($city);
         $staff = $this->createStaffUser($city);
+        $livreur = $this->createLivreurUser($city);
         $this->entityManager->flush();
 
         $colisMap = $this->seedColis($city);
@@ -75,6 +78,7 @@ final class TestDataSeeder
             'users' => [
                 'client' => ['email' => self::CLIENT_EMAIL, 'password' => self::DEFAULT_PASSWORD],
                 'staff' => ['email' => self::STAFF_EMAIL, 'password' => self::DEFAULT_PASSWORD],
+                'livreur' => ['email' => self::LIVREUR_EMAIL, 'password' => self::DEFAULT_PASSWORD],
             ],
             'city' => $city,
             'colis' => \count($colisMap),
@@ -113,11 +117,17 @@ final class TestDataSeeder
             $em->remove($colis);
         }
 
+        foreach ($em->getRepository(StockMovementItem::class)->findAll() as $item) {
+            $em->remove($item);
+        }
+        $em->flush();
+
         foreach ($em->getRepository(StockMovement::class)->findAll() as $movement) {
             if (str_starts_with($movement->getReference(), self::MOVEMENT_PREFIX)) {
                 $em->remove($movement);
             }
         }
+        $em->flush();
 
         foreach ($em->getRepository(StockProduct::class)->findAll() as $product) {
             $barcode = $product->getBarcode() ?? '';
@@ -132,7 +142,7 @@ final class TestDataSeeder
             }
         }
 
-        foreach ([self::CLIENT_EMAIL, self::STAFF_EMAIL] as $email) {
+        foreach ([self::CLIENT_EMAIL, self::STAFF_EMAIL, self::LIVREUR_EMAIL] as $email) {
             $user = $this->userRepository->findOneBy(['email' => $email]);
             if ($user === null) {
                 continue;
@@ -147,6 +157,7 @@ final class TestDataSeeder
         }
 
         $em->flush();
+        $em->clear();
     }
 
     private function resolveCity(): string
@@ -216,6 +227,27 @@ final class TestDataSeeder
         $user->setFullName('Superviseur Test');
         $user->setBusinessName('LivrExpress Staff SEED');
         $user->setBusinessPhone('0600000001');
+        $user->setCity($city);
+
+        $this->entityManager->persist($user);
+
+        return $user;
+    }
+
+    private function createLivreurUser(string $city): User
+    {
+        $existing = $this->userRepository->findOneBy(['email' => self::LIVREUR_EMAIL]);
+        if ($existing instanceof User) {
+            return $existing;
+        }
+
+        $user = new User();
+        $user->setEmail(self::LIVREUR_EMAIL);
+        $user->setRoles(['ROLE_LIVREUR']);
+        $user->setPassword($this->passwordHasher->hashPassword($user, self::DEFAULT_PASSWORD));
+        $user->setFullName('Livreur Test Express');
+        $user->setBusinessName('Service Livraison');
+        $user->setBusinessPhone('0600000002');
         $user->setCity($city);
 
         $this->entityManager->persist($user);
