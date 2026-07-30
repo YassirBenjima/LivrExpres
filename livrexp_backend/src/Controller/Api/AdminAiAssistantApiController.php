@@ -48,7 +48,10 @@ final class AdminAiAssistantApiController extends AbstractController
         }
 
         // --- Check for Ramassage Intent (single or multiple tracking codes) ---
-        $isRamassageIntent = (bool) preg_match('/(ramassage|ramasser|demande.*ramassage|attente.*ramassage)/ui', $rawMessage);
+        // Covers: ramassage, ramasage (typo), ramsage (typo), ramasser, dmd de ramassage, dem de ramasage, etc.
+        $isRamassageIntent = (bool) preg_match('/\b(ramas{1,2}age|ramasser|ramsage|ramasage)\b/ui', $rawMessage)
+            || (bool) preg_match('/\b(dmd|dem|demande)\b.*\b(ramas{1,2}age|ramsage|pickup)\b/ui', $rawMessage)
+            || (bool) preg_match('/\bpickup\b/ui', $rawMessage);
         if ($isRamassageIntent) {
             // Extract full tracking codes first (CMD-XXXX or F-YYYYMMDD-NNNNNN), then bare numbers
             preg_match_all('/\b(CMD-\d+|F-\d{6,8}-\d+)\b/i', $rawMessage, $fullCodeMatches);
