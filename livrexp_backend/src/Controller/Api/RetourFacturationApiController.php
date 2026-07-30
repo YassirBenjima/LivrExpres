@@ -32,7 +32,10 @@ final class RetourFacturationApiController extends AbstractController
         $search = trim((string) $request->query->get('q', ''));
         $selectedStatut = trim((string) $request->query->get('statut', ''));
 
-        $demandes = $returnRequestRepository->findAllForList($search, $selectedStatut);
+        $user = $this->getUser();
+        $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
+
+        $demandes = $returnRequestRepository->findAllForList($search, $selectedStatut, $scopedUser);
         $statutLabels = ReturnRequest::getStatusLabels();
 
         $data = [];
@@ -81,7 +84,14 @@ final class RetourFacturationApiController extends AbstractController
         ReturnRequestRepository $returnRequestRepository
     ): JsonResponse {
         $search = trim((string) $request->query->get('q', ''));
-        $allColis = $colisRepository->findBy([], ['id' => 'DESC']);
+        $user = $this->getUser();
+        
+        $qb = $colisRepository->createQueryBuilder('c')->orderBy('c.id', 'DESC');
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+        $allColis = $qb->getQuery()->getResult();
 
         $assignedIds = $returnRequestRepository->findColisIdsAlreadyAssigned(
             array_map(static fn ($c) => (int) $c->getId(), $allColis)
@@ -98,14 +108,9 @@ final class RetourFacturationApiController extends AbstractController
             }
 
             if ($searchLower !== '') {
-                $haystack = mb_strtolower(implode(' ', [
-                    (string) $colis->getTrackingCode(),
-                    (string) $colis->getOrderNumber(),
-                    (string) $colis->getProductNature(),
-                    (string) $colis->getCity(),
-                    (string) $colis->getRecipient(),
-                ]));
-                if (!str_contains($haystack, $searchLower)) {
+                $tracking = mb_strtolower((string) $colis->getTrackingCode());
+                $orderNum = mb_strtolower((string) $colis->getOrderNumber());
+                if (!str_contains($tracking, $searchLower) && !str_contains($orderNum, $searchLower)) {
                     continue;
                 }
             }
@@ -303,8 +308,11 @@ final class RetourFacturationApiController extends AbstractController
         if ($dateFrom === false) $dateFrom = null;
         if ($dateTo === false) $dateTo = null;
 
-        $entries = $crbtRepository->findAllForList($search, $selectedStatut, $dateFrom, $dateTo);
-        $summary = $crbtRepository->computeSummaryTotals($search, $selectedStatut, $dateFrom, $dateTo);
+        $user = $this->getUser();
+        $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
+
+        $entries = $crbtRepository->findAllForList($search, $selectedStatut, $dateFrom, $dateTo, $scopedUser);
+        $summary = $crbtRepository->computeSummaryTotals($search, $selectedStatut, $dateFrom, $dateTo, $scopedUser);
 
         $statutLabels = Crbt::getStatusLabels();
         $data = [];

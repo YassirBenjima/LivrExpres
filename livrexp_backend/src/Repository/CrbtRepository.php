@@ -25,11 +25,17 @@ final class CrbtRepository extends ServiceEntityRepository
         string $status = '',
         ?\DateTimeImmutable $dateFrom = null,
         ?\DateTimeImmutable $dateTo = null,
+        ?\App\Entity\User $user = null,
     ): array {
         $qb = $this->createQueryBuilder('c')
             ->innerJoin('c.colis', 'colis')
             ->addSelect('colis')
             ->orderBy('c.createdAt', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('colis.createdBy = :user OR colis.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         if ($status !== '') {
             $qb->andWhere('c.status = :status')
@@ -70,8 +76,9 @@ final class CrbtRepository extends ServiceEntityRepository
         string $status = '',
         ?\DateTimeImmutable $dateFrom = null,
         ?\DateTimeImmutable $dateTo = null,
+        ?\App\Entity\User $user = null,
     ): array {
-        $entries = $this->findAllForList($search, $status, $dateFrom, $dateTo);
+        $entries = $this->findAllForList($search, $status, $dateFrom, $dateTo, $user);
 
         $totals = [
             'disponible' => 0.0,
@@ -97,7 +104,7 @@ final class CrbtRepository extends ServiceEntityRepository
     /**
      * @return list<Colis>
      */
-    public function findColisEligibleWithoutCrbt(): array
+    public function findColisEligibleWithoutCrbt(?\App\Entity\User $user = null): array
     {
         $qb = $this->getEntityManager()->createQueryBuilder()
             ->select('colis')
@@ -106,6 +113,11 @@ final class CrbtRepository extends ServiceEntityRepository
             ->andWhere('crbt.id IS NULL')
             ->andWhere('colis.paymentType IN (:types)')
             ->setParameter('types', [Colis::PAYMENT_COD, Colis::PAYMENT_CRBT]);
+
+        if ($user !== null) {
+            $qb->andWhere('colis.createdBy = :user OR colis.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         return $qb->getQuery()->getResult();
     }

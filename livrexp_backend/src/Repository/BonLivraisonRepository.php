@@ -19,13 +19,18 @@ final class BonLivraisonRepository extends ServiceEntityRepository
     /**
      * @return list<BonLivraison>
      */
-    public function findAllForList(string $search = '', string $status = ''): array
+    public function findAllForList(string $search = '', string $status = '', ?\App\Entity\User $user = null): array
     {
         $qb = $this->createQueryBuilder('bl')
             ->distinct()
             ->leftJoin('bl.colis', 'c')
             ->addSelect('c')
             ->orderBy('bl.createdAt', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('bl.createdBy = :user OR bl.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         if ($status !== '') {
             $qb->andWhere('bl.status = :status')

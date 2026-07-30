@@ -39,7 +39,13 @@ final class BonLivraisonApiController extends AbstractController
         $search = trim((string) $request->query->get('q', ''));
         $selectedStatut = trim((string) $request->query->get('statut', ''));
 
-        $bons = $bonLivraisonRepository->findAllForList($search, $selectedStatut);
+        $user = $this->getUser();
+        $scopedUser = null;
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && !$this->isGranted('ROLE_LIVREUR') && $user instanceof User) {
+            $scopedUser = $user;
+        }
+
+        $bons = $bonLivraisonRepository->findAllForList($search, $selectedStatut, $scopedUser);
 
         $data = array_map(function (BonLivraison $bon) {
             $statusLabel = BonLivraison::getStatusLabels()[$bon->getStatus()] ?? $bon->getStatus();

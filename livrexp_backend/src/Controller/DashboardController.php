@@ -16,7 +16,10 @@ class DashboardController extends AbstractController
     #[Route('/dashboard', name: 'app_dashboard')]
     public function index(ColisRepository $colisRepo, BonLivraisonRepository $bonLivraisonRepo): Response
     {
-        $stats = $colisRepo->createQueryBuilder('c')
+        $user = $this->getUser();
+        $isClientOnly = !$this->isGranted('ROLE_SUPERVISEUR');
+
+        $qb = $colisRepo->createQueryBuilder('c')
             ->select('
                 COUNT(c.id) as totalColis,
                 SUM(CASE WHEN c.etat = :livre THEN 1 ELSE 0 END) as colisLivres,
@@ -33,9 +36,14 @@ class DashboardController extends AbstractController
             ->setParameter('expedie', Colis::ETAT_EXPEDIE)
             ->setParameter('retour', Colis::ETAT_RETOUR)
             ->setParameter('cree', Colis::ETAT_CREE)
-            ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR])
-            ->getQuery()
-            ->getSingleResult();
+            ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR]);
+
+        if ($isClientOnly && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $stats = $qb->getQuery()->getSingleResult();
 
         $totalColis = (int) $stats['totalColis'];
         $colisLivres = (int) $stats['colisLivres'];
@@ -48,19 +56,28 @@ class DashboardController extends AbstractController
         $crbtEnCours = (float) $stats['crbtEnCours'];
 
         // Recent items
-        $recentColis = $colisRepo->findBy([], ['createdAt' => 'DESC'], 5);
-        $recentBons = $bonLivraisonRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        $recentColisQb = $colisRepo->createQueryBuilder('c')->orderBy('c.createdAt', 'DESC')->setMaxResults(5);
+        if ($isClientOnly && $user instanceof User) {
+            $recentColisQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+        }
+        $recentColis = $recentColisQb->getQuery()->getResult();
 
-        // Get volume statistics for the last 7 active days in the database
-        $volumeStats = $colisRepo->createQueryBuilder('c')
+        $recentBonsQb = $bonLivraisonRepo->createQueryBuilder('b')->orderBy('b.createdAt', 'DESC')->setMaxResults(5);
+        if ($isClientOnly && $user instanceof User) {
+            $recentBonsQb->andWhere('b.createdBy = :user OR b.createdBy IS NULL')->setParameter('user', $user);
+        }
+        $recentBons = $recentBonsQb->getQuery()->getResult();
+
+        // Get volume statistics for active days
+        $volumeQb = $colisRepo->createQueryBuilder('c')
             ->select("SUBSTRING(c.createdAt, 1, 10) as dateStr, COUNT(c.id) as cnt")
             ->groupBy('dateStr')
             ->orderBy('dateStr', 'DESC')
-            ->setMaxResults(7)
-            ->getQuery()
-            ->getResult();
-
-        $volumeStats = array_reverse($volumeStats);
+            ->setMaxResults(7);
+        if ($isClientOnly && $user instanceof User) {
+            $volumeQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+        }
+        $volumeStats = array_reverse($volumeQb->getQuery()->getResult());
 
         $chartLabels = [];
         $chartData = [];
@@ -76,7 +93,6 @@ class DashboardController extends AbstractController
                 $chartData[] = (int) $stat['cnt'];
             }
         } else {
-            // Fallback if database has no colis at all
             for ($i = 6; $i >= 0; $i--) {
                 $dt = (new \DateTimeImmutable("-$i days"));
                 $chartLabels[] = $dt->format('d M');
@@ -104,7 +120,10 @@ class DashboardController extends AbstractController
     #[Route('/api/dashboard', name: 'app_api_dashboard', methods: ['GET'])]
     public function apiIndex(ColisRepository $colisRepo, BonLivraisonRepository $bonLivraisonRepo): Response
     {
-        $stats = $colisRepo->createQueryBuilder('c')
+        $user = $this->getUser();
+        $isClientOnly = !$this->isGranted('ROLE_SUPERVISEUR');
+
+        $qb = $colisRepo->createQueryBuilder('c')
             ->select('
                 COUNT(c.id) as totalColis,
                 SUM(CASE WHEN c.etat = :livre THEN 1 ELSE 0 END) as colisLivres,
@@ -121,9 +140,14 @@ class DashboardController extends AbstractController
             ->setParameter('expedie', Colis::ETAT_EXPEDIE)
             ->setParameter('retour', Colis::ETAT_RETOUR)
             ->setParameter('cree', Colis::ETAT_CREE)
-            ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR])
-            ->getQuery()
-            ->getSingleResult();
+            ->setParameter('excludedEtats', [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR]);
+
+        if ($isClientOnly && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $stats = $qb->getQuery()->getSingleResult();
 
         $totalColis = (int) $stats['totalColis'];
         $colisLivres = (int) $stats['colisLivres'];
@@ -136,7 +160,12 @@ class DashboardController extends AbstractController
         $crbtEnCours = (float) $stats['crbtEnCours'];
 
         // Recent items
-        $recentColis = $colisRepo->findBy([], ['createdAt' => 'DESC'], 5);
+        $recentColisQb = $colisRepo->createQueryBuilder('c')->orderBy('c.createdAt', 'DESC')->setMaxResults(5);
+        if ($isClientOnly && $user instanceof User) {
+            $recentColisQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+        }
+        $recentColis = $recentColisQb->getQuery()->getResult();
+
         $recentColisData = [];
         foreach ($recentColis as $colis) {
             $recentColisData[] = [
@@ -151,16 +180,16 @@ class DashboardController extends AbstractController
             ];
         }
 
-        // Get volume statistics for the last 7 active days in the database
-        $volumeStats = $colisRepo->createQueryBuilder('c')
+        // Get volume statistics for active days
+        $volumeQb = $colisRepo->createQueryBuilder('c')
             ->select("SUBSTRING(c.createdAt, 1, 10) as dateStr, COUNT(c.id) as cnt")
             ->groupBy('dateStr')
             ->orderBy('dateStr', 'DESC')
-            ->setMaxResults(7)
-            ->getQuery()
-            ->getResult();
-
-        $volumeStats = array_reverse($volumeStats);
+            ->setMaxResults(7);
+        if ($isClientOnly && $user instanceof User) {
+            $volumeQb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')->setParameter('user', $user);
+        }
+        $volumeStats = array_reverse($volumeQb->getQuery()->getResult());
 
         $chartLabels = [];
         $chartData = [];
@@ -176,7 +205,6 @@ class DashboardController extends AbstractController
                 $chartData[] = (int) $stat['cnt'];
             }
         } else {
-            // Fallback if database has no colis at all
             for ($i = 6; $i >= 0; $i--) {
                 $dt = (new \DateTimeImmutable("-$i days"));
                 $chartLabels[] = $dt->format('d M');

@@ -30,8 +30,10 @@ final class RamassageApiController extends AbstractController
     {
         $search = trim((string) $request->query->get('q', ''));
         $selectedStatut = trim((string) $request->query->get('statut', ''));
+        $user = $this->getUser();
+        $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
 
-        $pickups = $pickupRequestRepository->findAllForList($search, $selectedStatut);
+        $pickups = $pickupRequestRepository->findAllForList($search, $selectedStatut, $scopedUser);
 
         $data = array_map(function (PickupRequest $pickup) {
             return [
@@ -65,7 +67,9 @@ final class RamassageApiController extends AbstractController
     #[Route('/stats', name: 'api_ramassage_stats', methods: ['GET'])]
     public function stats(PickupRequestRepository $pickupRequestRepository): JsonResponse
     {
-        $stats = $pickupRequestRepository->countByStatus();
+        $user = $this->getUser();
+        $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
+        $stats = $pickupRequestRepository->countByStatus($scopedUser);
         return $this->json([
             'stats' => $stats,
             'statut_labels' => self::STATUS_LABELS,

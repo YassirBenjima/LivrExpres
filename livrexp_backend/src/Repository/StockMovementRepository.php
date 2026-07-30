@@ -19,7 +19,7 @@ final class StockMovementRepository extends ServiceEntityRepository
     /**
      * @return list<StockMovement>
      */
-    public function findEntryMovementsForIndex(string $search = ''): array
+    public function findEntryMovementsForIndex(string $search = '', ?\App\Entity\User $user = null): array
     {
         $qb = $this->createQueryBuilder('m')
             ->leftJoin('m.items', 'i')
@@ -31,6 +31,11 @@ final class StockMovementRepository extends ServiceEntityRepository
             ->andWhere('m.direction = :dir')
             ->setParameter('dir', StockMovement::DIRECTION_ENTRY)
             ->orderBy('m.id', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('m.createdBy = :user OR m.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         $search = trim($search);
         if ($search !== '') {

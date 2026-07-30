@@ -70,12 +70,20 @@ final class PickupRequestRepository extends ServiceEntityRepository
     /**
      * @return list<PickupRequest>
      */
-    public function findAllForList(string $search = '', string $selectedStatus = ''): array
+    /**
+     * @return list<PickupRequest>
+     */
+    public function findAllForList(string $search = '', string $selectedStatus = '', ?\App\Entity\User $user = null): array
     {
         $qb = $this->createQueryBuilder('pr')
             ->leftJoin('pr.createdBy', 'u')
             ->addSelect('u')
             ->orderBy('pr.id', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         if ($selectedStatus !== '') {
             $qb->andWhere('pr.status = :status')
@@ -95,13 +103,18 @@ final class PickupRequestRepository extends ServiceEntityRepository
     /**
      * @return array{pending: int, confirmed: int, picked_up: int, cancelled: int, total: int}
      */
-    public function countByStatus(): array
+    public function countByStatus(?\App\Entity\User $user = null): array
     {
-        $rows = $this->createQueryBuilder('pr')
+        $qb = $this->createQueryBuilder('pr')
             ->select('pr.status, COUNT(pr.id) as cnt')
-            ->groupBy('pr.status')
-            ->getQuery()
-            ->getArrayResult();
+            ->groupBy('pr.status');
+
+        if ($user !== null) {
+            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $rows = $qb->getQuery()->getArrayResult();
 
         $result = ['pending' => 0, 'confirmed' => 0, 'picked_up' => 0, 'cancelled' => 0, 'total' => 0];
         foreach ($rows as $row) {
@@ -119,16 +132,21 @@ final class PickupRequestRepository extends ServiceEntityRepository
     /**
      * @return array{pending: list<PickupRequest>, confirmed: list<PickupRequest>, picked_up: list<PickupRequest>}
      */
-    public function findGroupedByStatus(): array
+    public function findGroupedByStatus(?\App\Entity\User $user = null): array
     {
-        $all = $this->createQueryBuilder('pr')
+        $qb = $this->createQueryBuilder('pr')
             ->leftJoin('pr.createdBy', 'u')
             ->addSelect('u')
             ->andWhere('pr.status != :cancelled')
             ->setParameter('cancelled', 'cancelled')
-            ->orderBy('pr.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('pr.createdAt', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('pr.createdBy = :user OR pr.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $all = $qb->getQuery()->getResult();
 
         $grouped = ['pending' => [], 'confirmed' => [], 'picked_up' => []];
         foreach ($all as $pickup) {

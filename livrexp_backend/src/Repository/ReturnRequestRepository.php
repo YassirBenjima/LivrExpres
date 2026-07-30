@@ -19,13 +19,18 @@ final class ReturnRequestRepository extends ServiceEntityRepository
     /**
      * @return list<ReturnRequest>
      */
-    public function findAllForList(string $search = '', string $status = ''): array
+    public function findAllForList(string $search = '', string $status = '', ?\App\Entity\User $user = null): array
     {
         $qb = $this->createQueryBuilder('rr')
             ->distinct()
             ->leftJoin('rr.colis', 'c')
             ->addSelect('c')
             ->orderBy('rr.createdAt', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('rr.createdBy = :user OR rr.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
 
         if ($status !== '') {
             $qb->andWhere('rr.status = :status')

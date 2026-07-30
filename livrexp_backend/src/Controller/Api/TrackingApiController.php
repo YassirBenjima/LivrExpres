@@ -28,7 +28,13 @@ final class TrackingApiController extends AbstractController
         $search = trim((string) $request->query->get('q', ''));
         $selectedCity = trim((string) $request->query->get('city', ''));
 
-        $colisEntities = $colisRepository->findBy([], ['id' => 'DESC']);
+        $user = $this->getUser();
+        $qb = $colisRepository->createQueryBuilder('c')->orderBy('c.id', 'DESC');
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+        $colisEntities = $qb->getQuery()->getResult();
         $colisList = [];
 
         $searchLower = mb_strtolower($search);

@@ -36,8 +36,15 @@ final class StockApiController extends AbstractController
         StockProductRepository $repo,
         PickupRequestRepository $pickupRequestRepo
     ): JsonResponse {
+        $user = $this->getUser();
         $search = trim((string) $request->query->get('q', ''));
-        $all = $repo->findBy([], ['id' => 'DESC']);
+        
+        $qb = $repo->createQueryBuilder('p')->orderBy('p.id', 'DESC');
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
+            $qb->andWhere('p.createdBy = :user OR p.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+        $all = $qb->getQuery()->getResult();
 
         $productIds = array_values(array_filter(array_map(
             static fn(StockProduct $p): int => (int) $p->getId(),
@@ -112,6 +119,10 @@ final class StockApiController extends AbstractController
         }
 
         $product = new StockProduct($name, $category);
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $product->setCreatedBy($user);
+        }
         $product->setNote($note !== '' ? $note : null);
 
         if ($variantsEnabled) {
@@ -515,7 +526,9 @@ final class StockApiController extends AbstractController
     public function entryList(Request $request, StockMovementRepository $repo): JsonResponse
     {
         $search = trim((string) $request->query->get('q', ''));
-        $movements = $repo->findEntryMovementsForIndex($search);
+        $user = $this->getUser();
+        $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
+        $movements = $repo->findEntryMovementsForIndex($search, $scopedUser);
 
         $data = [];
         foreach ($movements as $m) {
@@ -557,6 +570,10 @@ final class StockApiController extends AbstractController
 
         $reference = $this->generateUniqueRef($movRepo);
         $movement = new StockMovement($reference);
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $movement->setCreatedBy($user);
+        }
         $movement->setDirection(StockMovement::DIRECTION_ENTRY);
         $movement->setStatus(StockMovement::STATUS_PENDING);
         $em->persist($movement);

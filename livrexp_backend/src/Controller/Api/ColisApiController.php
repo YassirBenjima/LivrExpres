@@ -17,11 +17,17 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis', name: 'api_colis_list', methods: ['GET'])]
     public function getColis(ColisRepository $colisRepository): JsonResponse
     {
-        $colisList = $colisRepository->createQueryBuilder('c')
+        $user = $this->getUser();
+        $qb = $colisRepository->createQueryBuilder('c')
             ->select('c.id', 'c.orderNumber', 'c.trackingCode', 'c.productNature', 'c.createdAt', 'c.address', 'c.etat', 'c.statut', 'c.city', 'c.price', 'c.comment')
-            ->orderBy('c.id', 'DESC')
-            ->getQuery()
-            ->getArrayResult();
+            ->orderBy('c.id', 'DESC');
+
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $colisList = $qb->getQuery()->getArrayResult();
 
         $data = [];
 
@@ -70,6 +76,11 @@ final class ColisApiController extends AbstractController
 
         $colis = new Colis();
         
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $colis->setCreatedBy($user);
+        }
+
         // Map fields
         $colis->setOrderNumber($data['orderNumber'] ?? '');
         $colis->setType($data['type'] ?? Colis::TYPE_SIMPLE);
@@ -115,10 +126,25 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis/pickup', name: 'api_colis_pickup', methods: ['GET'])]
     public function getPickupColis(ColisRepository $colisRepository): JsonResponse
     {
-        $colisList = $colisRepository->findBy([
+        $user = $this->getUser();
+        $criteria = [
             'statut' => Colis::STATUT_EN_ATTENTE,
             'type' => Colis::TYPE_SIMPLE
-        ], ['id' => 'DESC']);
+        ];
+        
+        $qb = $colisRepository->createQueryBuilder('c')
+            ->andWhere('c.statut = :statut')
+            ->andWhere('c.type = :type')
+            ->setParameter('statut', Colis::STATUT_EN_ATTENTE)
+            ->setParameter('type', Colis::TYPE_SIMPLE)
+            ->orderBy('c.id', 'DESC');
+
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
+            $qb->andWhere('c.createdBy = :user OR c.createdBy IS NULL')
+               ->setParameter('user', $user);
+        }
+
+        $colisList = $qb->getQuery()->getResult();
         $data = [];
 
         foreach ($colisList as $colis) {
@@ -247,6 +273,10 @@ final class ColisApiController extends AbstractController
             }
 
             $colis = new Colis();
+            $user = $this->getUser();
+            if ($user instanceof User) {
+                $colis->setCreatedBy($user);
+            }
             $colis->setOrderNumber((string) $data['N° Commande']);
             $colis->setRecipient($data['Destinataire'] ?? null);
             $colis->setPhoneNumber((string) ($data['Téléphone'] ?? ''));
@@ -303,6 +333,10 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis/{id}', name: 'api_colis_show', methods: ['GET'])]
     public function show(Colis $colis): JsonResponse
     {
+        if ($accessError = $this->checkColisOwnership($colis)) {
+            return $accessError;
+        }
+
         return $this->json([
             'id' => $colis->getId(),
             'orderNumber' => str_replace('CMD-', '', $colis->getOrderNumber() ?? ''),
@@ -328,6 +362,10 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis/{id}', name: 'api_colis_edit', methods: ['PUT'])]
     public function edit(Request $request, Colis $colis, EntityManagerInterface $entityManager): JsonResponse
     {
+        if ($accessError = $this->checkColisOwnership($colis)) {
+            return $accessError;
+        }
+
         $data = json_decode($request->getContent(), true);
         if (!$data) {
             return $this->json(['message' => 'Données invalides.'], JsonResponse::HTTP_BAD_REQUEST);
@@ -377,6 +415,10 @@ final class ColisApiController extends AbstractController
     #[Route('/api/colis/{id}', name: 'api_colis_delete', methods: ['DELETE'])]
     public function delete(Colis $colis, EntityManagerInterface $entityManager): JsonResponse
     {
+        if ($accessError = $this->checkColisOwnership($colis)) {
+            return $accessError;
+        }
+
         try {
             $entityManager->remove($colis);
             $entityManager->flush();
@@ -385,5 +427,17 @@ final class ColisApiController extends AbstractController
         }
 
         return $this->json(['message' => 'Colis supprimé avec succès.']);
+    }
+
+    private function checkColisOwnership(Colis $colis): ?JsonResponse
+    {
+        if (!$this->isGranted('ROLE_SUPERVISEUR')) {
+            $user = $this->getUser();
+            if ($colis->getCreatedBy() !== null && $colis->getCreatedBy() !== $user) {
+                return $this->json(['message' => 'Accès refusé à ce colis.'], JsonResponse::HTTP_FORBIDDEN);
+            }
+        }
+
+        return null;
     }
 }
