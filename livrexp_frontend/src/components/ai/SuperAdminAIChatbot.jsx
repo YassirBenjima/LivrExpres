@@ -169,6 +169,10 @@ export default function SuperAdminAIChatbot() {
               price: data.colis.price || ''
             });
           }
+          // If the AI handled a ramassage request, notify other pages to refresh
+          if (data.message && data.message.includes('Ramassage')) {
+            window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
+          }
           setMessages(prev => [
             ...prev,
             {

@@ -38,7 +38,12 @@ export default function ColisPickupPage({ navigate, showNotification }) {
         setLoading(false);
       }
     };
+
     fetchColis();
+
+    // Auto-refresh when the AI chatbot records a ramassage request
+    window.addEventListener('ai:ramassage-updated', fetchColis);
+    return () => window.removeEventListener('ai:ramassage-updated', fetchColis);
   }, []);
 
   const handleSelectAll = (e) => {
