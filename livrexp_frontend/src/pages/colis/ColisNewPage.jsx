@@ -125,6 +125,16 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
     return { value: c || '', label: c || '' };
   });
 
+  // Calculate dynamic fees and total price
+  const deliveryFee = 40.00;
+  const cartonFee = useCarton ? (
+    cartonOption === 's' ? 1.50 :
+    cartonOption === 'm' ? 2.50 :
+    cartonOption === 'l' ? 3.00 : 0
+  ) : 0;
+  const basePrice = parseFloat(price) || 0;
+  const totalPrice = basePrice + deliveryFee + cartonFee;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -137,7 +147,10 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
       recipient,
       city,
       address,
-      price: parseFloat(price) || 0,
+      price: totalPrice,
+      basePrice: basePrice,
+      deliveryFee: deliveryFee,
+      cartonFee: cartonFee,
       replacePackage,
       oldColis: replacePackage ? oldColis : null,
       packageOption,

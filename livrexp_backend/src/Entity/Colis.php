@@ -98,8 +98,11 @@ class Colis
     #[ORM\Column(length: 20, options: ['default' => 'CRBT'])]
     private string $paymentType = self::PAYMENT_CRBT;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?string $deliveryFee = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true, options: ['default' => '40.00'])]
+    private ?string $deliveryFee = '40.00';
+
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $otpCode = null;
 
     public function __construct()
     {
@@ -107,6 +110,7 @@ class Colis
         $this->etat = self::ETAT_CREE;
         $this->statut = self::STATUT_EN_ATTENTE;
         $this->paymentType = self::PAYMENT_CRBT;
+        $this->deliveryFee = '40.00';
     }
 
     public function getId(): ?int
@@ -427,12 +431,12 @@ class Colis
 
     public function getDeliveryFee(): ?string
     {
-        return $this->deliveryFee;
+        return $this->deliveryFee ?? '40.00';
     }
 
     public function setDeliveryFee(?string $deliveryFee): static
     {
-        $this->deliveryFee = $deliveryFee;
+        $this->deliveryFee = $deliveryFee ?? '40.00';
 
         return $this;
     }
@@ -524,6 +528,26 @@ class Colis
             self::ETAT_LIVRE,
             self::ETAT_RETOUR,
         ];
+    }
+
+    public function getOtpCode(): ?string
+    {
+        return $this->otpCode;
+    }
+
+    public function setOtpCode(?string $otpCode): static
+    {
+        $this->otpCode = $otpCode;
+
+        return $this;
+    }
+
+    public function generateOtpCode(): string
+    {
+        if (!$this->otpCode) {
+            $this->otpCode = (string) random_int(1000, 9999);
+        }
+        return $this->otpCode;
     }
 
     /**

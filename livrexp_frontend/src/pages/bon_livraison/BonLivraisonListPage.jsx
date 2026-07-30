@@ -14,6 +14,48 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
   const [bonToDelete, setBonToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // OTP Validation Modal state
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otpTrackingCode, setOtpTrackingCode] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+
+  const handleVerifyOtpSubmit = async (e) => {
+    e.preventDefault();
+    setOtpError('');
+    if (!otpTrackingCode || !otpInput) {
+      setOtpError('Veuillez saisir le code de suivi et le code OTP à 4 chiffres.');
+      return;
+    }
+    setOtpLoading(true);
+
+    try {
+      const res = await fetch('/api/whatsapp/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ trackingCode: otpTrackingCode, otpCode: otpInput })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (showNotification) {
+          showNotification('success', data.message || 'Code OTP validé ! Le colis a été marqué comme Livré.');
+        }
+        setOtpModalOpen(false);
+        setOtpTrackingCode('');
+        setOtpInput('');
+        fetchBons();
+      } else {
+        setOtpError(data.message || 'Code OTP invalide. Veuillez vérifier auprès du client.');
+      }
+    } catch (err) {
+      console.error(err);
+      setOtpError('Erreur de communication avec le serveur.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const fetchBons = async () => {
     setLoading(true);
     try {
@@ -141,6 +183,14 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
               </div>
             </div>
             <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                className="kt-btn kt-btn-outline text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                onClick={() => { setOtpTrackingCode(''); setOtpInput(''); setOtpError(''); setOtpModalOpen(true); }}
+              >
+                <i className="ki-filled ki-shield-check text-base"></i>
+                Valider OTP WhatsApp
+              </button>
               <button 
                 onClick={() => navigate('/bon-livraison/new')}
                 className="kt-btn kt-btn-primary"
@@ -384,6 +434,86 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
                 {deleting ? 'Suppression...' : 'Supprimer'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* OTP Validation Modal */}
+      {otpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-background rounded-xl border border-border shadow-2xl max-w-md w-full p-6 m-4">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <i className="ki-filled ki-shield-check text-green-600 text-xl"></i>
+                Validation OTP Livraison WhatsApp
+              </h3>
+              <button 
+                onClick={() => setOtpModalOpen(false)}
+                className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
+                disabled={otpLoading}
+              >
+                <i className="ki-filled ki-cross text-lg"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleVerifyOtpSubmit} className="py-4 flex flex-col gap-4">
+              {otpError && (
+                <div className="p-3 text-xs bg-red-500/10 border border-red-500/30 text-red-600 rounded flex items-center gap-2">
+                  <i className="ki-filled ki-information-2 text-base"></i>
+                  <span>{otpError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
+                  Code de suivi / N° de commande *
+                </label>
+                <input
+                  type="text"
+                  className="kt-input text-sm w-full"
+                  placeholder="Ex: CMD-1001 ou TRACK-..."
+                  required
+                  value={otpTrackingCode}
+                  onChange={(e) => setOtpTrackingCode(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
+                  Code OTP WhatsApp (4 chiffres) *
+                </label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  className="kt-input text-lg font-mono text-center tracking-widest w-full"
+                  placeholder="Ex: 4821"
+                  required
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Ce code à 4 chiffres a été envoyé automatiquement au destinataire par WhatsApp.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
+                <button 
+                  type="button" 
+                  onClick={() => setOtpModalOpen(false)} 
+                  className="kt-btn kt-btn-outline"
+                  disabled={otpLoading}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="kt-btn kt-btn-primary bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={otpLoading}
+                >
+                  {otpLoading ? 'Vérification...' : 'Valider & Marquer Livré'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -89,6 +89,7 @@ final class ColisApiController extends AbstractController
         $colis->setCity($data['city'] ?? '');
         $colis->setAddress($data['address'] ?? '');
         $colis->setPrice((string)($data['price'] ?? 0.0));
+        $colis->setDeliveryFee((string)($data['deliveryFee'] ?? '40.00'));
         $colis->setPhoneNumber($data['phoneNumber'] ?? '');
         $colis->setNeighborhood($data['neighborhood'] ?? '');
         $colis->setProductNature($data['productNature'] ?? 'Marchandise');
