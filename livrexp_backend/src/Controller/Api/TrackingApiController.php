@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\Colis;
+use App\Entity\User;
 use App\Entity\WhatsAppTemplate;
 use App\Repository\CityRepository;
 use App\Repository\ColisRepository;

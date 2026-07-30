@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\Colis;
+use App\Entity\User;
 use App\Repository\ColisRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

@@ -8,6 +8,7 @@ use App\Entity\StockMovement;
 use App\Entity\StockProduct;
 use App\Entity\StockProductVariant;
 use App\Entity\StockMovementItem;
+use App\Entity\User;
 use App\Repository\CityRepository;
 use App\Repository\ColisRepository;
 use App\Repository\PickupRequestRepository;

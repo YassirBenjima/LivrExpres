@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Colis;
+use App\Entity\User;
 use App\Repository\BonLivraisonRepository;
 use App\Repository\ColisRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
