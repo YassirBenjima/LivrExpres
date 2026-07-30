@@ -112,14 +112,18 @@ final class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/api/logout', name: 'app_api_logout', methods: ['POST'])]
-    public function apiLogout(): Response
+    #[Route(path: '/api/logout', name: 'app_api_logout', methods: ['POST', 'GET'])]
+    public function apiLogout(\Symfony\Component\HttpFoundation\Request $request): Response
     {
+        if ($request->hasSession()) {
+            $request->getSession()->invalidate();
+        }
         $response = new \Symfony\Component\HttpFoundation\JsonResponse([
             'success' => true,
             'message' => 'Déconnexion réussie.'
         ]);
         $response->headers->clearCookie('AUTH_SESSION', '/');
+        $response->headers->clearCookie('PHPSESSID', '/');
         return $response;
     }
 

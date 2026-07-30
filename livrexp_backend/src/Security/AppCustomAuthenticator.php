@@ -68,7 +68,10 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         if ($request->hasSession()) {
-            $request->getSession()->migrate(true);
+            $session = $request->getSession();
+            $session->invalidate();
+            $session->set('_security_' . $firewallName, serialize($token));
+            $session->save();
         }
 
         if (str_contains($request->headers->get('Content-Type', ''), 'application/json') || str_starts_with($request->getPathInfo(), '/api/')) {

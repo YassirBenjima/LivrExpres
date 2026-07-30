@@ -70,7 +70,12 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
     localStorage.setItem('kt-theme', themeMode);
   }, [themeMode]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
     window.history.pushState({}, '', '/login');
