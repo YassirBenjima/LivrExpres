@@ -136,10 +136,12 @@ function App() {
     }
   };
 
-  // Check auth and load initially when route changes
+  // Check auth and apply global route guarding when route changes
   useEffect(() => {
     const authed = checkAuth();
-    const isAuthRoute = [
+    
+    // Auth-only public routes
+    const PUBLIC_AUTH_ROUTES = [
       '/login',
       '/login-staff',
       '/register',
@@ -147,29 +149,37 @@ function App() {
       '/reset-password/check-email',
       '/reset-password/change',
       '/reset-password/changed',
-      '/'
-    ].includes(currentRoute);
+    ];
 
-    const isProtectedRoute = currentRoute === '/dashboard' || currentRoute.startsWith('/colis');
+    const isAuthRoute = PUBLIC_AUTH_ROUTES.includes(currentRoute) || currentRoute === '/';
 
-    if (authed && isAuthRoute) {
-      navigate('/dashboard');
-    } else if (!authed && isProtectedRoute) {
-      navigate('/login');
-    }
-
-    // ── RBAC: guard ROLE_LIVREUR ─────────────────────────────────────────────
     const roles = getUserRoles();
     const isLivreur = roles.includes('ROLE_LIVREUR');
-    if (authed && isLivreur && !isAuthRoute && !isAllowedForLivreur(currentRoute)) {
-      // Redirect livreur away from forbidden pages
+
+    // 1. Unauthenticated users: block access to all protected app routes -> redirect to /login
+    if (!authed && !isAuthRoute) {
+      navigate('/login');
+      return;
+    }
+
+    // 2. Authenticated users: prevent returning to login/auth pages -> redirect to home route
+    if (authed && isAuthRoute) {
+      if (isLivreur) {
+        navigate('/bon-livraison');
+      } else {
+        navigate('/dashboard');
+      }
+      return;
+    }
+
+    // 3. Role-Based Access Control (RBAC): restrict ROLE_LIVREUR from forbidden modules (/stock, /facturation, /colis, etc.)
+    if (authed && isLivreur && !isAllowedForLivreur(currentRoute)) {
       navigate('/bon-livraison');
       return;
     }
-    // ─────────────────────────────────────────────────────────────────────────
 
     // Trigger fetch when entering a protected route to keep data up-to-date
-    if (authed && isProtectedRoute && !loading) {
+    if (authed && !loading) {
       const needsSpinner = colisList.length === 0;
       fetchAllData(needsSpinner);
     }
