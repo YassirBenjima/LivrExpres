@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function SuperAdminAIChatbot() {
-  const { isLivreur } = useAuth();
+  const { user, isLivreur } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -18,6 +18,31 @@ export default function SuperAdminAIChatbot() {
 
   const chatEndRef = useRef(null);
 
+  // Helper to resolve user's full name or display name
+  const getUserDisplayName = () => {
+    try {
+      const cachedProfile = sessionStorage.getItem('user_profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        if (parsed.fullName) return parsed.fullName;
+        if (parsed.firstName || parsed.lastName) {
+          return `${parsed.firstName || ''} ${parsed.lastName || ''}`.trim();
+        }
+      }
+    } catch (_) {}
+
+    if (user?.fullName) return user.fullName;
+    if (user?.name) return user.name;
+    if (user?.firstName || user?.lastName) {
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    }
+    if (user?.email) {
+      const prefix = user.email.split('@')[0];
+      return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
+    return 'Super Admin';
+  };
+
   // Hide only if explicitly a livreur session
   if (isLivreur) {
     return null;
@@ -26,11 +51,12 @@ export default function SuperAdminAIChatbot() {
   // Initialize welcome message when opened for the first time (do NOT auto load any parcel)
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      const displayName = getUserDisplayName();
       setMessages([
         {
           id: 'welcome',
           sender: 'ai',
-          text: `👋 **Bonjour Super Admin !**\n\nJe suis votre **Assistant IA Livraison**. Veuillez me donner un code de suivi (ex: \`CMD-84920\`) pour consulter et modifier un colis.`,
+          text: `👋 **Bonjour ${displayName} !**\n\nJe suis votre **Assistant IA Livraison**. Veuillez me donner un code de suivi (ex: \`CMD-84920\`) pour consulter et modifier un colis.`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           showQuickActions: true
         }
