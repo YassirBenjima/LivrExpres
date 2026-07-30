@@ -16,6 +16,10 @@ export default function ProfilePage({ navigate, showNotification }) {
     confirm_password: ''
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -130,7 +134,30 @@ export default function ProfilePage({ navigate, showNotification }) {
   };
 
   const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    setPasswordError('');
+
+    if (!passwordState.current_password) {
+      const msg = 'Veuillez saisir votre mot de passe actuel.';
+      setPasswordError(msg);
+      if (showNotification) showNotification('danger', msg);
+      return;
+    }
+
+    if (!passwordState.new_password || passwordState.new_password.length < 8) {
+      const msg = 'Le nouveau mot de passe doit comporter au moins 8 caractères.';
+      setPasswordError(msg);
+      if (showNotification) showNotification('danger', msg);
+      return;
+    }
+
+    if (passwordState.new_password !== passwordState.confirm_password) {
+      const msg = 'Les nouveaux mots de passe ne correspondent pas.';
+      setPasswordError(msg);
+      if (showNotification) showNotification('danger', msg);
+      return;
+    }
+
     setPasswordLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -145,13 +172,16 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification('success', data.message);
+        if (showNotification) showNotification('success', data.message || 'Mot de passe mis à jour avec succès.');
         setPasswordState({ current_password: '', new_password: '', confirm_password: '' });
       } else {
-        if (showNotification) showNotification('danger', data.message || 'Erreur mot de passe.');
+        const errMsg = data.message || 'Erreur lors de la mise à jour du mot de passe.';
+        setPasswordError(errMsg);
+        if (showNotification) showNotification('danger', errMsg);
       }
     } catch (err) {
       console.error('Erreur mot de passe:', err);
+      if (showNotification) showNotification('danger', 'Une erreur réseau est survenue.');
     } finally {
       setPasswordLoading(false);
     }
@@ -443,53 +473,114 @@ export default function ProfilePage({ navigate, showNotification }) {
                       disabled={passwordLoading}
                       type="button"
                     >
-                      Mettre a jour le mot de passe
+                      {passwordLoading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
                     </button>
                   </div>
+
+                  {passwordError && (
+                    <div className="mx-5 mt-3 p-3 text-xs bg-red-500/10 border border-red-500/30 text-red-500 rounded-md flex items-center gap-2">
+                      <i className="ki-solid ki-information-2 text-base"></i>
+                      <span>{passwordError}</span>
+                    </div>
+                  )}
+
                   <div className="kt-card-table pb-3">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
                       <tbody>
+
+                        {/* Current Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Ancien mot de passe</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Ancien mot de passe *</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <input
-                              className="kt-input h-8 text-sm"
-                              type="password"
-                              placeholder="Ancien mot de passe"
-                              required
-                              value={passwordState.current_password}
-                              onChange={e => setPasswordState(prev => ({ ...prev, current_password: e.target.value }))}
-                            />
+                            <div className="relative">
+                              <input
+                                className="kt-input h-8 text-sm pe-8"
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                placeholder="Ancien mot de passe"
+                                required
+                                value={passwordState.current_password}
+                                onChange={e => setPasswordState(prev => ({ ...prev, current_password: e.target.value }))}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                              >
+                                <i className={`ki-filled ${showCurrentPassword ? 'ki-eye-slash' : 'ki-eye'}`}></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
+
+                        {/* New Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nouveau mot de passe</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nouveau mot de passe *</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <input
-                              className="kt-input h-8 text-sm"
-                              type="password"
-                              placeholder="Nouveau mot de passe"
-                              minLength={8}
-                              required
-                              value={passwordState.new_password}
-                              onChange={e => setPasswordState(prev => ({ ...prev, new_password: e.target.value }))}
-                            />
+                            <div className="relative">
+                              <input
+                                className="kt-input h-8 text-sm pe-8"
+                                type={showNewPassword ? 'text' : 'password'}
+                                placeholder="Nouveau mot de passe (min. 8 caractères)"
+                                minLength={8}
+                                required
+                                value={passwordState.new_password}
+                                onChange={e => setPasswordState(prev => ({ ...prev, new_password: e.target.value }))}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                              >
+                                <i className={`ki-filled ${showNewPassword ? 'ki-eye-slash' : 'ki-eye'}`}></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
+
+                        {/* Confirm Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Re-taper le nouveau mot de passe</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Re-taper le nouveau mot de passe *</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <input
-                              className="kt-input h-8 text-sm"
-                              type="password"
-                              placeholder="Re-taper le nouveau mot de passe"
-                              minLength={8}
-                              required
-                              value={passwordState.confirm_password}
-                              onChange={e => setPasswordState(prev => ({ ...prev, confirm_password: e.target.value }))}
-                            />
+                            <div className="relative">
+                              <input
+                                className={`kt-input h-8 text-sm pe-8 ${
+                                  passwordState.confirm_password.length > 0
+                                    ? (passwordState.confirm_password === passwordState.new_password ? 'border-green-500 focus:border-green-500' : 'border-red-500 focus:border-red-500')
+                                    : ''
+                                }`}
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder="Confirmer le nouveau mot de passe"
+                                minLength={8}
+                                required
+                                value={passwordState.confirm_password}
+                                onChange={e => setPasswordState(prev => ({ ...prev, confirm_password: e.target.value }))}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                              >
+                                <i className={`ki-filled ${showConfirmPassword ? 'ki-eye-slash' : 'ki-eye'}`}></i>
+                              </button>
+                            </div>
+                            
+                            {/* Visual Confirmation Match Badge */}
+                            {passwordState.confirm_password.length > 0 && (
+                              passwordState.confirm_password === passwordState.new_password ? (
+                                <div className="flex items-center gap-1.5 text-xs text-green-500 mt-1 font-medium">
+                                  <i className="ki-solid ki-check-circle text-sm"></i>
+                                  <span>Les mots de passe correspondent</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-medium">
+                                  <i className="ki-solid ki-cross-circle text-sm"></i>
+                                  <span>Les mots de passe ne correspondent pas</span>
+                                </div>
+                              )
+                            )}
                           </td>
                         </tr>
+
                       </tbody>
                     </table>
                   </div>
