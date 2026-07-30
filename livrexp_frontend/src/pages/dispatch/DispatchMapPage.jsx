@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
-import L from 'leaflet';
 
 export default function DispatchMapPage({ navigate, currentUser }) {
   const [drivers, setDrivers] = useState([]);
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [leafletReady, setLeafletReady] = useState(false);
   const [selectedCity, setSelectedCity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -19,14 +19,35 @@ export default function DispatchMapPage({ navigate, currentUser }) {
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
 
-  // Load Leaflet CSS dynamically if not present
+  // Dynamically load Leaflet CSS & JS script
   useEffect(() => {
+    if (window.L) {
+      setLeafletReady(true);
+      return;
+    }
+
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
       link.id = 'leaflet-css';
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
+    }
+
+    if (!document.getElementById('leaflet-js')) {
+      const script = document.createElement('script');
+      script.id = 'leaflet-js';
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => setLeafletReady(true);
+      document.head.appendChild(script);
+    } else {
+      const interval = setInterval(() => {
+        if (window.L) {
+          setLeafletReady(true);
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
     }
   }, []);
 
@@ -99,7 +120,9 @@ export default function DispatchMapPage({ navigate, currentUser }) {
 
   // Initialize & Update Leaflet Map
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!leafletReady || !mapContainerRef.current || !window.L) return;
+
+    const L = window.L;
 
     // Create Leaflet map instance if not existing
     if (!mapInstanceRef.current) {
@@ -138,7 +161,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
           ">
             <span>🚚</span>
             <span>${name.split(' ')[0]}</span>
-            ${isLive ? '<span style="width: 7px; height: 7px; background: #34d399; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite;"></span>' : ''}
+            ${isLive ? '<span style="width: 7px; height: 7px; background: #34d399; border-radius: 50%; display: inline-block;"></span>' : ''}
           </div>
         `,
         iconSize: [120, 30],
@@ -266,7 +289,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
       }
     });
 
-  }, [drivers, parcels, selectedCity, searchQuery]);
+  }, [leafletReady, drivers, parcels, selectedCity, searchQuery]);
 
   return (
     <DashboardLayout navigate={navigate} activeItem="dispatch-map">
@@ -399,7 +422,14 @@ export default function DispatchMapPage({ navigate, currentUser }) {
 
         {/* Leaflet Interactive Map View */}
         <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden relative" style={{ height: '580px' }}>
-          <div ref={mapContainerRef} className="w-full h-full z-10" />
+          <div ref={mapContainerRef} className="w-full h-full z-10 flex items-center justify-center bg-muted/20">
+            {!leafletReady && (
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <i className="ki-filled ki-loading animate-spin text-lg"></i>
+                Chargement de la carte interactive Leaflet...
+              </div>
+            )}
+          </div>
 
           {/* Floating Map Legend Overlay */}
           <div className="absolute bottom-4 right-4 z-[999] bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border border-border rounded-xl p-3 shadow-xl text-xs space-y-1.5">
