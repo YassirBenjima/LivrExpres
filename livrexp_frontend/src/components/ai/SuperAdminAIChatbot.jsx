@@ -23,19 +23,19 @@ export default function SuperAdminAIChatbot() {
     return null;
   }
 
-  // Initialize welcome message when opened for the first time
+  // Initialize welcome message when opened for the first time (do NOT auto load any parcel)
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
         {
           id: 'welcome',
           sender: 'ai',
-          text: `👋 **Bonjour Super Admin !**\n\nJe suis votre **Assistant IA Livraison**. Saisissez un code de suivi (ex: \`CMD-84920\`) ou donnez-moi une instruction en langage naturel.`,
+          text: `👋 **Bonjour Super Admin !**\n\nJe suis votre **Assistant IA Livraison**. Veuillez me donner un code de suivi (ex: \`CMD-84920\`) pour consulter et modifier un colis.`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           showQuickActions: true
         }
       ]);
-      fetchRecentParcels();
+      setActiveColis(null);
     }
   }, [isOpen]);
 
@@ -155,6 +155,22 @@ export default function SuperAdminAIChatbot() {
 
   const simulateLocalAiResponse = (text) => {
     const textLower = text.toLowerCase();
+    const matchCode = text.match(/(CMD-\d+|\b\d{4,8}\b)/i);
+
+    // If no active parcel and no tracking code specified in message, ask user for code
+    if (!activeColis && !matchCode) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'ai',
+          text: `🔎 **Veuillez me donner un numéro de colis** (ex: \`CMD-84920\` ou \`CMD-466134\`) pour afficher ses informations et accéder aux choix de modification.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      return;
+    }
+
     let current = activeColis || {
       id: 1,
       orderNumber: 'CMD-84920',
@@ -171,7 +187,6 @@ export default function SuperAdminAIChatbot() {
     let updated = { ...current };
     let changes = [];
 
-    const matchCode = text.match(/(CMD-\d+|\b\d{4,8}\b)/i);
     if (matchCode) {
       const codeStr = matchCode[1].startsWith('CMD-') ? matchCode[1].toUpperCase() : 'CMD-' + matchCode[1];
       updated.orderNumber = codeStr;
