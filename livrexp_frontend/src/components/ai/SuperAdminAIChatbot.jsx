@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function SuperAdminAIChatbot() {
-  const { user, isLivreur } = useAuth();
+  const { user, isLivreur, isClient } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -64,8 +64,8 @@ export default function SuperAdminAIChatbot() {
     return 'Super Admin';
   };
 
-  // Hide only if explicitly a livreur session
-  if (isLivreur) {
+  // Hide for livreurs and clients — chatbot is admin/superviseur only
+  if (isLivreur || isClient) {
     return null;
   }
 
