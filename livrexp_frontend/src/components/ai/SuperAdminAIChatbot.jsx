@@ -335,46 +335,41 @@ export default function SuperAdminAIChatbot() {
         fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
       }}
     >
-      {/* Floating Action Trigger Button */}
+      {/* Minimalist Floating Circular Action Button */}
       {!isOpen && (
         <button
           id="btn-open-super-admin-ai"
           onClick={() => setIsOpen(true)}
           style={{
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+            position: 'relative',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #0094FF 0%, #4f46e5 60%, #7c3aed 100%)',
             color: '#ffffff',
-            padding: '12px 20px',
-            borderRadius: '9999px',
-            boxShadow: '0 20px 25px -5px rgba(124, 58, 237, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+            boxShadow: '0 12px 28px -4px rgba(0, 148, 255, 0.45), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            justifyContent: 'center',
             cursor: 'pointer',
             border: '2px solid rgba(255, 255, 255, 0.3)',
-            fontSize: '14px',
-            fontWeight: 600,
-            outline: 'none'
+            outline: 'none',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
           }}
-          title="Assistant IA Super Admin"
+          title="Assistant IA LivrExpress"
         >
-          {/* Animated pulse dot */}
-          <span style={{ position: 'relative', display: 'flex', width: '12px', height: '12px' }}>
+          {/* Animated online pulse dot */}
+          <span style={{ position: 'absolute', top: '2px', right: '2px', display: 'flex', width: '12px', height: '12px' }}>
             <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: '#10b981', opacity: 0.75 }}></span>
-            <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+            <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#10b981', border: '2px solid #151521' }}></span>
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="22" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19.1354 2.07227L23.1485 14.4133C23.5688 15.7057 22.6055 17.0318 21.2466 17.0318H19.5501C18.243 17.0318 17.0863 16.1855 16.6908 14.9397L12.9398 3.12631C12.4484 1.57872 13.6035 0 15.2273 0H16.2825C17.5819 0 18.7336 0.836547 19.1354 2.07227Z" fill="#0094FF"/>
-              <path d="M13.4903 10.9357L10.4497 1.19615C10.2275 0.48457 9.5686 0 8.82314 0C8.09725 0 7.49869 0.56884 7.46175 1.29379L7.10061 8.38112C7.05414 9.29305 7.16414 10.2062 7.42583 11.081L8.77917 15.605C9.03246 16.4517 9.81148 17.0318 10.6953 17.0318H11.2254C12.0959 17.0318 12.8665 16.4687 13.1309 15.6394L13.4794 14.5464C13.8537 13.3725 13.8575 12.1119 13.4903 10.9357Z" fill="#FFFFFF"/>
-              <path d="M6.83708 0H8.0515C9.66981 0 10.8243 1.56893 10.3428 3.11397L6.62408 15.0486C6.23346 16.3022 5.07297 17.1561 3.7599 17.1561H2.08532C0.741852 17.1561 -0.219543 15.8579 0.172263 14.5729L3.96749 2.12509C4.35241 0.862609 5.51723 0 6.83708 0Z" fill="#0094FF"/>
-            </svg>
-            <span>Super Admin IA</span>
-          </div>
-
-          <span style={{ background: 'rgba(255, 255, 255, 0.25)', fontSize: '11px', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Chatbot
-          </span>
+          {/* Official LivrExpress Logo Icon */}
+          <svg width="26" height="20" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.1354 2.07227L23.1485 14.4133C23.5688 15.7057 22.6055 17.0318 21.2466 17.0318H19.5501C18.243 17.0318 17.0863 16.1855 16.6908 14.9397L12.9398 3.12631C12.4484 1.57872 13.6035 0 15.2273 0H16.2825C17.5819 0 18.7336 0.836547 19.1354 2.07227Z" fill="#ffffff"/>
+            <path d="M13.4903 10.9357L10.4497 1.19615C10.2275 0.48457 9.5686 0 8.82314 0C8.09725 0 7.49869 0.56884 7.46175 1.29379L7.10061 8.38112C7.05414 9.29305 7.16414 10.2062 7.42583 11.081L8.77917 15.605C9.03246 16.4517 9.81148 17.0318 10.6953 17.0318H11.2254C12.0959 17.0318 12.8665 16.4687 13.1309 15.6394L13.4794 14.5464C13.8537 13.3725 13.8575 12.1119 13.4903 10.9357Z" fill="#e0e7ff"/>
+            <path d="M6.83708 0H8.0515C9.66981 0 10.8243 1.56893 10.3428 3.11397L6.62408 15.0486C6.23346 16.3022 5.07297 17.1561 3.7599 17.1561H2.08532C0.741852 17.1561 -0.219543 15.8579 0.172263 14.5729L3.96749 2.12509C4.35241 0.862609 5.51723 0 6.83708 0Z" fill="#ffffff"/>
+          </svg>
         </button>
       )}
 
