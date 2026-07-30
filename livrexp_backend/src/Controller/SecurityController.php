@@ -93,6 +93,36 @@ final class SecurityController extends AbstractController
         ]);
     }
 
+    #[Route(path: '/api/me', name: 'app_api_me', methods: ['GET'])]
+    public function me(): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'authenticated' => false
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse([
+            'authenticated' => true,
+            'user' => [
+                'email' => $user->getUserIdentifier(),
+                'roles' => $user->getRoles(),
+            ]
+        ]);
+    }
+
+    #[Route(path: '/api/logout', name: 'app_api_logout', methods: ['POST'])]
+    public function apiLogout(): Response
+    {
+        $response = new \Symfony\Component\HttpFoundation\JsonResponse([
+            'success' => true,
+            'message' => 'Déconnexion réussie.'
+        ]);
+        $response->headers->clearCookie('AUTH_SESSION', '/');
+        return $response;
+    }
+
     #[Route(path: '/logout', name: 'app_logout')]
     public function logout(): void
     {

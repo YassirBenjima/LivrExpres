@@ -68,14 +68,31 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         if (str_contains($request->headers->get('Content-Type', ''), 'application/json') || str_starts_with($request->getPathInfo(), '/api/')) {
-            return new \Symfony\Component\HttpFoundation\JsonResponse([
+            $user = $token->getUser();
+            $response = new \Symfony\Component\HttpFoundation\JsonResponse([
                 'success' => true,
                 'user' => [
-                    'email' => $token->getUser()->getUserIdentifier(),
-                    'roles' => $token->getUser()->getRoles(),
+                    'email' => $user->getUserIdentifier(),
+                    'roles' => $user->getRoles(),
                 ],
                 'redirect' => '/dashboard'
             ]);
+
+            // Set secure HttpOnly cookie (XSS-protected: cannot be read or stolen by JavaScript)
+            $authCookie = \Symfony\Component\HttpFoundation\Cookie::create(
+                'AUTH_SESSION',
+                base64_encode($user->getUserIdentifier() . ':' . time()),
+                time() + (86400 * 7), // 7 days
+                '/',
+                null,
+                false, // Secure (set to true in HTTPS production)
+                true,  // HttpOnly = TRUE (XSS Protection)
+                false,
+                \Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
+            );
+            $response->headers->setCookie($authCookie);
+
+            return $response;
         }
 
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {

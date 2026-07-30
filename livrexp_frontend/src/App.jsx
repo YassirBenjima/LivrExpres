@@ -41,7 +41,7 @@ function App() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(
-    !!(localStorage.getItem('auth_token') || localStorage.getItem('user'))
+    !!localStorage.getItem('user')
   );
   const [notification, setNotification] = useState(null);
 
@@ -85,7 +85,7 @@ function App() {
 
   // Check auth status
   const checkAuth = () => {
-    const authed = !!(localStorage.getItem('auth_token') || localStorage.getItem('user'));
+    const authed = !!localStorage.getItem('user');
     if (authed !== isAuthenticated) {
       setIsAuthenticated(authed);
       if (!authed) {
@@ -106,16 +106,14 @@ function App() {
     }
 
     try {
-      const token = localStorage.getItem('auth_token');
       const headers = {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Accept': 'application/json'
       };
 
-      // Fetch both endpoints concurrently
+      // Fetch both endpoints concurrently using credentials: 'include' for HttpOnly cookie auth
       const [colisRes, dashRes] = await Promise.all([
-        fetch('/api/colis', { headers }),
-        fetch('/api/dashboard', { headers })
+        fetch('/api/colis', { headers, credentials: 'include' }),
+        fetch('/api/dashboard', { headers, credentials: 'include' })
       ]);
 
       if (colisRes.ok) {
@@ -316,7 +314,7 @@ function App() {
 
   let normalizedRoute = currentRoute;
   if (normalizedRoute === '/') {
-    normalizedRoute = (localStorage.getItem('auth_token') || localStorage.getItem('user')) ? '/dashboard' : '/login';
+    normalizedRoute = localStorage.getItem('user') ? '/dashboard' : '/login';
   }
 
   // Strip trailing slash for easier routing comparison

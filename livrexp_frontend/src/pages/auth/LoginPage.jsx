@@ -25,11 +25,7 @@ export default function LoginPage({ navigate }) {
       if (data.success || data.user) {
         const userPayload = data.user || {};
         localStorage.setItem('user', JSON.stringify(userPayload));
-        if (data.token) {
-          localStorage.setItem('auth_token', data.token);
-        } else {
-          localStorage.setItem('auth_token', 'session');
-        }
+        localStorage.removeItem('auth_token'); // Sensitive tokens are handled via HttpOnly cookie for XSS protection
         setApiSuccess('Connexion réussie ! Redirection...');
         setTimeout(() => {
           navigate(data.redirect || '/dashboard');
