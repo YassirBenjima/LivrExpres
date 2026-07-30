@@ -558,15 +558,22 @@ export default function SuperAdminAIChatbot() {
                   <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#34d399' }}>{activeColis.price} DH</span>
                 </div>
 
-                {/* Instant Combo Action */}
-                <button
-                  onClick={() => handleQuickStatusChange('Livré', 'Terminé')}
-                  disabled={loading}
-                  style={{ width: '100%', padding: '10px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #0d9488)', color: '#ffffff', fontWeight: 'bold', fontSize: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)' }}
-                >
-                  <i className="ki-filled ki-check-circle" style={{ fontSize: '16px' }}></i>
-                  <span>Marquer comme Livré & Terminé (1 Clic)</span>
-                </button>
+                {/* Instant Combo Action Button (Only show if not already Livré & Terminé) */}
+                {activeColis.etat === 'Livré' && (activeColis.statut === 'Terminé' || activeColis.statut === 'Livré') ? (
+                  <div style={{ padding: '8px 12px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <i className="ki-filled ki-check-circle" style={{ fontSize: '16px' }}></i>
+                    <span>✅ Colis déjà Livré et Terminé</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleQuickStatusChange('Livré', 'Terminé')}
+                    disabled={loading}
+                    style={{ width: '100%', padding: '10px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #0d9488)', color: '#ffffff', fontWeight: 'bold', fontSize: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)' }}
+                  >
+                    <i className="ki-filled ki-check-circle" style={{ fontSize: '16px' }}></i>
+                    <span>Marquer comme Livré & Terminé (1 Clic)</span>
+                  </button>
+                )}
 
                 {/* Direct Choice Buttons: État */}
                 <div>
