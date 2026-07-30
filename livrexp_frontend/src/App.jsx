@@ -34,6 +34,7 @@ import FacturationCrbtPage from './pages/facturation/FacturationCrbtPage';
 import AffiliatePage from './pages/affiliate/AffiliatePage';
 import ApiDocsPage from './pages/api_docs/ApiDocsPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import DispatchMapPage from './pages/dispatch/DispatchMapPage';
 import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
     '/dashboard',
     '/bon-livraison',
     '/bon-livraison/new',
+    '/dispatch-map',
     '/profile',
   ];
 
@@ -427,6 +429,9 @@ function App() {
         return <AffiliatePage navigate={navigate} showNotification={showNotification} />;
       case '/api-docs':
         return <ApiDocsPage navigate={navigate} showNotification={showNotification} />;
+      case '/dispatch-map':
+      case '/suivi/carte':
+        return <DispatchMapPage navigate={navigate} showNotification={showNotification} />;
       case '/profile':
         return <ProfilePage navigate={navigate} showNotification={showNotification} />;
       case '/register':

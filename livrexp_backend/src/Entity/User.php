@@ -94,6 +94,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $apiKey = null;
 
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $longitude = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $lastLocationUpdate = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -405,6 +414,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setApiKey(?string $apiKey): static
     {
         $this->apiKey = $apiKey;
+
+        return $this;
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): static
+    {
+        $this->latitude = $latitude;
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): static
+    {
+        $this->longitude = $longitude;
+
+        return $this;
+    }
+
+    public function getLastLocationUpdate(): ?\DateTimeImmutable
+    {
+        return $this->lastLocationUpdate;
+    }
+
+    public function setLastLocationUpdate(?\DateTimeImmutable $lastLocationUpdate): static
+    {
+        $this->lastLocationUpdate = $lastLocationUpdate;
 
         return $this;
     }
