@@ -37,7 +37,23 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
         // Ignore
       }
     }
-    // Fetch real avatar from profile API
+
+    // Check if profile is already cached in sessionStorage to prevent refetching on every page change
+    const cachedProfile = sessionStorage.getItem('user_profile');
+    if (cachedProfile) {
+      try {
+        const parsed = JSON.parse(cachedProfile);
+        setAvatarUrl(parsed.avatarUrl || null);
+        if (parsed.fullName) {
+          setUser(prev => prev ? { ...prev, name: parsed.fullName, email: parsed.email } : prev);
+        }
+        return;
+      } catch (e) {
+        // Ignore parse error and proceed to fetch
+      }
+    }
+
+    // Fetch real avatar from profile API if not cached
     const token = localStorage.getItem('auth_token');
     fetch('/api/profile', {
       headers: {
@@ -48,6 +64,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.user) {
+          sessionStorage.setItem('user_profile', JSON.stringify(data.user));
           setAvatarUrl(data.user.avatarUrl || null);
           // Also update display name from profile
           setUser(prev => prev ? { ...prev, name: data.user.fullName, email: data.user.email } : prev);
@@ -78,6 +95,7 @@ export default function DashboardLayout({ children, activeMenu = 'dashboard' }) 
     }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('user_profile');
     window.history.pushState({}, '', '/login');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };

@@ -33,6 +33,9 @@ export default function ProfilePage({ navigate, showNotification }) {
         setFormData(data.user);
         setCities(data.cities || []);
         setMoroccanBanks(data.moroccanBanks || []);
+        if (data.user) {
+          sessionStorage.setItem('user_profile', JSON.stringify(data.user));
+        }
       }
     } catch (err) {
       console.error('Erreur chargement profil:', err);

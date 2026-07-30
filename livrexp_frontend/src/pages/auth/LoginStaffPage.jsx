@@ -44,6 +44,7 @@ export default function LoginStaffPage({ navigate }) {
       if (data.success || data.user) {
         const userPayload = data.user || {};
         localStorage.setItem('user', JSON.stringify(userPayload));
+        sessionStorage.removeItem('user_profile');
         localStorage.removeItem('auth_token'); // Sensitive tokens are handled via HttpOnly cookie for XSS protection
         setApiSuccess('Authentification Staff réussie ! Redirection...');
         setTimeout(() => {
