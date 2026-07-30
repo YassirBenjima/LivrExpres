@@ -47,6 +47,52 @@ final class AdminAiAssistantApiController extends AbstractController
             ]);
         }
 
+        // --- Check for Ramassage Intent (single or multiple tracking codes) ---
+        $isRamassageIntent = (bool) preg_match('/(ramassage|ramasser|demande.*ramassage|attente.*ramassage)/ui', $rawMessage);
+        if ($isRamassageIntent) {
+            // Extract full tracking codes first (CMD-XXXX or F-YYYYMMDD-NNNNNN), then bare numbers
+            preg_match_all('/\b(CMD-\d+|F-\d{6,8}-\d+)\b/i', $rawMessage, $fullCodeMatches);
+            $codes = array_values(array_unique(array_filter($fullCodeMatches[1] ?? [])));
+            // Only fall back to bare numbers if no full codes were found
+            if (empty($codes)) {
+                preg_match_all('/\b(\d{4,8})\b/', $rawMessage, $bareMatches);
+                $codes = array_values(array_unique(array_filter($bareMatches[1] ?? [])));
+            }
+            if (empty($codes) && !empty($contextCode)) {
+                $codes = [$contextCode];
+            }
+
+            if (!empty($codes)) {
+                $results = [];
+                $updatedColis = null;
+
+                foreach ($codes as $codeStr) {
+                    $c = $this->findColisByCode($codeStr, $colisRepository);
+                    if (!$c) {
+                        $results[] = sprintf("❌ **%s** : Colis introuvable dans la base de données.", $codeStr);
+                        continue;
+                    }
+
+                    $updatedColis = $c;
+                    if ($c->getEtat() === Colis::ETAT_EN_PREPARATION) {
+                        $results[] = sprintf("⚠️ **%s** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: %s).", $c->getOrderNumber(), $c->getStatut() ?? 'En attente');
+                    } else {
+                        $c->setEtat(Colis::ETAT_EN_PREPARATION);
+                        $c->setStatut(Colis::STATUT_EN_ATTENTE);
+                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En attente').", $c->getOrderNumber());
+                    }
+                }
+
+                $entityManager->flush();
+
+                return $this->json([
+                    'success' => true,
+                    'message' => "🤖 **IA Agent Logistique - Demandes de Ramassage** :\n\n" . implode("\n\n", $results),
+                    'colis' => $updatedColis ? $this->formatColisData($updatedColis) : null
+                ]);
+            }
+        }
+
         // 1. Extract tracking code or order number from raw message or context
         $extractedCode = $this->extractTrackingCode($rawMessage) ?: $contextCode;
 
@@ -314,12 +360,16 @@ Output MUST be a valid JSON object matching this schema ONLY:
         }
 
         // --- Check for City change ---
-        if (preg_match('/ville\s*(vers|a|à|:|=)?\s*([a-zA-ZÀ-ÿ\s-]+)/u', $rawMessage, $matches)) {
-            $newCity = trim($matches[2]);
-            if (!empty($newCity) && strtolower($newCity) !== 'vers') {
+        if (preg_match('/\b(?:par|vers|en|à|a|:|=)\s+([a-zA-ZÀ-ÿ-]+)/ui', $rawMessage, $matches)
+            || preg_match('/ville\s+(?:de\s+)?([a-zA-ZÀ-ÿ-]+)/ui', $rawMessage, $matches)
+            || preg_match('/ville\s*:\s*([a-zA-ZÀ-ÿ-]+)/ui', $rawMessage, $matches)) {
+            $candidateCity = trim($matches[1]);
+            $stopwords = ['vers', 'par', 'du', 'de', 'la', 'le', 'cette', 'commande', 'colis', 'et', 'etat', 'statut', 'changer'];
+            if (!empty($candidateCity) && !in_array(strtolower($candidateCity), $stopwords)) {
                 $oldCity = $colis->getCity();
-                $colis->setCity(ucfirst($newCity));
-                $changesMade[] = sprintf("Ville: `%s` ➔ **%s**", $oldCity, ucfirst($newCity));
+                $formattedCity = ucfirst(strtolower($candidateCity));
+                $colis->setCity($formattedCity);
+                $changesMade[] = sprintf("Ville: `%s` ➔ **%s**", $oldCity, $formattedCity);
             }
         }
 
@@ -345,13 +395,8 @@ Output MUST be a valid JSON object matching this schema ONLY:
             $reply = "🤖 **IA Agent Logistique** : J'ai analysé votre demande et appliqué les modifications à la commande **" . $colis->getOrderNumber() . "**.";
         } else {
             $reply = sprintf(
-                "🤖 **IA Agent Logistique** : Fiche et suivi pour le colis **%s** :\n• **État** : `%s` | **Statut** : `%s`\n• **Ville** : `%s` | **Destinataire** : `%s` | **Prix** : `%.2f DH`",
-                $colis->getOrderNumber(),
-                $colis->getEtat() ?? 'Créé',
-                $colis->getStatut() ?? 'En attente',
-                $colis->getCity() ?? 'Non spécifiée',
-                $colis->getRecipient() ?? 'Non spécifié',
-                (float) ($colis->getPrice() ?? 0)
+                "🤖 **IA Agent Logistique** : Voici la fiche et le suivi du colis **%s** :",
+                $colis->getOrderNumber()
             );
         }
 
@@ -363,8 +408,9 @@ Output MUST be a valid JSON object matching this schema ONLY:
 
     private function findColisByCode(string $code, ColisRepository $colisRepository): ?Colis
     {
-        $cleanCode = trim($code);
+        $cleanCode = strtoupper(trim($code));
 
+        // Direct lookup by orderNumber or trackingCode (handles CMD-XXXX and F-YYYYMMDD-NNNNNN as-is)
         $colis = $colisRepository->findOneBy(['orderNumber' => $cleanCode])
             ?? $colisRepository->findOneBy(['trackingCode' => $cleanCode]);
 
@@ -372,6 +418,16 @@ Output MUST be a valid JSON object matching this schema ONLY:
             return $colis;
         }
 
+        // For F-YYYYMMDD-NNNNNN format: extract the LAST numeric segment → CMD-NNNNNN
+        if (preg_match('/^F-\d{6,8}-(\d+)$/i', $cleanCode, $fMatches)) {
+            $lastSegment = $fMatches[1];
+            $colis = $colisRepository->findOneBy(['orderNumber' => 'CMD-' . $lastSegment]);
+            if ($colis) {
+                return $colis;
+            }
+        }
+
+        // For bare numbers or CMD-XXXX: strip all non-digits and try CMD-digits
         $digits = preg_replace('/\D+/', '', $cleanCode);
         if (!empty($digits)) {
             $cmdCode = 'CMD-' . $digits;

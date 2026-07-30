@@ -8,6 +8,7 @@ export default function SuperAdminAIChatbot() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeColis, setActiveColis] = useState(null);
+  const [showDirectModifications, setShowDirectModifications] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [editForm, setEditForm] = useState({
     recipient: '',
@@ -17,6 +18,26 @@ export default function SuperAdminAIChatbot() {
   });
 
   const chatEndRef = useRef(null);
+
+  const getEtatColor = (etat) => {
+    switch (etat) {
+      case 'Livré': return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', border: 'rgba(16, 185, 129, 0.3)' };
+      case 'Retourné': return { bg: 'rgba(244, 63, 94, 0.15)', text: '#fb7185', border: 'rgba(244, 63, 94, 0.3)' };
+      case 'Expédié': return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.3)' };
+      case 'En préparation': return { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.3)' };
+      default: return { bg: 'rgba(148, 163, 184, 0.15)', text: '#cbd5e1', border: 'rgba(148, 163, 184, 0.3)' };
+    }
+  };
+
+  const getStatutColor = (statut) => {
+    switch (statut) {
+      case 'Terminé': return { bg: 'rgba(20, 184, 166, 0.15)', text: '#2dd4bf', border: 'rgba(20, 184, 166, 0.3)' };
+      case 'En cours': return { bg: 'rgba(14, 165, 233, 0.15)', text: '#38bdf8', border: 'rgba(14, 165, 233, 0.3)' };
+      case 'Reporté': return { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.3)' };
+      case 'Échec': return { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', border: 'rgba(239, 68, 68, 0.3)' };
+      default: return { bg: 'rgba(148, 163, 184, 0.15)', text: '#cbd5e1', border: 'rgba(148, 163, 184, 0.3)' };
+    }
+  };
 
   // Helper to resolve user's full name or display name
   const getUserDisplayName = () => {
@@ -219,7 +240,25 @@ export default function SuperAdminAIChatbot() {
       updated.trackingCode = 'F-20260730-' + matchCode[1].replace(/\D/g, '');
     }
 
-    if (textLower.includes('livre') || textLower.includes('livré')) {
+    if (textLower.includes('ramassage') || textLower.includes('ramasser')) {
+      if (updated.etat === 'En préparation') {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `⚠️ **${updated.orderNumber}** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: ${updated.statut}).`,
+            colis: updated,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        return;
+      } else {
+        changes.push(`État: \`${updated.etat}\` ➔ **En préparation**`);
+        updated.etat = 'En préparation';
+        updated.statut = 'En attente';
+      }
+    } else if (textLower.includes('livre') || textLower.includes('livré')) {
       changes.push(`État: \`${updated.etat}\` ➔ **Livré**`);
       updated.etat = 'Livré';
     } else if (textLower.includes('expedie') || textLower.includes('expédié')) {
@@ -250,11 +289,15 @@ export default function SuperAdminAIChatbot() {
       updated.statut = 'Échec';
     }
 
-    const cityMatch = text.match(/ville\s*(vers|a|à|:|=)?\s*([a-zA-ZÀ-ÿ\s-]+)/i);
-    if (cityMatch && cityMatch[2]) {
-      const newCity = cityMatch[2].trim();
-      changes.push(`Ville: \`${updated.city}\` ➔ **${newCity}**`);
-      updated.city = newCity;
+    const cityMatch = text.match(/\b(?:par|vers|en|à|a|:|=)\s+([a-zA-ZÀ-ÿ-]+)/i) || text.match(/ville\s+(?:de\s+)?([a-zA-ZÀ-ÿ-]+)/i) || text.match(/ville\s*:\s*([a-zA-ZÀ-ÿ-]+)/i);
+    if (cityMatch && cityMatch[1]) {
+      const rawCity = cityMatch[1].trim();
+      const stopwords = ['vers', 'par', 'du', 'de', 'la', 'le', 'cette', 'commande', 'colis', 'et', 'etat', 'statut', 'changer'];
+      if (!stopwords.includes(rawCity.toLowerCase())) {
+        const newCity = rawCity.charAt(0).toUpperCase() + rawCity.slice(1).toLowerCase();
+        changes.push(`Ville: \`${updated.city}\` ➔ **${newCity}**`);
+        updated.city = newCity;
+      }
     }
 
     setActiveColis(updated);
@@ -511,7 +554,7 @@ export default function SuperAdminAIChatbot() {
                   }}
                 >
                   <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {msg.text.split('\n').map((line, idx) => (
+                    {msg.text.split('\n').filter(line => !msg.colis || !line.trim().startsWith('•')).map((line, idx) => (
                       <p key={idx} style={{ margin: idx > 0 ? '4px 0 0 0' : 0 }}>
                         {line.includes('**') ? (
                           line.split('**').map((chunk, i) => (
@@ -522,6 +565,88 @@ export default function SuperAdminAIChatbot() {
                     ))}
                   </div>
 
+                  {/* Rich Visual Parcel Card */}
+                  {msg.colis && (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      backgroundColor: '#111827',
+                      border: '1px solid rgba(59, 130, 246, 0.25)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#60a5fa' }}>
+                          📦 {msg.colis.orderNumber || msg.colis.trackingCode}
+                        </span>
+                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#34d399' }}>
+                          {msg.colis.price} DH
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {msg.colis.etat && (
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            backgroundColor: getEtatColor(msg.colis.etat).bg,
+                            color: getEtatColor(msg.colis.etat).text,
+                            border: `1px solid ${getEtatColor(msg.colis.etat).border}`
+                          }}>
+                            État : {msg.colis.etat}
+                          </span>
+                        )}
+                        {msg.colis.statut && (
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            backgroundColor: getStatutColor(msg.colis.statut).bg,
+                            color: getStatutColor(msg.colis.statut).text,
+                            border: `1px solid ${getStatutColor(msg.colis.statut).border}`
+                          }}>
+                            Statut : {msg.colis.statut}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px', color: '#cbd5e1', backgroundColor: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '8px', marginTop: '2px' }}>
+                        <div>📍 <strong>Ville:</strong> {msg.colis.city || 'Non spécifiée'}</div>
+                        <div>👤 <strong>Client:</strong> {msg.colis.recipient || 'N/A'}</div>
+                        {msg.colis.phoneNumber && (
+                          <div>📞 <strong>Tél:</strong> {msg.colis.phoneNumber}</div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => setShowDirectModifications(prev => !prev)}
+                        style={{
+                          marginTop: '4px',
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          background: 'rgba(168, 85, 247, 0.15)',
+                          color: '#d8b4fe',
+                          border: '1px solid rgba(168, 85, 247, 0.3)',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <i className="ki-filled ki-setting-2"></i>
+                        <span>{showDirectModifications ? 'Masquer Choix de Modification' : '⚡ Modifier État / Statut Manuellement'}</span>
+                      </button>
+                    </div>
+                  )}
+
                   {msg.showQuickActions && (
                     <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       <button
@@ -531,7 +656,7 @@ export default function SuperAdminAIChatbot() {
                         🔍 Consulter CMD-84920
                       </button>
                       <button
-                        onClick={() => handleSendMessage('Changer letat vers livre et status vers terminer')}
+                        onClick={() => { setShowDirectModifications(true); handleSendMessage('Changer letat vers livre et status vers terminer'); }}
                         style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', border: '1px solid rgba(16, 185, 129, 0.3)', fontSize: '11px', cursor: 'pointer' }}
                       >
                         ⚡ Livré & Terminé
@@ -548,8 +673,8 @@ export default function SuperAdminAIChatbot() {
               </div>
             ))}
 
-            {/* Interactive Control Panel Card */}
-            {activeColis && (
+            {/* Interactive Control Panel Card (Only shown if toggled) */}
+            {activeColis && showDirectModifications && (
               <div style={{ padding: '14px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1))', border: '1px solid rgba(168, 85, 247, 0.3)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
                   <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#c084fc', uppercase: 'true' }}>

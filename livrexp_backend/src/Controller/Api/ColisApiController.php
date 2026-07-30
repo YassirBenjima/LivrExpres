@@ -137,8 +137,10 @@ final class ColisApiController extends AbstractController
         $qb = $colisRepository->createQueryBuilder('c')
             ->andWhere('c.statut = :statut')
             ->andWhere('c.type = :type')
+            ->andWhere('c.etat != :etatPrep')
             ->setParameter('statut', Colis::STATUT_EN_ATTENTE)
             ->setParameter('type', Colis::TYPE_SIMPLE)
+            ->setParameter('etatPrep', Colis::ETAT_EN_PREPARATION)
             ->orderBy('c.id', 'DESC');
 
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
