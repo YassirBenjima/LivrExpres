@@ -12,6 +12,49 @@
   }
 }
 
+/* ─── Robust Sidebar Vertical Scrolling ──────────────────────────────── */
+#sidebar {
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#sidebar_content {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  max-height: calc(100vh - 65px) !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+#sidebar_scrollable {
+  overflow-y: auto !important;
+  max-height: 100% !important;
+  flex: 1 1 auto !important;
+}
+
+/* Ensure scrollbar styling is visible and clean */
+#sidebar_content::-webkit-scrollbar,
+#sidebar_scrollable::-webkit-scrollbar {
+  width: 5px;
+}
+
+#sidebar_content::-webkit-scrollbar-track,
+#sidebar_scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#sidebar_content::-webkit-scrollbar-thumb,
+#sidebar_scrollable::-webkit-scrollbar-thumb {
+  background: rgba(161, 165, 183, 0.4);
+  border-radius: 4px;
+}
+
+#sidebar_content::-webkit-scrollbar-thumb:hover,
+#sidebar_scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(161, 165, 183, 0.7);
+}
+
 /* Support Metronic classes that contain colons */
 .kt-menu-bullet::before {
   background-color: #a1a5b7;
@@ -71,8 +114,6 @@ table tr:has([style*="shimmer"]) td {
 }
 
 /* ─── Container: fill full available width at 1920p ──────────────────── */
-/* Metronic caps .kt-container-fixed at 80rem (1280px). Override to 100%  */
-/* so there is no white gap on the right at large resolutions.            */
 .kt-container-fixed {
   max-width: 100% !important;
 }
@@ -86,7 +127,7 @@ input.kt-switch {
   display: inline-block;
   width: 44px !important;
   height: 24px !important;
-  background-color: #e4e4e7; /* zinc-200 */
+  background-color: #e4e4e7;
   border-radius: 9999px;
   cursor: pointer;
   outline: none;
@@ -98,17 +139,13 @@ input.kt-switch {
   padding: 0;
 }
 
-input.kt-switch:hover {
-  background-color: #d4d4d8;
-}
-
 input.kt-switch:checked {
-  background-color: #1b84ff;
-  border-color: #1b84ff;
+  background-color: var(--primary, #3b82f6) !important;
+  border-color: var(--primary, #3b82f6) !important;
 }
 
 input.kt-switch::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 2px;
   left: 2px;
@@ -116,85 +153,10 @@ input.kt-switch::before {
   height: 18px;
   background-color: #ffffff;
   border-radius: 50%;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 input.kt-switch:checked::before {
   transform: translateX(20px);
 }
-
-/* Small switch size */
-input.kt-switch-sm {
-  width: 36px !important;
-  height: 20px !important;
-}
-
-input.kt-switch-sm::before {
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-}
-
-input.kt-switch-sm:checked::before {
-  transform: translateX(16px);
-}
-
-/* Ensure menu link icons for destructive actions inherit the danger/red color */
-.kt-menu-link.text-destructive .kt-menu-icon i {
-  color: inherit !important;
-}
-
-/* Keep select dropdown options list compact (about 5 options visible with scroll) */
-.kt-select-options {
-  max-height: 200px !important;
-  overflow-y: auto !important;
-}
-
-/* Comprehensive select and dropdown styling overrides (Light & Dark mode) */
-.kt-select-dropdown,
-[data-kt-select-dropdown="true"],
-.kt-select-options,
-.kt-dropdown-menu,
-div.kt-select-dropdown {
-  background-color: var(--card, #ffffff) !important;
-  color: var(--card-foreground, #09090b) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid var(--border, #e4e4e7) !important;
-}
-
-.dark .kt-select-dropdown,
-.dark [data-kt-select-dropdown="true"],
-.dark .kt-select-options,
-.dark .kt-dropdown-menu,
-.dark div.kt-select-dropdown {
-  background-color: #18181b !important; /* zinc-900 */
-  color: #f4f4f5 !important;
-  border-color: #27272a !important;
-}
-
-.kt-select-option,
-.kt-select-dropdown .kt-select-option,
-div.kt-select-option {
-  background-color: transparent !important;
-  color: inherit !important;
-  transition: background-color 0.15s ease;
-}
-
-.kt-select-option:hover,
-.kt-select-option.highlighted,
-.kt-select-option[aria-selected="true"],
-.kt-select-dropdown .kt-select-option:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
-.dark .kt-select-option:hover,
-.dark .kt-select-option.highlighted,
-.dark .kt-select-option[aria-selected="true"],
-.dark .kt-select-dropdown .kt-select-option:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-
-
