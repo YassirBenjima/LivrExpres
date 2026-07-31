@@ -465,7 +465,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                         options={[
                           { value: '', label: 'Toutes les anomalies' },
                           { value: 'Ramassage', label: 'Retard Ramassage' },
-                          { value: 'Inactif', label: 'Inactivité prolongée' },
+                          { value: 'Inactivité', label: 'Inactivité prolongée' },
                           { value: 'Livraison', label: 'Problème Livraison' }
                         ]}
                       />

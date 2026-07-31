@@ -1,0 +1,1 @@
+<?php $pdo = new PDO('mysql:host=127.0.0.1;port=3308;dbname=livrexpress', 'root', ''); $stmt = $pdo->query('SELECT id, order_number, etat, statut, created_at, comment FROM colis ORDER BY id DESC LIMIT 10'); print_r($stmt->fetchAll(PDO::FETCH_ASSOC));

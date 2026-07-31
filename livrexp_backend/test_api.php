@@ -1,0 +1,1 @@
+<?php $pdo = new PDO('mysql:host=127.0.0.1;port=3308;dbname=livrexpress', 'root', ''); $url = 'http://localhost:8080/api/ai/anomalies'; $ch = curl_init($url); curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); $response = curl_exec($ch); curl_close($ch); echo $response;

@@ -221,7 +221,7 @@ final class AdvancedAiApiController extends AbstractController
             }
 
             // Anomaly 2: Inactivité prolongée (Expédié / En cours > 36h)
-            if ($etat === Colis::ETAT_EXPEDIE || $statut === Colis::STATUT_EN_COURS || $etat === Colis::ETAT_EN_COURS) {
+            if ($etat === Colis::ETAT_EXPEDIE || $statut === Colis::STATUT_EN_COURS) {
                 if ($diffHours >= 36) {
                     $anomalies[] = [
                         'colis_id' => $c->getId(),
@@ -291,12 +291,45 @@ final class AdvancedAiApiController extends AbstractController
     #[Route('/route-optimizer', name: 'api_ai_route_optimizer', methods: ['GET', 'POST'])]
     public function optimizeRoute(Request $request, ColisRepository $colisRepository): JsonResponse
     {
-        $realParcels = $colisRepository->findBy([], ['id' => 'DESC'], 15);
+        // Try to find pending/in-progress parcels in Casablanca for a realistic local route
+        $realParcels = $colisRepository->createQueryBuilder('c')
+            ->where('c.statut IN (:statuts)')
+            ->andWhere('c.city = :city')
+            ->setParameter('statuts', [Colis::STATUT_EN_ATTENTE, Colis::STATUT_EN_COURS])
+            ->setParameter('city', 'Casablanca')
+            ->setMaxResults(8)
+            ->getQuery()
+            ->getResult();
+
+        if (empty($realParcels)) {
+            // Fallback to any pending parcels
+            $realParcels = $colisRepository->createQueryBuilder('c')
+                ->where('c.statut IN (:statuts)')
+                ->setParameter('statuts', [Colis::STATUT_EN_ATTENTE, Colis::STATUT_EN_COURS])
+                ->setMaxResults(8)
+                ->getQuery()
+                ->getResult();
+        }
+
+        // Simulate AI clustering by grouping by neighborhood
+        $groupedParcels = [];
+        foreach ($realParcels as $c) {
+            $neighborhood = $c->getNeighborhood() ?: 'Standard';
+            $groupedParcels[$neighborhood][] = $c;
+        }
+
+        $optimizedParcels = [];
+        foreach ($groupedParcels as $group) {
+            foreach ($group as $c) {
+                $optimizedParcels[] = $c;
+            }
+        }
 
         $stops = [];
         $stopIndex = 1;
+        $now = new \DateTime();
 
-        foreach ($realParcels as $c) {
+        foreach ($optimizedParcels as $c) {
             $destinataire = $c->getRecipient() ?? 'Client';
             $ville = $c->getCity() ?? 'Casablanca';
             $adresse = $c->getAddress() ?? $c->getNeighborhood() ?? 'Quartier principal';
@@ -311,9 +344,9 @@ final class AdvancedAiApiController extends AbstractController
                 'phone' => $phone,
                 'address' => sprintf("%s, %s", $adresse, $ville),
                 'crbt_amount' => $prix,
-                'eta' => (clone new \DateTime())->modify(sprintf('+%d minutes', $stopIndex * 20))->format('H:i'),
+                'eta' => (clone $now)->modify(sprintf('+%d minutes', $stopIndex * 15))->format('H:i'),
                 'status' => 'PENDING',
-                'priority' => $stopIndex === 1 ? 'HAUTE' : 'NORMALE'
+                'priority' => $stopIndex <= 2 ? 'HAUTE' : 'NORMALE'
             ];
 
             $stopIndex++;

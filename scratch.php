@@ -1,0 +1,1 @@
+<?php require 'livrexp_backend/vendor/autoload.php'; $kernel = new App\Kernel('dev', true); $kernel->boot(); $req = Symfony\Component\HttpFoundation\Request::create('/api/ai/anomalies', 'GET'); $res = $kernel->handle($req); echo $res->getContent();
