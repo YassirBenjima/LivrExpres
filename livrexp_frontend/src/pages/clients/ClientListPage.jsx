@@ -332,6 +332,22 @@ export default function ClientListPage({ navigate, showNotification }) {
     }
   };
 
+  const handleFillTestFields = () => {
+    const testId = Math.floor(100 + Math.random() * 900);
+    setNewClientForm({
+      businessName: `Boutique Express ${testId}`,
+      fullName: `Mehdi Alami`,
+      email: `contact.express${testId}@boutique.ma`,
+      phone: `06${Math.floor(10000000 + Math.random() * 89999999)}`,
+      city: 'Casablanca',
+      ice: `00${Math.floor(100000000000 + Math.random() * 899999999999)}`,
+      creditLimit: 8000,
+      tarifSameCity: 30,
+      tarifOtherCity: 40,
+      tarifReturn: 15
+    });
+  };
+
   return (
     <DashboardLayout activeMenu="clients">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
@@ -738,20 +754,32 @@ export default function ClientListPage({ navigate, showNotification }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-2">
+                  <div className="flex items-center justify-between pt-4 border-t border-border mt-2">
                     <button
                       type="button"
-                      onClick={() => setIsNewClientModalOpen(false)}
+                      onClick={handleFillTestFields}
                       className="kt-btn kt-btn-outline cursor-pointer"
+                      style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
                     >
-                      Annuler
+                      <i className="ki-filled ki-magic-wand text-xs me-1" />
+                      Remplir (Test)
                     </button>
-                    <button
-                      type="submit"
-                      className="kt-btn kt-btn-primary cursor-pointer"
-                    >
-                      Créer le client
-                    </button>
+
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsNewClientModalOpen(false)}
+                        className="kt-btn kt-btn-outline cursor-pointer"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        className="kt-btn kt-btn-primary cursor-pointer"
+                      >
+                        Créer le client
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
