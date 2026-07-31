@@ -609,6 +609,19 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                 </a>
               </div>}
 
+              {/* Intelligence Artificielle (IA) Suite */}
+              {isClientOrFull && <div className={`kt-menu-item ${activeMenu === 'ai_suite' ? 'active' : ''}`}>
+                <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/ai/suite"
+                  onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/suite'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                  <span className="kt-menu-icon items-start text-primary w-[20px]">
+                    <i className="ki-filled ki-technology-4 text-lg"></i>
+                  </span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">
+                    Intelligence Artificielle
+                  </span>
+                </a>
+              </div>}
+
             </div>
           </div>
         </div>

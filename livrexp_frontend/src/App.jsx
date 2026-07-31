@@ -40,6 +40,7 @@ import LivreurListPage from './pages/livreur/LivreurListPage';
 import LivreurNewPage from './pages/livreur/LivreurNewPage';
 import LivreurFichePage from './pages/livreur/LivreurFichePage';
 import LivreurAutoAssignPage from './pages/livreur/LivreurAutoAssignPage';
+import LivrExpressAiSuitePage from './pages/ai/LivrExpressAiSuitePage';
 import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
@@ -465,6 +466,10 @@ function App() {
         return <LivreurAutoAssignPage navigate={navigate} showNotification={showNotification} />;
       case '/profile':
         return <ProfilePage navigate={navigate} showNotification={showNotification} />;
+      case '/ai/suite':
+      case '/ai/dashboard':
+      case '/ai':
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':
