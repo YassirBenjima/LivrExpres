@@ -459,31 +459,80 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                 </div>
               </div>
 
-              {/* Welcome Banner Card */}
+              {/* Redesigned Welcome Banner Card */}
               <div className="lg:col-span-2">
-                <div className="kt-card h-full welcome-callout-card">
-                  <div className="kt-card-content p-10 bg-no-repeat bg-[length:40%] bg-[right_center] lg:bg-[right_10%_center]">
-                    <div className="flex flex-col justify-center gap-4 max-w-[60%]">
-                      <div className="flex -space-x-2">
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-4.png" alt="Avatar"/>
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-1.png" alt="Avatar"/>
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-2.png" alt="Avatar"/>
-                        <span className="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 font-semibold leading-none text-2xs size-10 text-white text-xs ring-background bg-green-500">
-                          S
+                <div className="kt-card h-full flex flex-col justify-between overflow-hidden relative">
+                  
+                  {/* Decorative background gradient element */}
+                  <div className="absolute -right-10 -bottom-10 opacity-15 pointer-events-none hidden md:block">
+                    <i className="ki-filled ki-delivery-3 text-[180px] text-primary" />
+                  </div>
+
+                  <div className="kt-card-content p-6 lg:p-8 flex flex-col justify-between h-full z-10">
+                    <div>
+                      {/* Top Header Row with Team Avatars and Live Status */}
+                      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex -space-x-2">
+                            <img className="hover:z-5 relative shrink-0 rounded-full ring-2 ring-background size-9 object-cover" src="/assets/media/avatars/300-4.png" alt="Avatar"/>
+                            <img className="hover:z-5 relative shrink-0 rounded-full ring-2 ring-background size-9 object-cover" src="/assets/media/avatars/300-1.png" alt="Avatar"/>
+                            <img className="hover:z-5 relative shrink-0 rounded-full ring-2 ring-background size-9 object-cover" src="/assets/media/avatars/300-2.png" alt="Avatar"/>
+                            <span className="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-2 font-bold text-xs size-9 text-white ring-background bg-emerald-500">
+                              S
+                            </span>
+                          </div>
+                          <span className="text-xs font-semibold text-muted-foreground hidden sm:inline-block">
+                            Équipe Logistique • Actifs
+                          </span>
+                        </div>
+
+                        <span className="kt-badge kt-badge-outline kt-badge-success rounded-full text-2xs px-2.5 py-1 flex items-center gap-1.5 font-medium">
+                          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Plateforme Opérationnelle
                         </span>
                       </div>
-                      <h2 className="text-xl font-semibold text-mono">
-                        LivrExpress<br/>Tableau de Bord
-                      </h2>
-                      <p className="text-sm font-normal text-secondary-foreground leading-5.5">
-                        Gérez vos colis, vos ramassages, vos retours et vos bons de livraison en toute simplicité avec notre interface d'administration temps réel.
+
+                      {/* Main Title & Subtitle */}
+                      <div className="space-y-1 mb-3">
+                        <h2 className="text-xl lg:text-2xl font-bold text-mono text-foreground">
+                          LivrExpress — Tableau de Bord
+                        </h2>
+                        <div className="text-xs font-medium text-primary uppercase tracking-wider">
+                          Pilotez vos expéditions en temps réel
+                        </div>
+                      </div>
+
+                      {/* Description Paragraph */}
+                      <p className="text-sm font-normal text-secondary-foreground leading-relaxed max-w-xl mb-6">
+                        Gérez vos colis, vos ramassages, vos retours et vos bons de livraison en toute simplicité. Bénéficiez d'une visibilité complète sur la performance logistique et le suivi financier CRBT.
                       </p>
                     </div>
-                  </div>
-                  <div className="kt-card-footer justify-center">
-                    <a className="kt-link kt-link-underlined kt-link-dashed" href="/colis/">
-                      Gérer les Colis
-                    </a>
+
+                    {/* Quick Action Shortcuts inside Card */}
+                    <div className="flex items-center flex-wrap gap-2.5 pt-4 border-t border-border/50">
+                      <a 
+                        href="/colis/nouveau" 
+                        className="kt-btn kt-btn-primary kt-btn-sm rounded-lg flex items-center gap-1.5"
+                        onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/colis/nouveau'); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                      >
+                        <i className="ki-filled ki-plus text-sm" /> Nouveau Colis
+                      </a>
+                      <a 
+                        href="/ramassage" 
+                        className="kt-btn kt-btn-outline kt-btn-sm rounded-lg flex items-center gap-1.5"
+                        onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/ramassage'); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                      >
+                        <i className="ki-filled ki-truck text-sm" /> Ramassages
+                      </a>
+                      <a 
+                        href="/colis" 
+                        className="kt-btn kt-btn-outline kt-btn-sm rounded-lg flex items-center gap-1.5"
+                        onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                      >
+                        <i className="ki-filled ki-box text-sm" /> Consulter Tous les Colis
+                      </a>
+                    </div>
+
                   </div>
                 </div>
               </div>
