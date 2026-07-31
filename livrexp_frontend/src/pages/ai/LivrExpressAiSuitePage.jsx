@@ -325,8 +325,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                     {p.crbt ? p.crbt.toFixed(2) : '0.00'} DH
                                   </td>
                                   <td className="text-center">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <div className="w-16 bg-accent/50 h-2 rounded-full overflow-hidden">
+                                    <div className="flex flex-col items-center justify-center gap-1 mx-auto w-full">
+                                      <span className={`kt-badge kt-badge-${pred.badge_color || 'primary'} kt-badge-outline rounded-full text-[11px]`}>
+                                        {pred.risk_score}% ({pred.risk_level})
+                                      </span>
+                                      <div className="w-20 bg-accent/50 h-1.5 rounded-full overflow-hidden">
                                         <div
                                           className={`h-full rounded-full ${
                                             pred.risk_score > 60 ? 'bg-destructive' : pred.risk_score > 30 ? 'bg-warning' : 'bg-success'
@@ -334,9 +337,6 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                           style={{ width: `${pred.risk_score || 0}%` }}
                                         />
                                       </div>
-                                      <span className={`kt-badge kt-badge-${pred.badge_color || 'primary'} kt-badge-outline rounded-full text-[11px]`}>
-                                        {pred.risk_score}% ({pred.risk_level})
-                                      </span>
                                     </div>
                                   </td>
                                   <td>
