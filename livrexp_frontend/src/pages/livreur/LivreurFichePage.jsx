@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
 export default function LivreurFichePage({ navigate, showNotification, livreurId }) {
-  const [livreur, setLivreur]   = useState(null);
-  const [colis, setColis]       = useState([]);
-  const [tournees, setTournees] = useState({});
-  const [commission, setComm]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [activeTab, setActiveTab] = useState('stats');
-  const [toggling, setToggling] = useState(false);
+  const [livreur, setLivreur]     = useState(null);
+  const [colis, setColis]         = useState([]);
+  const [tournees, setTournees]   = useState({});
+  const [commission, setComm]     = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [activeTab, setActiveTab] = useState('colis');
+  const [toggling, setToggling]   = useState(false);
 
   const id = livreurId || window.location.pathname.split('/livreurs/')[1]?.split('/')[0];
 
@@ -41,9 +41,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
     setToggling(true);
     try {
       const r = await fetch(`/api/livreurs/${livreur.id}`, {
-        method: 'PATCH',
-        headers: headers(),
-        credentials: 'include',
+        method: 'PATCH', headers: headers(), credentials: 'include',
         body: JSON.stringify({ disponible: !livreur.disponible }),
       });
       const d = await r.json();
@@ -52,13 +50,28 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
     finally { setToggling(false); }
   };
 
-  const etatColor = (e) => ({ 'Livré': 'kt-badge-success', 'Retourné': 'kt-badge-destructive', 'Expédié': 'kt-badge-info', 'En préparation': 'kt-badge-warning', 'Créé': 'kt-badge-primary' }[e] || 'kt-badge-secondary');
+  const etatBadge = (e) => ({ 'Livré': 'kt-badge-success', 'Retourné': 'kt-badge-destructive', 'Expédié': 'kt-badge-info', 'En préparation': 'kt-badge-warning', 'Créé': 'kt-badge-primary' }[e] || 'kt-badge-secondary');
+  const statutBadge = (s) => ({ 'Terminé': 'kt-badge-success', 'En cours': 'kt-badge-primary', 'Reporté': 'kt-badge-info', 'Échec': 'kt-badge-destructive' }[s] || 'kt-badge-warning');
 
   if (loading) return (
     <DashboardLayout activeMenu="livreurs_list">
       <main className="grow pt-5 dashboard-content-shift">
-        <div className="kt-container-fixed flex items-center justify-center h-60 gap-3 text-secondary-foreground">
-          <i className="ki-filled ki-spinner animate-spin text-2xl text-primary" /> Chargement de la fiche...
+        <div className="kt-container-fixed">
+          {/* Skeleton Header */}
+          <div className="flex flex-wrap items-center justify-between gap-5 pb-7.5">
+            <div className="flex flex-col gap-2">
+              <div style={{ height: '20px', width: '200px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ height: '14px', width: '150px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="kt-card p-5">
+                <div style={{ height: '32px', width: '32px', borderRadius: '8px', background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                <div className="mt-4" style={{ height: '20px', width: '60px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     </DashboardLayout>
@@ -67,7 +80,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   if (!livreur) return (
     <DashboardLayout activeMenu="livreurs_list">
       <main className="grow pt-5 dashboard-content-shift">
-        <div className="kt-container-fixed text-center py-20 text-secondary-foreground">
+        <div className="kt-container-fixed py-20 text-center text-secondary-foreground">
           <i className="ki-filled ki-user text-5xl block mb-3 text-muted-foreground" />
           <p className="font-medium text-lg">Livreur introuvable</p>
           <button className="kt-btn kt-btn-primary mt-4" onClick={() => navigate('/livreurs')}>Retour à la liste</button>
@@ -77,211 +90,300 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   );
 
   const stats = livreur.stats || {};
+  const taux = stats.tauxLivraison ?? 0;
+  const tauxColor = taux >= 75 ? 'text-success' : taux >= 50 ? 'text-warning' : 'text-destructive';
 
   return (
     <DashboardLayout activeMenu="livreurs_list">
-      <main className="grow pt-5 dashboard-content-shift" role="content">
-        <div className="kt-container-fixed">
+      <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-5 pb-7.5">
-            <div className="flex items-center gap-4">
-              <button className="kt-btn kt-btn-sm kt-btn-outline kt-btn-icon" onClick={() => navigate('/livreurs')}>
-                <i className="ki-filled ki-left" />
-              </button>
-              <div
-                className="size-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shrink-0"
-                style={{ background: `hsl(${(livreur.id * 47) % 360}, 65%, 50%)` }}
-              >
-                {livreur.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-mono">{livreur.fullName}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <i className="ki-filled ki-geolocation text-muted-foreground text-xs" />
-                  <span className="text-sm text-secondary-foreground">{livreur.city}</span>
-                  <span className={`kt-badge kt-badge-sm ${livreur.disponible ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline`}>
-                    {livreur.disponible ? 'Disponible' : 'Indisponible'}
+        {/* Page Header */}
+        <div className="kt-container-fixed">
+          <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+            <div className="flex flex-col justify-center gap-2">
+              <h1 className="text-xl font-medium leading-none text-mono">
+                Fiche Livreur — {livreur.fullName}
+              </h1>
+              <div className="flex items-center flex-wrap gap-2">
+                <span className="text-base text-secondary-foreground">{livreur.city}</span>
+                <span className={`kt-badge ${livreur.disponible ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline rounded-[30px]`}>
+                  <span className="kt-badge-dot size-1.5" />{livreur.disponible ? 'Disponible' : 'Indisponible'}
+                </span>
+                {livreur.isLive && (
+                  <span className="kt-badge kt-badge-success kt-badge-outline rounded-[30px]">
+                    <span className="kt-badge-dot size-1.5" />GPS Live
                   </span>
-                  {livreur.isLive && (
-                    <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">
-                      <span className="size-1.5 rounded-full bg-success me-1 animate-pulse" /> Live GPS
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </div>
-            <div className="flex gap-2.5">
-              <button className="kt-btn kt-btn-outline" onClick={toggleDispo} disabled={toggling}>
-                <i className={`ki-filled ${livreur.disponible ? 'ki-minus-circle' : 'ki-check-circle'} me-1`} />
+            <div className="flex items-center gap-2.5">
+              <button type="button" className="kt-btn kt-btn-outline" onClick={() => navigate('/livreurs')}>
+                Retour à la liste
+              </button>
+              <button
+                type="button"
+                className="kt-btn kt-btn-outline"
+                onClick={toggleDispo}
+                disabled={toggling}
+              >
                 {livreur.disponible ? 'Marquer Indisponible' : 'Marquer Disponible'}
               </button>
-              <button className="kt-btn kt-btn-primary" onClick={() => navigate(`/livreurs/${livreur.id}/edit`)}>
-                <i className="ki-filled ki-pencil me-1" /> Modifier
-              </button>
             </div>
           </div>
+        </div>
 
-          {/* Info + Stats row */}
-          <div className="grid lg:grid-cols-3 gap-5 mb-5">
+        <div className="kt-container-fixed">
+          <div className="grid gap-5 lg:gap-7.5">
 
-            {/* Info card */}
-            <div className="kt-card p-6 flex flex-col gap-4">
-              <h3 className="kt-card-title"><i className="ki-filled ki-user me-2 text-primary" />Informations</h3>
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { icon: 'ki-sms', label: 'Email', value: livreur.email },
-                { icon: 'ki-phone', label: 'Téléphone', value: livreur.phone },
-                { icon: 'ki-geolocation', label: 'Ville', value: livreur.city },
-                { icon: 'ki-home', label: 'Adresse', value: livreur.address || '-' },
-                { icon: 'ki-time', label: 'Dernière activité', value: livreur.lastSeen },
-              ].map(({ icon, label, value }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                    <i className={`ki-filled ${icon} text-sm text-muted-foreground`} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-secondary-foreground">{label}</p>
-                    <p className="text-sm font-medium text-foreground">{value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Stats */}
-            <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-5">
-              {[
-                { label: 'Total Colis', value: stats.total ?? 0, icon: 'ki-package', color: 'text-primary', sub: 'Dans sa ville' },
-                { label: 'Livrés', value: stats.livres ?? 0, icon: 'ki-verify', color: 'text-success', sub: `+${stats.tauxLivraison ?? 0}% taux` },
+                { label: 'Colis Total', value: stats.total ?? 0, icon: 'ki-package', color: 'text-primary', sub: 'dans sa ville' },
+                { label: 'Colis Livrés', value: stats.livres ?? 0, icon: 'ki-verify', color: 'text-success', sub: `Taux: ${taux}%` },
                 { label: 'En Cours', value: stats.enCours ?? 0, icon: 'ki-delivery-3', color: 'text-info', sub: 'Actuellement' },
-                { label: 'Retours', value: stats.retours ?? 0, icon: 'ki-delivery-time', color: 'text-destructive', sub: `${stats.tauxRetour ?? 0}% taux` },
-                { label: 'Commission', value: `${(stats.commission ?? 0).toLocaleString('fr-FR')} MAD`, icon: 'ki-dollar', color: 'text-warning', sub: '15 MAD/colis livré' },
-                { label: 'Taux Livraison', value: `${stats.tauxLivraison ?? 0}%`, icon: 'ki-chart-line-up', color: stats.tauxLivraison >= 75 ? 'text-success' : 'text-warning', sub: 'Performance globale' },
+                { label: 'Commission', value: `${(stats.commission ?? 0).toLocaleString('fr-FR')} MAD`, icon: 'ki-dollar', color: 'text-warning', sub: '15 MAD/livré' },
               ].map((s, i) => (
-                <div key={i} className="kt-card flex-col gap-3 p-5">
-                  <div className={s.color}><i className={`ki-filled ${s.icon} text-2xl`} /></div>
-                  <div>
-                    <p className="text-xl font-bold text-mono">{s.value}</p>
-                    <p className="text-sm font-medium text-foreground">{s.label}</p>
-                    <p className="text-xs text-secondary-foreground">{s.sub}</p>
+                <div key={i} className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
+                  <div className={`mt-4 ms-5 ${s.color}`}>
+                    <i className={`ki-filled ${s.icon} text-3xl`} />
+                  </div>
+                  <div className="flex flex-col gap-1 pb-4 px-5">
+                    <span className="text-2xl font-semibold text-mono">{s.value}</span>
+                    <span className="text-sm font-normal text-secondary-foreground">{s.label}</span>
+                    <span className="text-xs text-muted-foreground">{s.sub}</span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 border-b border-border mb-5">
-            {[
-              { key: 'stats', label: 'Colis assignés', icon: 'ki-package' },
-              { key: 'tournee', label: 'Tournée du jour', icon: 'ki-route' },
-              { key: 'commission', label: 'Commission', icon: 'ki-dollar' },
-            ].map(t => (
-              <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-secondary-foreground hover:text-foreground'}`}
-              >
-                <i className={`ki-filled ${t.icon} text-sm`} /> {t.label}
-              </button>
-            ))}
-          </div>
+            {/* Info + Performance */}
+            <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5">
 
-          {/* Tab: Colis */}
-          {activeTab === 'stats' && (
-            <div className="kt-card">
-              {colis.length === 0 ? (
-                <div className="p-12 text-center text-secondary-foreground">
-                  <i className="ki-filled ki-package text-4xl mb-3 block text-muted-foreground" />
-                  <p>Aucun colis assigné à ce livreur pour sa ville.</p>
+              {/* Info Card */}
+              <div className="kt-card">
+                <div className="kt-card-header">
+                  <h3 className="kt-card-title">Informations</h3>
                 </div>
-              ) : (
-                <div className="kt-scrollable-x-auto">
-                  <table className="kt-table kt-table-border table-fixed">
-                    <thead>
-                      <tr>
-                        <th className="min-w-[160px]">Code</th>
-                        <th className="min-w-[150px]">Destinataire</th>
-                        <th className="min-w-[120px]">Adresse</th>
-                        <th className="min-w-[100px]">Prix</th>
-                        <th className="min-w-[110px]">État</th>
-                        <th className="min-w-[130px]">Date</th>
-                      </tr>
-                    </thead>
+                <div className="kt-card-table pb-3">
+                  <table className="kt-table align-middle text-sm text-muted-foreground">
                     <tbody>
-                      {colis.map(c => (
-                        <tr key={c.id}>
-                          <td>
-                            <div className="font-semibold text-sm text-mono">{c.trackingCode}</div>
-                            <div className="text-xs text-secondary-foreground">{c.orderNumber}</div>
+                      {[
+                        { label: 'Email', value: livreur.email, icon: 'ki-sms' },
+                        { label: 'Téléphone', value: livreur.phone, icon: 'ki-phone' },
+                        { label: 'Ville', value: livreur.city, icon: 'ki-geolocation' },
+                        { label: 'Adresse', value: livreur.address || '-', icon: 'ki-home' },
+                        { label: 'Dernière activité', value: livreur.lastSeen, icon: 'ki-time' },
+                      ].map(({ label, value, icon }) => (
+                        <tr key={label}>
+                          <td className="py-2 text-secondary-foreground font-normal min-w-32">
+                            <div className="flex items-center gap-1.5">
+                              <i className={`ki-filled ${icon} text-sm text-muted-foreground`} />
+                              {label}
+                            </div>
                           </td>
-                          <td>
-                            <div className="text-sm font-medium">{c.recipient}</div>
-                            <div className="text-xs text-secondary-foreground">{c.phone}</div>
-                          </td>
-                          <td className="text-sm text-secondary-foreground">{c.address}</td>
-                          <td className="text-sm font-semibold text-primary">{c.price} MAD</td>
-                          <td><span className={`kt-badge ${etatColor(c.etat)} kt-badge-outline`}>{c.etat}</span></td>
-                          <td className="text-xs text-secondary-foreground">{c.createdAt}</td>
+                          <td className="py-2 text-foreground font-normal text-sm">{value}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
 
-          {/* Tab: Tournée */}
-          {activeTab === 'tournee' && (
-            <div className="grid md:grid-cols-2 gap-5">
-              {Object.entries(tournees).map(([statut, items]) => (
-                <div key={statut} className="kt-card p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">{statut}</h3>
-                    <span className="kt-badge kt-badge-primary kt-badge-outline">{items.length}</span>
-                  </div>
-                  {items.length === 0 ? (
-                    <p className="text-sm text-secondary-foreground text-center py-4">Aucun colis</p>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {items.slice(0, 5).map(c => (
-                        <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/50">
-                          <div>
-                            <p className="text-sm font-medium">{c.recipient}</p>
-                            <p className="text-xs text-secondary-foreground">{c.address}</p>
-                          </div>
-                          <span className="text-sm font-semibold text-primary">{c.price} MAD</span>
-                        </div>
-                      ))}
-                      {items.length > 5 && <p className="text-xs text-center text-secondary-foreground">+{items.length - 5} de plus</p>}
-                    </div>
-                  )}
+              {/* Performance Card */}
+              <div className="lg:col-span-2 kt-card">
+                <div className="kt-card-header">
+                  <h3 className="kt-card-title">Performance</h3>
+                  <span className="text-sm text-secondary-foreground">Statistiques globales</span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Tab: Commission */}
-          {activeTab === 'commission' && commission && (
-            <div className="kt-card p-6 max-w-md">
-              <h3 className="kt-card-title mb-5"><i className="ki-filled ki-dollar me-2 text-warning" />Détails de Commission</h3>
-              <div className="flex flex-col gap-4">
-                {[
-                  { label: 'Colis livrés avec succès', value: commission.livres },
-                  { label: 'Taux par colis livré', value: `${commission.tauxParColis} MAD` },
-                  { label: 'Ville couverte', value: livreur.city },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between border-b border-border pb-3">
-                    <span className="text-sm text-secondary-foreground">{label}</span>
-                    <span className="text-sm font-semibold text-foreground">{value}</span>
+                <div className="kt-card-content p-5 lg:p-7.5 lg:pt-4">
+                  <div className="flex flex-col gap-0.5 mb-4">
+                    <span className="text-sm font-normal text-secondary-foreground">Taux de livraison</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className={`text-2xl font-bold text-mono ${tauxColor}`}>{taux}%</span>
+                      <span className={`kt-badge kt-badge-outline kt-badge-sm ${taux >= 75 ? 'kt-badge-success' : taux >= 50 ? 'kt-badge-warning' : 'kt-badge-destructive'}`}>
+                        {taux >= 75 ? 'Excellent' : taux >= 50 ? 'Moyen' : 'Insuffisant'}
+                      </span>
+                    </div>
                   </div>
-                ))}
-                <div className="flex items-center justify-between bg-success/10 rounded-xl p-4 mt-2">
-                  <span className="font-semibold text-foreground">Commission totale</span>
-                  <span className="text-2xl font-bold text-success">{commission.totalCommission.toLocaleString('fr-FR')} {commission.devise}</span>
+
+                  {/* Progress Bar */}
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <div className="bg-green-500 h-2 rounded-xs" style={{ width: `${stats.livres ?? 0}%` }} />
+                    <div className="bg-destructive h-2 rounded-xs" style={{ width: `${stats.retours ?? 0}%` }} />
+                    <div className="bg-violet-500 h-2 rounded-xs" style={{ width: `${stats.enCours ?? 0}%` }} />
+                  </div>
+
+                  <div className="flex items-center flex-wrap gap-4 mb-4">
+                    {[
+                      { label: `Livré (${stats.livres ?? 0})`, color: 'bg-green-500' },
+                      { label: `Retourné (${stats.retours ?? 0})`, color: 'bg-destructive' },
+                      { label: `En cours (${stats.enCours ?? 0})`, color: 'bg-violet-500' },
+                    ].map(({ label, color }) => (
+                      <div key={label} className="flex items-center gap-1.5">
+                        <span className={`rounded-full size-2 ${color}`} />
+                        <span className="text-sm font-normal text-foreground">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-b border-input mb-4" />
+
+                  <div className="grid gap-3">
+                    {[
+                      { icon: 'ki-package', label: 'Total colis (ville)', value: `${stats.total ?? 0}`, pct: '100%' },
+                      { icon: 'ki-verify', label: 'Colis livrés', value: `${stats.livres ?? 0}`, pct: `${taux}%`, color: 'text-success' },
+                      { icon: 'ki-delivery-time', label: 'Colis retournés', value: `${stats.retours ?? 0}`, pct: `${stats.tauxRetour ?? 0}%`, color: 'text-destructive' },
+                    ].map(({ icon, label, value, pct, color }) => (
+                      <div key={label} className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <i className={`ki-filled ${icon} text-base text-muted-foreground`} />
+                          <span className="text-sm font-normal text-mono">{label}</span>
+                        </div>
+                        <div className="flex items-center text-sm font-medium text-foreground gap-6">
+                          <span>{value}</span>
+                          <span className={color || ''}>{pct}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          )}
 
+            {/* Tabs Section */}
+            <div className="kt-card kt-card-grid min-w-full">
+              {/* Tab Header */}
+              <div className="kt-card-header border-b-0 pb-0">
+                <div className="flex gap-0">
+                  {[
+                    { key: 'colis', label: 'Colis assignés' },
+                    { key: 'tournee', label: 'Tournée du jour' },
+                    { key: 'commission', label: 'Commission' },
+                  ].map(t => (
+                    <button
+                      key={t.key}
+                      onClick={() => setActiveTab(t.key)}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-secondary-foreground hover:text-foreground'}`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tab: Colis */}
+              {activeTab === 'colis' && (
+                <div className="kt-card-content">
+                  <div className="grid">
+                    <div className="kt-scrollable-x-auto">
+                      <table className="kt-table table-auto kt-table-border">
+                        <thead>
+                          <tr>
+                            <th className="min-w-[150px]"><span className="kt-table-col"><span className="kt-table-col-label">Code de suivi</span></span></th>
+                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">Destinataire</span></span></th>
+                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">Adresse</span></span></th>
+                            <th className="min-w-[100px]"><span className="kt-table-col"><span className="kt-table-col-label">Prix</span></span></th>
+                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">État</span></span></th>
+                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">Statut</span></span></th>
+                            <th className="min-w-[130px]"><span className="kt-table-col"><span className="kt-table-col-label">Date</span></span></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {colis.length === 0 ? (
+                            <tr><td colSpan={7} className="py-8 text-center text-secondary-foreground">Aucun colis assigné pour cette ville</td></tr>
+                          ) : colis.map(c => (
+                            <tr key={c.id}>
+                              <td className="font-medium text-foreground">{c.trackingCode}</td>
+                              <td className="text-foreground font-normal">
+                                {c.recipient}
+                                <div className="text-xs text-secondary-foreground">{c.phone}</div>
+                              </td>
+                              <td className="text-foreground font-normal">{c.address}</td>
+                              <td className="text-foreground font-medium">{c.price} MAD</td>
+                              <td>
+                                <span className={`kt-badge ${etatBadge(c.etat)} kt-badge-outline rounded-[30px]`}>
+                                  <span className="kt-badge-dot size-1.5" />{c.etat}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`kt-badge ${statutBadge(c.statut)} kt-badge-outline rounded-[30px]`}>
+                                  <span className="kt-badge-dot size-1.5" />{c.statut}
+                                </span>
+                              </td>
+                              <td className="text-foreground font-normal text-sm">{c.createdAt}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Tournée */}
+              {activeTab === 'tournee' && (
+                <div className="kt-card-content p-5 lg:p-7.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {Object.entries(tournees).map(([statut, items]) => (
+                      <div key={statut} className="kt-card border border-border/50 p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="font-semibold text-foreground">{statut}</h4>
+                          <span className={`kt-badge kt-badge-outline rounded-[30px] ${statutBadge(statut)}`}>
+                            <span className="kt-badge-dot size-1.5" />{items.length} colis
+                          </span>
+                        </div>
+                        {items.length === 0 ? (
+                          <p className="text-sm text-secondary-foreground text-center py-4">Aucun colis</p>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {items.slice(0, 5).map(c => (
+                              <div key={c.id} className="flex items-center justify-between p-2.5 rounded-lg bg-accent/50 border border-border/40">
+                                <div>
+                                  <p className="text-sm font-medium text-foreground">{c.recipient}</p>
+                                  <p className="text-xs text-secondary-foreground">{c.address}</p>
+                                </div>
+                                <span className="text-sm font-semibold text-primary">{c.price} MAD</span>
+                              </div>
+                            ))}
+                            {items.length > 5 && <p className="text-xs text-center text-secondary-foreground">+{items.length - 5} autres colis</p>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Commission */}
+              {activeTab === 'commission' && commission && (
+                <div className="kt-card-content p-5 lg:p-7.5">
+                  <div className="max-w-md">
+                    <div className="grid gap-3">
+                      {[
+                        { icon: 'ki-verify', label: 'Colis livrés avec succès', value: commission.livres },
+                        { icon: 'ki-dollar', label: 'Taux par colis livré', value: `${commission.tauxParColis} ${commission.devise}` },
+                        { icon: 'ki-geolocation', label: 'Ville couverte', value: livreur.city },
+                      ].map(({ icon, label, value }) => (
+                        <div key={label} className="flex items-center justify-between flex-wrap gap-2 border-b border-border pb-3">
+                          <div className="flex items-center gap-1.5">
+                            <i className={`ki-filled ${icon} text-base text-muted-foreground`} />
+                            <span className="text-sm font-normal text-mono">{label}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-foreground">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between bg-accent/50 rounded-xl p-5 mt-4">
+                      <span className="font-semibold text-foreground">Commission totale</span>
+                      <span className="text-2xl font-bold text-success">{commission.totalCommission.toLocaleString('fr-FR')} {commission.devise}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
         </div>
       </main>
     </DashboardLayout>
