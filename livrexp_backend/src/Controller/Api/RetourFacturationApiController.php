@@ -320,13 +320,19 @@ final class RetourFacturationApiController extends AbstractController
         foreach ($entries as $crbt) {
             $statut = $crbt->getStatus();
             $colis = $crbt->getColis();
+            $creator = $colis?->getCreatedBy();
+            $clientName = $creator 
+                ? (method_exists($creator, 'getNomStore') && $creator->getNomStore() ? $creator->getNomStore() : ($creator->getNomComplet() ?: 'Client Privé'))
+                : 'Client Privé';
+
             $data[] = [
                 'id' => $crbt->getId(),
                 'code' => $crbt->getReference() ?: ('CRBT-' . $crbt->getId()),
+                'client' => $clientName,
                 'dateCreation' => $crbt->getCreatedAt() ? $crbt->getCreatedAt()->format('d/m/Y H:i') : '-',
                 'nbrColis' => 1,
                 'totalBrut' => (float) ($colis ? $colis->getPrice() : $crbt->getMontant()),
-                'fraisLivraison' => 0.0,
+                'fraisLivraison' => (float) $crbt->getMontantFrais(),
                 'fraisRefus' => 0.0,
                 'totalNet' => (float) $crbt->getBalance(),
                 'statut' => $statut,
