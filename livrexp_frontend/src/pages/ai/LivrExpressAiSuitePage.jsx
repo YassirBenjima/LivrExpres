@@ -165,7 +165,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             </div>
 
             {/* Sub Tabs */}
-            <div className="flex items-center p-1 bg-accent/30 rounded-lg border border-border">
+            <div className="flex items-center p-1 bg-accent/30 rounded-lg border border-border overflow-x-auto max-w-full flex-nowrap whitespace-nowrap shrink-0">
               <button
                 type="button"
                 onClick={() => {

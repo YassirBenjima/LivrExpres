@@ -234,9 +234,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
         </div>
 
         {/* Sidebar Content */}
-        <div className="kt-sidebar-content flex grow shrink-0 py-5 pe-2" id="sidebar_content">
-          <div className="kt-scrollable-y-hover grow shrink-0 flex ps-2 lg:ps-5 pe-1 lg:pe-3" id="sidebar_scrollable">
-            <div className="kt-menu flex flex-col grow gap-1" id="sidebar_menu">
+        <div className="kt-sidebar-content flex grow shrink min-h-0 py-5 pe-2 overflow-y-auto" id="sidebar_content">
+          <div className="kt-scrollable-y-hover grow shrink min-h-0 flex flex-col ps-2 lg:ps-5 pe-1 lg:pe-3 overflow-y-auto" id="sidebar_scrollable">
+            <div className="kt-menu flex flex-col grow gap-1 pb-10" id="sidebar_menu">
               
               {/* Dashboard */}
               <div className={`kt-menu-item ${activeMenu === 'dashboard' ? 'here' : ''}`}>
