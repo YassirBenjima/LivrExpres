@@ -470,7 +470,7 @@ export default function ClientListPage({ navigate, showNotification }) {
       </head>
       <body>
 
-        {/* Header */}
+        <!-- Header -->
         <div class="header">
           <div class="brand">
             <div class="logo-text">Livr<span>Express</span></div>
@@ -483,7 +483,7 @@ export default function ClientListPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* Section 1: Parties */}
+        <!-- Section 1: Parties -->
         <div class="section-title">Article 1 — Identification des Parties Contracting</div>
         <div class="parties-grid">
           <div class="party-card">
@@ -504,13 +504,13 @@ export default function ClientListPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* Section 2: Objet */}
+        <!-- Section 2: Objet -->
         <div class="section-title">Article 2 — Objet & Périmètre d'Intervention</div>
         <div class="article-text">
           Le présent contrat a pour objet de définir les conditions organisationnelles, juridiques et financières dans lesquelles la société <strong>LivrExpress S.A.R.L</strong> assure pour le compte de <strong>${client.businessName}</strong> les prestations de ramassage, d'expédition, de suivi digitalisé, de livraison au destinataire final ainsi que l'encaissement des montants en Contre-Remboursement (CRBT).
         </div>
 
-        {/* Section 3: Grille Tarifaire */}
+        <!-- Section 3: Grille Tarifaire -->
         <div class="section-title">Article 3 — Conditions Financières & Grille Tarifaire</div>
         <table class="pricing-table">
           <thead>
@@ -543,13 +543,13 @@ export default function ClientListPage({ navigate, showNotification }) {
           </tbody>
         </table>
 
-        {/* Section 4: Cash-on-Delivery */}
+        <!-- Section 4: Cash-on-Delivery -->
         <div class="section-title">Article 4 — Reversement des Fonds (CRBT) & Réconciliation</div>
         <div class="article-text">
           Les fonds collectés auprès des destinataires finaux au titre des livraisons payées en espèces sont sécurisés par LivrExpress. Le reversement s'effectue hebdomadairement par virement bancaire sur le compte indiqué par le Client, déduction faite des frais de transport négociés. Un état de réconciliation comptable automatique est mis à disposition sur la plateforme.
         </div>
 
-        {/* Highlight Box Credit */}
+        <!-- Highlight Box Credit -->
         <div class="highlight-box">
           <div>
             <div style="font-weight: 700; color: #1e3a8a;">Plafond d'Encours & Crédit Autorisé</div>
@@ -560,13 +560,13 @@ export default function ClientListPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* Section 5: Durée & Signatures */}
+        <!-- Section 5: Durée & Signatures -->
         <div class="section-title">Article 5 — Durée & Prise d'Effet</div>
         <div class="article-text">
           Le présent contrat est conclu pour une durée indéterminée à compter de sa signature. Il peut être résilié par l'une ou l'autre des parties sous réserve d'un préavis écrit de trente (30) jours.
         </div>
 
-        {/* Signatures */}
+        <!-- Signatures -->
         <div class="signatures-container">
           <div class="signature-box">
             <div class="signature-title">Pour le Client : ${client.businessName}</div>
