@@ -217,7 +217,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
     document.body.removeChild(link);
 
     if (showNotification) {
-      showNotification(`Export comptable (${format}) téléchargé avec succès !`, 'success');
+      showNotification('success', `Export comptable (${format}) téléchargé avec succès !`);
     }
   };
 
@@ -248,14 +248,14 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
     setIsVirementModalOpen(false);
     if (showNotification) {
-      showNotification(`Virement ${virementForm.refVirement} de ${virementForm.montant.toFixed(2)} MAD exécuté avec succès !`, 'success');
+      showNotification('success', `Virement ${virementForm.refVirement} de ${virementForm.montant.toFixed(2)} MAD exécuté avec succès !`);
     }
   };
 
   // Handle Automatic Bank Reconciliation
   const handleRunReconciliation = () => {
     if (showNotification) {
-      showNotification('Réconciliation bancaire exécutée : 100% des montants concordent avec les encaissements !', 'success');
+      showNotification('success', 'Réconciliation bancaire exécutée : 100% des montants concordent avec les encaissements !');
     }
   };
 
