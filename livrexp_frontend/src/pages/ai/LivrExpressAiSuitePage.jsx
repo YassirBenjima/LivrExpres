@@ -225,7 +225,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={fetchPredictions}
+                onClick={() => {
+                  if (activeTab === 'predictions') fetchPredictions();
+                  if (activeTab === 'anomalies') fetchAnomalies();
+                  if (activeTab === 'route') fetchRouteOptimization();
+                }}
                 className="kt-btn kt-btn-outline"
               >
                 <i className="ki-filled ki-arrows-loop text-sm me-1" />
