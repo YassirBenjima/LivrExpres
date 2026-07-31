@@ -584,163 +584,177 @@ export default function ClientListPage({ navigate, showNotification }) {
         {/* MODAL: CREATE NEW CLIENT */}
         {isNewClientModalOpen && createPortal(
           <div
-            className="fixed flex items-center justify-center p-4"
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 99999 }}
+            className="fixed flex items-center justify-center p-4 overflow-y-auto"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              zIndex: 99999
+            }}
             onClick={() => setIsNewClientModalOpen(false)}
           >
             <div
-              className="bg-white dark:bg-zinc-950 border rounded-xl shadow-2xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]"
-              style={{ borderColor: 'var(--border)' }}
+              className="kt-modal-content w-full max-w-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
-                <h3 className="font-semibold text-base text-foreground">Nouveau Client Multi-Tenant</h3>
+              <div className="kt-modal-header">
+                <h3 className="kt-modal-title">Nouveau client</h3>
                 <button
-                  type="button"
+                  className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0"
                   onClick={() => setIsNewClientModalOpen(false)}
-                  className="text-muted-foreground hover:text-foreground p-1 bg-transparent border-0 cursor-pointer"
+                  type="button"
                 >
-                  <i className="ki-filled ki-cross text-lg" />
+                  <i className="ki-filled ki-cross"></i>
                 </button>
               </div>
 
-              <form onSubmit={handleCreateClient} className="flex flex-col gap-4 mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Raison Sociale / Boutique</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: Casa Chic SARL"
-                      className="kt-input"
-                      value={newClientForm.businessName}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, businessName: e.target.value })}
-                    />
+              <div className="kt-modal-body px-5 py-5">
+                <form onSubmit={handleCreateClient} className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Raison Sociale / Boutique</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: Casa Chic SARL"
+                        className="kt-input"
+                        value={newClientForm.businessName}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, businessName: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Représentant Légal</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: Yassine El Amrani"
+                        className="kt-input"
+                        value={newClientForm.fullName}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, fullName: e.target.value })}
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Représentant Légal</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: Yassine El Amrani"
-                      className="kt-input"
-                      value={newClientForm.fullName}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, fullName: e.target.value })}
-                    />
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Email Professionnel</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="contact@boutique.ma"
+                        className="kt-input"
+                        value={newClientForm.email}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, email: e.target.value })}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Email Professionnel</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="contact@boutique.ma"
-                      className="kt-input"
-                      value={newClientForm.email}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, email: e.target.value })}
-                    />
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Téléphone</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="0600000000"
+                        className="kt-input"
+                        value={newClientForm.phone}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, phone: e.target.value })}
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Téléphone</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="0600000000"
-                      className="kt-input"
-                      value={newClientForm.phone}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, phone: e.target.value })}
-                    />
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Ville</label>
+                      <select
+                        className="kt-input"
+                        value={newClientForm.city}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, city: e.target.value })}
+                      >
+                        <option value="Casablanca">Casablanca</option>
+                        <option value="Rabat">Rabat</option>
+                        <option value="Marrakech">Marrakech</option>
+                        <option value="Tanger">Tanger</option>
+                        <option value="Agadir">Agadir</option>
+                        <option value="Fès">Fès</option>
+                      </select>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Ville</label>
-                    <select
-                      className="kt-input"
-                      value={newClientForm.city}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, city: e.target.value })}
+                    <div className="grid grid-cols-1 gap-1.5">
+                      <label className="text-sm font-medium text-mono text-foreground">Numéro ICE</label>
+                      <input
+                        type="text"
+                        placeholder="00298102000099"
+                        className="kt-input font-mono text-xs"
+                        value={newClientForm.ice}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, ice: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-border mt-1">
+                    <h4 className="text-xs font-bold uppercase text-primary mb-3 me-1">Tarification & Plafond Crédit</h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 gap-1.5">
+                        <label className="text-xs font-medium text-mono text-foreground">Même Ville (MAD)</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          className="kt-input"
+                          value={newClientForm.tarifSameCity}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, tarifSameCity: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-1.5">
+                        <label className="text-xs font-medium text-mono text-foreground">National (MAD)</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          className="kt-input"
+                          value={newClientForm.tarifOtherCity}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, tarifOtherCity: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-1.5">
+                        <label className="text-xs font-medium text-mono text-foreground">Crédit Max (MAD)</label>
+                        <input
+                          type="number"
+                          step="500"
+                          className="kt-input font-bold text-success"
+                          value={newClientForm.creditLimit}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, creditLimit: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewClientModalOpen(false)}
+                      className="kt-btn kt-btn-outline cursor-pointer"
                     >
-                      <option value="Casablanca">Casablanca</option>
-                      <option value="Rabat">Rabat</option>
-                      <option value="Marrakech">Marrakech</option>
-                      <option value="Tanger">Tanger</option>
-                      <option value="Agadir">Agadir</option>
-                      <option value="Fès">Fès</option>
-                    </select>
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      className="kt-btn kt-btn-primary cursor-pointer"
+                    >
+                      Créer le client
+                    </button>
                   </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Numéro ICE</label>
-                    <input
-                      type="text"
-                      placeholder="00298102000099"
-                      className="kt-input font-mono text-xs"
-                      value={newClientForm.ice}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, ice: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-                  <h4 className="text-xs font-bold uppercase text-primary mb-3">Tarification & Plafond Crédit</h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif Même Ville</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        className="kt-input text-xs"
-                        value={newClientForm.tarifSameCity}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, tarifSameCity: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif National</label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        className="kt-input text-xs"
-                        value={newClientForm.tarifOtherCity}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, tarifOtherCity: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Plafond Crédit (MAD)</label>
-                      <input
-                        type="number"
-                        step="500"
-                        className="kt-input text-xs font-bold text-success"
-                        value={newClientForm.creditLimit}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, creditLimit: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-4 border-t mt-2" style={{ borderColor: 'var(--border)' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewClientModalOpen(false)}
-                    className="kt-btn kt-btn-outline cursor-pointer"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="kt-btn kt-btn-primary cursor-pointer"
-                  >
-                    Créer le Compte Client
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           </div>,
           document.body
