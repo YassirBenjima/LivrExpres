@@ -584,22 +584,23 @@ export default function ClientListPage({ navigate, showNotification }) {
         {/* MODAL: CREATE NEW CLIENT */}
         {isNewClientModalOpen && createPortal(
           <div
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+            className="fixed flex items-center justify-center p-4"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 99999 }}
             onClick={() => setIsNewClientModalOpen(false)}
           >
             <div
-              className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]"
+              className="bg-white dark:bg-zinc-950 border rounded-xl shadow-2xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]"
+              style={{ borderColor: 'var(--border)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center pb-3 border-b border-border">
-                <h3 className="font-bold text-base text-foreground">Nouveau Client Multi-Tenant</h3>
+              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                <h3 className="font-semibold text-base text-foreground">Nouveau Client Multi-Tenant</h3>
                 <button
                   type="button"
                   onClick={() => setIsNewClientModalOpen(false)}
-                  className="text-muted-foreground hover:text-foreground font-bold text-lg border-0 bg-transparent cursor-pointer"
+                  className="text-muted-foreground hover:text-foreground p-1 bg-transparent border-0 cursor-pointer"
                 >
-                  ✕
+                  <i className="ki-filled ki-cross text-lg" />
                 </button>
               </div>
 
@@ -618,7 +619,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Représentant Legal</label>
+                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Représentant Légal</label>
                     <input
                       type="text"
                       required
@@ -685,45 +686,46 @@ export default function ClientListPage({ navigate, showNotification }) {
                   </div>
                 </div>
 
-                <hr className="border-border my-1" />
-                <h4 className="text-xs font-bold uppercase text-primary">Tarification & Plafond Crédit</h4>
+                <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
+                  <h4 className="text-xs font-bold uppercase text-primary mb-3">Tarification & Plafond Crédit</h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif Même Ville</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      className="kt-input text-xs"
-                      value={newClientForm.tarifSameCity}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, tarifSameCity: e.target.value })}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif Même Ville</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        className="kt-input text-xs"
+                        value={newClientForm.tarifSameCity}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, tarifSameCity: e.target.value })}
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif National</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      className="kt-input text-xs"
-                      value={newClientForm.tarifOtherCity}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, tarifOtherCity: e.target.value })}
-                    />
-                  </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif National</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        className="kt-input text-xs"
+                        value={newClientForm.tarifOtherCity}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, tarifOtherCity: e.target.value })}
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Plafond Crédit (MAD)</label>
-                    <input
-                      type="number"
-                      step="500"
-                      className="kt-input text-xs font-bold text-success"
-                      value={newClientForm.creditLimit}
-                      onChange={(e) => setNewClientForm({ ...newClientForm, creditLimit: e.target.value })}
-                    />
+                    <div>
+                      <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Plafond Crédit (MAD)</label>
+                      <input
+                        type="number"
+                        step="500"
+                        className="kt-input text-xs font-bold text-success"
+                        value={newClientForm.creditLimit}
+                        onChange={(e) => setNewClientForm({ ...newClientForm, creditLimit: e.target.value })}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-border mt-2">
+                <div className="flex items-center justify-end gap-2.5 pt-4 border-t mt-2" style={{ borderColor: 'var(--border)' }}>
                   <button
                     type="button"
                     onClick={() => setIsNewClientModalOpen(false)}
