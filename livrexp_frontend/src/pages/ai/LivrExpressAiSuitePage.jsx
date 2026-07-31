@@ -343,7 +343,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        if (showNotification) showNotification('info', `Appel de pré-livraison lancé pour ${p.destinataire}`);
+                                        if (showNotification) showNotification('success', `Appel de pré-livraison lancé pour ${p.destinataire}`);
                                       }}
                                       className="kt-btn kt-btn-xs kt-btn-outline"
                                     >

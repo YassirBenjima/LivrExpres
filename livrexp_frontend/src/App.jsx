@@ -609,12 +609,12 @@ function App() {
           <div className={`custom-toast ${notification.type}`}>
             <div className={`custom-toast-icon-container ${notification.type}`}>
               <i className={`ki-filled ${
-                notification.type === 'success' ? 'ki-check' : 'ki-information'
+                notification.type === 'success' ? 'ki-check' : notification.type === 'info' ? 'ki-information-2' : 'ki-cross-circle'
               } text-base`}></i>
             </div>
             <div className="custom-toast-content">
               <h4 className="custom-toast-title">
-                {notification.type === 'success' ? 'Succès' : 'Erreur'}
+                {notification.type === 'success' ? 'Succès' : notification.type === 'info' ? 'Information' : 'Erreur'}
               </h4>
               <p className="custom-toast-message">
                 {notification.message}
