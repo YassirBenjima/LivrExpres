@@ -626,6 +626,22 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
               )}
+              {activeMenu.startsWith('livreurs') && activeMenu !== 'livreurs_list' && activeMenu !== 'livreurs' && (
+                <>
+                  <a 
+                    href="/livreurs" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/livreurs');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    Livreurs
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {activeMenu === 'dashboard' ? 'Tableau de bord'
                   : activeMenu === 'colis_list' ? 'Liste des colis'
@@ -645,6 +661,10 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   : activeMenu === 'ramassage' ? 'Ramassage'
                   : activeMenu === 'bon_livraison_list' || activeMenu === 'bon_livraison' ? 'Liste bons de livraison'
                   : activeMenu === 'bon_livraison_new' ? 'Ajouter Bon de Livraison'
+                  : activeMenu === 'livreurs_list' || activeMenu === 'livreurs' ? 'Livreurs'
+                  : activeMenu === 'livreurs_new' ? 'Ajouter un livreur'
+                  : activeMenu === 'livreurs_fiche' ? 'Fiche livreur'
+                  : activeMenu === 'livreurs_auto_assign' ? 'Attribution automatique'
                   : activeMenu === 'suivi' ? 'Suivi'
                   : activeMenu === 'retour' ? 'Retour'
                   : activeMenu === 'facturation' ? 'Facturation'
