@@ -105,18 +105,9 @@ final class AdvancedAiApiController extends AbstractController
         }
 
         $comment = strtolower((string) ($colis->getComment() ?? (method_exists($colis, 'getRemarque') ? $colis->getRemarque() : '')));
-        if (str_contains($comment, 'absent') || str_contains($comment, 'refus')) {
+        if (str_contains($comment, 'absent') || str_contains($comment, 'refus') || str_contains($comment, 'annulé')) {
             $score += 35;
             $factors[] = "Passage précédent ou commentaire de risque détecté (+35%)";
-        }
-
-        // Varied risk simulation for test parcels to showcase High (Élevé), Medium (Moyen), and Low (Faible) tiers
-        if ($colis->getId() % 3 === 0) {
-            $score += 45;
-            $factors[] = "Historique d'annulations client répétées sur ce secteur (+45%)";
-        } elseif ($colis->getId() % 2 === 0) {
-            $score += 25;
-            $factors[] = "Adresse de livraison incomplète ou imprécise (+25%)";
         }
 
         $riskPercent = min(99, max(5, $score));
@@ -200,94 +191,69 @@ final class AdvancedAiApiController extends AbstractController
         $anomalies = [];
         $now = new \DateTime();
 
-        $sampleAnomalyTypes = [
-            [
-                'title' => 'Retard Ramassage',
-                'severity' => 'WARNING',
-                'badge_class' => 'kt-badge-warning',
-                'hours_stuck' => 32.5,
-                'description' => 'Colis en attente de ramassage depuis plus de 30 heures.',
-                'action_suggested' => 'Ré-assigner d\'urgence un livreur de secteur.'
-            ],
-            [
-                'title' => 'Inactivité prolongée',
-                'severity' => 'CRITICAL',
-                'badge_class' => 'kt-badge-destructive',
-                'hours_stuck' => 54.0,
-                'description' => 'Aucune mise à jour de statut de livraison depuis 54h.',
-                'action_suggested' => 'Ouvrir un ticket d\'enquête auprès du hub logistique.'
-            ],
-            [
-                'title' => 'Problème Livraison',
-                'severity' => 'CRITICAL',
-                'badge_class' => 'kt-badge-destructive',
-                'hours_stuck' => 41.2,
-                'description' => 'Échec de livraison répété - Destinataire injoignable.',
-                'action_suggested' => 'Déclencher un appel de confirmation et mettre à jour le créneau.'
-            ]
-        ];
-
-        foreach ($realParcels as $idx => $c) {
-            $created = $c->getCreatedAt() ?? new \DateTime('-1 day');
-            $diffHours = max(1.5, round(($now->getTimestamp() - $created->getTimestamp()) / 3600, 1));
+        foreach ($realParcels as $c) {
+            $created = $c->getCreatedAt() ? \DateTime::createFromInterface($c->getCreatedAt()) : new \DateTime('-1 day');
+            $diffHours = max(0.5, round(($now->getTimestamp() - $created->getTimestamp()) / 3600, 1));
 
             $destinataire = $c->getRecipient() ?? 'Client';
             $ville = $c->getCity() ?? 'Casablanca';
+            $comment = strtolower((string) ($c->getComment() ?? ''));
+            $statut = $c->getStatut() ?? '';
+            $etat = $c->getEtat() ?? '';
 
-            // Real DB anomalies
-            if ($c->getEtat() === Colis::ETAT_EN_ATTENTE || $c->getStatut() === Colis::STATUT_EN_ATTENTE) {
+            // Anomaly 1: Retard Ramassage (Created / En attente > 12h)
+            if ($etat === Colis::ETAT_CREE || $statut === Colis::STATUT_EN_ATTENTE) {
+                if ($diffHours >= 12) {
+                    $anomalies[] = [
+                        'colis_id' => $c->getId(),
+                        'tracking_code' => $c->getOrderNumber() ?? sprintf('CMD-%d', $c->getId()),
+                        'destinataire' => $destinataire,
+                        'ville' => $ville,
+                        'etat' => $etat,
+                        'hours_stuck' => $diffHours,
+                        'severity' => $diffHours > 48 ? 'CRITICAL' : 'WARNING',
+                        'badge_class' => $diffHours > 48 ? 'kt-badge-destructive' : 'kt-badge-warning',
+                        'title' => 'Retard Ramassage',
+                        'description' => sprintf('En attente de ramassage depuis %.1fh (Seuil recommandé: 12h).', $diffHours),
+                        'action_suggested' => sprintf('Ré-assigner d\'urgence un livreur pour ramasser la commande de %s.', $destinataire)
+                    ];
+                }
+            }
+
+            // Anomaly 2: Inactivité prolongée (Expédié / En cours > 36h)
+            if ($etat === Colis::ETAT_EXPEDIE || $statut === Colis::STATUT_EN_COURS || $etat === Colis::ETAT_EN_COURS) {
+                if ($diffHours >= 36) {
+                    $anomalies[] = [
+                        'colis_id' => $c->getId(),
+                        'tracking_code' => $c->getOrderNumber() ?? sprintf('CMD-%d', $c->getId()),
+                        'destinataire' => $destinataire,
+                        'ville' => $ville,
+                        'etat' => $etat,
+                        'hours_stuck' => $diffHours,
+                        'severity' => 'CRITICAL',
+                        'badge_class' => 'kt-badge-destructive',
+                        'title' => 'Inactivité prolongée',
+                        'description' => sprintf('Colis en cours/expédié depuis %.1fh sans mise à jour de statut.', $diffHours),
+                        'action_suggested' => sprintf('Ouvrir un ticket d\'enquête auprès du hub logistique de %s.', $ville)
+                    ];
+                }
+            }
+
+            // Anomaly 3: Problème Livraison (Reporté / Échec ou refus/absent comment)
+            if ($statut === Colis::STATUT_REPORTE || $statut === Colis::STATUT_ECHEC || str_contains($comment, 'absent') || str_contains($comment, 'refus') || str_contains($comment, 'injoignable')) {
                 $anomalies[] = [
                     'colis_id' => $c->getId(),
                     'tracking_code' => $c->getOrderNumber() ?? sprintf('CMD-%d', $c->getId()),
                     'destinataire' => $destinataire,
                     'ville' => $ville,
-                    'etat' => $c->getEtat() ?? 'En attente',
-                    'hours_stuck' => max($diffHours, 28.5),
-                    'severity' => 'WARNING',
-                    'badge_class' => 'kt-badge-warning',
-                    'title' => 'Retard Ramassage',
-                    'description' => sprintf('En attente de ramassage depuis %.1fh (Seuil recommandé: 24h).', max($diffHours, 28.5)),
-                    'action_suggested' => sprintf('Ré-assigner un livreur pour ramasser la commande de %s.', $destinataire)
-                ];
-            } elseif ($c->getEtat() === Colis::ETAT_EXPEDIE || $c->getEtat() === Colis::ETAT_EN_COURS) {
-                $anomalies[] = [
-                    'colis_id' => $c->getId(),
-                    'tracking_code' => $c->getOrderNumber() ?? sprintf('CMD-%d', $c->getId()),
-                    'destinataire' => $destinataire,
-                    'ville' => $ville,
-                    'etat' => $c->getEtat(),
-                    'hours_stuck' => max($diffHours, 42.0),
+                    'etat' => $etat ?: $statut,
+                    'hours_stuck' => $diffHours,
                     'severity' => 'CRITICAL',
                     'badge_class' => 'kt-badge-destructive',
                     'title' => 'Problème Livraison',
-                    'description' => sprintf('Colis en cours/expédié depuis %.1fh sans clôture.', max($diffHours, 42.0)),
-                    'action_suggested' => sprintf('Contacter le livreur assigné ou le hub de %s.', $ville)
+                    'description' => sprintf('Échec ou report de livraison détecté pour %s (Remarque: %s).', $destinataire, $comment ?: 'Destinataire injoignable'),
+                    'action_suggested' => sprintf('Déclencher un appel de confirmation et planifier un nouveau passage avec %s.', $destinataire)
                 ];
-            }
-        }
-
-        // Always ensure comprehensive test coverage with all 3 anomaly types if DB items are limited
-        if (count($anomalies) < 3 && !empty($realParcels)) {
-            foreach ($realParcels as $i => $c) {
-                $sample = $sampleAnomalyTypes[$i % count($sampleAnomalyTypes)];
-                $destinataire = $c->getRecipient() ?? 'Client';
-                $ville = $c->getCity() ?? 'Casablanca';
-
-                $anomalies[] = [
-                    'colis_id' => $c->getId(),
-                    'tracking_code' => $c->getOrderNumber() ?? sprintf('CMD-%d', $c->getId()),
-                    'destinataire' => $destinataire,
-                    'ville' => $ville,
-                    'etat' => $c->getEtat() ?? 'En cours',
-                    'hours_stuck' => $sample['hours_stuck'],
-                    'severity' => $sample['severity'],
-                    'badge_class' => $sample['badge_class'],
-                    'title' => $sample['title'],
-                    'description' => sprintf('%s à %s', $sample['description'], $ville),
-                    'action_suggested' => sprintf('%s (%s)', $sample['action_suggested'], $destinataire)
-                ];
-
-                if (count($anomalies) >= 6) break;
             }
         }
 

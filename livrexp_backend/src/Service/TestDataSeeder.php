@@ -440,6 +440,71 @@ final class TestDataSeeder
                 'price' => '150.00',
                 'recipient' => 'BL Annulé',
             ],
+            'ai_high_risk_1' => [
+                'order' => 900020,
+                'type' => Colis::TYPE_SIMPLE,
+                'etat' => Colis::ETAT_CREE,
+                'statut' => Colis::STATUT_EN_ATTENTE,
+                'payment' => Colis::PAYMENT_CRBT,
+                'price' => '1850.00',
+                'recipient' => 'Amine El Amrani',
+                'city' => 'Oujda',
+                'phone' => '0600000000',
+                'comment' => 'Passage précédent refusé par le destinataire',
+                'created_hours_ago' => 36,
+            ],
+            'ai_high_risk_2' => [
+                'order' => 900021,
+                'type' => Colis::TYPE_SIMPLE,
+                'etat' => Colis::ETAT_EXPEDIE,
+                'statut' => Colis::STATUT_EN_COURS,
+                'payment' => Colis::PAYMENT_CRBT,
+                'price' => '1450.00',
+                'recipient' => 'Fatima Zohra Mansouri',
+                'city' => 'Tanger',
+                'phone' => '0612',
+                'comment' => 'Injoignable au 1er passage',
+                'created_hours_ago' => 54,
+            ],
+            'ai_anomaly_pickup' => [
+                'order' => 900022,
+                'type' => Colis::TYPE_SIMPLE,
+                'etat' => Colis::ETAT_CREE,
+                'statut' => Colis::STATUT_EN_ATTENTE,
+                'payment' => Colis::PAYMENT_CRBT,
+                'price' => '450.00',
+                'recipient' => 'Brahim Naciri',
+                'city' => 'Marrakech',
+                'phone' => '0661122334',
+                'comment' => 'En attente de ramassage urgent',
+                'created_hours_ago' => 40,
+            ],
+            'ai_anomaly_inactif' => [
+                'order' => 900023,
+                'type' => Colis::TYPE_SIMPLE,
+                'etat' => Colis::ETAT_EXPEDIE,
+                'statut' => Colis::STATUT_EN_COURS,
+                'payment' => Colis::PAYMENT_CRBT,
+                'price' => '720.00',
+                'recipient' => 'Siham Berada',
+                'city' => 'Agadir',
+                'phone' => '0662233445',
+                'comment' => 'Inactivité prolongée sur le hub',
+                'created_hours_ago' => 60,
+            ],
+            'ai_anomaly_probleme' => [
+                'order' => 900024,
+                'type' => Colis::TYPE_SIMPLE,
+                'etat' => Colis::ETAT_EXPEDIE,
+                'statut' => Colis::STATUT_REPORTE,
+                'payment' => Colis::PAYMENT_CRBT,
+                'price' => '530.00',
+                'recipient' => 'Rachid Chraibi',
+                'city' => 'Rabat',
+                'phone' => '0663344556',
+                'comment' => 'Passage effectué - Destinataire absent',
+                'created_hours_ago' => 28,
+            ],
         ];
 
         $map = [];
@@ -464,12 +529,12 @@ final class TestDataSeeder
     private function buildColis(array $data, string $city): Colis
     {
         $colis = new Colis();
-        $colis->setOrderNumber((string) $data['order']);
+        $colis->setOrderNumber('CMD-' . $data['order']);
         $colis->setType($data['type']);
-        $colis->setCity($city);
+        $colis->setCity($data['city'] ?? $city);
         $colis->setAddress('45 Avenue Test');
         $colis->setNeighborhood('Quartier Seed');
-        $colis->setPhoneNumber('0611223344');
+        $colis->setPhoneNumber($data['phone'] ?? '0611223344');
         $colis->setPrice($data['price']);
         $colis->setProductNature($data['productNature'] ?? 'Produit test');
         $colis->setRecipient($data['recipient']);
@@ -478,6 +543,10 @@ final class TestDataSeeder
         $colis->setStatut($data['statut']);
         $colis->setPaymentType($data['payment']);
         $colis->setComment($data['comment'] ?? 'Donnée de démonstration');
+
+        if (isset($data['created_hours_ago'])) {
+            $colis->setCreatedAt(new \DateTimeImmutable(sprintf('-%d hours', $data['created_hours_ago'])));
+        }
 
         if (isset($data['deliveryFee'])) {
             $colis->setDeliveryFee($data['deliveryFee']);
