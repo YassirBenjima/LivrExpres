@@ -77,7 +77,16 @@ final class AdminAiAssistantApiController extends AbstractController
                     }
 
                     $updatedColis = $c;
-                    if ($c->getEtat() === Colis::ETAT_EN_PREPARATION) {
+                    // Block ramassage for already-completed or delivered/returned parcels
+                    $finalEtats = [Colis::ETAT_LIVRE, Colis::ETAT_RETOUR];
+                    if (in_array($c->getEtat(), $finalEtats) || $c->getStatut() === Colis::STATUT_TERMINE) {
+                        $results[] = sprintf(
+                            "🚫 **%s** : Impossible de créer une demande de ramassage. Ce colis est déjà dans un état final (État: **%s** | Statut: **%s**). Aucune action n'est requise.",
+                            $c->getOrderNumber(),
+                            $c->getEtat() ?? '-',
+                            $c->getStatut() ?? '-'
+                        );
+                    } elseif ($c->getEtat() === Colis::ETAT_EN_PREPARATION) {
                         $results[] = sprintf("⚠️ **%s** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: %s).", $c->getOrderNumber(), $c->getStatut() ?? 'En attente');
                     } else {
                         $c->setEtat(Colis::ETAT_EN_PREPARATION);

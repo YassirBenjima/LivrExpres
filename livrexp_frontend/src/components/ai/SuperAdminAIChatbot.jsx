@@ -61,7 +61,7 @@ export default function SuperAdminAIChatbot() {
       const prefix = user.email.split('@')[0];
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
     }
-    return 'Super Admin';
+    return '{getUserDisplayName()}';
   };
 
   // Hide for livreurs and clients — chatbot is admin/superviseur only
@@ -245,7 +245,20 @@ export default function SuperAdminAIChatbot() {
     }
 
     if (textLower.includes('ramassage') || textLower.includes('ramasser')) {
-      if (updated.etat === 'En préparation') {
+      const finalEtats = ['Livré', 'Retourné'];
+      if (finalEtats.includes(updated.etat) || updated.statut === 'Terminé') {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `🚫 **${updated.orderNumber}** : Impossible de créer une demande de ramassage. Ce colis est déjà dans un état final (État: **${updated.etat}** | Statut: **${updated.statut}**). Aucune action n'est requise.`,
+            colis: updated,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        return;
+      } else if (updated.etat === 'En préparation') {
         setMessages(prev => [
           ...prev,
           {
@@ -467,8 +480,8 @@ export default function SuperAdminAIChatbot() {
               </div>
               <div>
                 <div className="kt-card-title" style={{ fontSize: '14px', margin: 0 }}>
-                  Assistant IA Colis
-                  <span className="kt-badge kt-badge-primary kt-badge-outline ms-2" style={{ fontSize: '9px', padding: '1px 6px' }}>SUPER ADMIN</span>
+                  LivrExpress
+                  <span className="kt-badge kt-badge-primary kt-badge-outline ms-2" style={{ fontSize: '9px', padding: '1px 6px' }}>{getUserDisplayName()}</span>
                 </div>
                 <p className="text-secondary-foreground" style={{ fontSize: '11px', margin: 0 }}>Agent logistique IA</p>
               </div>
@@ -511,7 +524,7 @@ export default function SuperAdminAIChatbot() {
             {messages.map((msg) => (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start', gap: '3px' }}>
                 <div className="text-secondary-foreground" style={{ fontSize: '11px' }}>
-                  {msg.sender === 'user' ? 'Vous' : 'Assistant IA'} • {msg.timestamp}
+                  {msg.sender === 'user' ? 'Vous' : 'LivrExpress'} • {msg.timestamp}
                 </div>
 
                 <div
