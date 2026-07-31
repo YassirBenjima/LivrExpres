@@ -35,18 +35,13 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
 
   // Search & Filter state for anomalies table
-  const [anomalySearch, setAnomalySearch] = useState('');
-  const [anomalySeverity, setAnomalySeverity] = useState('');
+  const [anomalySearchQuery, setAnomalySearchQuery] = useState('');
+  const [selectedAnomalyType, setSelectedAnomalyType] = useState('');
   const [anomalyPage, setAnomalyPage] = useState(1);
   const [anomalyPerPage] = useState(10);
-
-  // Search & Filter state for route table
-  const [routeSearch, setRouteSearch] = useState('');
-  const [routePage, setRoutePage] = useState(1);
-  const [routePerPage] = useState(10);
 
   // AI Predictions State
   const [predictions, setPredictions] = useState([]);
@@ -82,7 +77,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/ai/predictions', {
+      const res = await fetch('/api/ai/predict-return-risk', {
         headers: { 'Accept': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
       if (res.ok) {
@@ -181,7 +176,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
     }
   };
 
-  // 1. Predictions Filtered & Paginated
+  // Predictions Filtered & Paginated
   const filteredPredictions = predictions.filter(p => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q || 
@@ -196,52 +191,20 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const totalPages = Math.ceil(filteredPredictions.length / perPage) || 1;
   const paginatedPredictions = filteredPredictions.slice((currentPage - 1) * perPage, currentPage * perPage);
 
-  // 2. Anomalies Filtered & Paginated
+  // Anomalies Filtered & Paginated
   const filteredAnomalies = anomalies.filter(an => {
-    const q = anomalySearch.toLowerCase().trim();
-    const matchesSearch = !q ||
+    const q = anomalySearchQuery.toLowerCase().trim();
+    const matchesSearch = !q || 
       (an.tracking_code && an.tracking_code.toLowerCase().includes(q)) ||
       (an.destinataire && an.destinataire.toLowerCase().includes(q)) ||
-      (an.ville && an.ville.toLowerCase().includes(q)) ||
-      (an.title && an.title.toLowerCase().includes(q));
+      (an.ville && an.ville.toLowerCase().includes(q));
 
-    const matchesSeverity = !anomalySeverity || (an.badge_class && an.badge_class.includes(anomalySeverity));
-    return matchesSearch && matchesSeverity;
+    const matchesType = !selectedAnomalyType || (an.title && an.title.includes(selectedAnomalyType));
+    return matchesSearch && matchesType;
   });
 
-  const anomalyTotalPages = Math.ceil(filteredAnomalies.length / anomalyPerPage) || 1;
+  const totalAnomalyPages = Math.ceil(filteredAnomalies.length / anomalyPerPage) || 1;
   const paginatedAnomalies = filteredAnomalies.slice((anomalyPage - 1) * anomalyPerPage, anomalyPage * anomalyPerPage);
-
-  // 3. Route Stops Filtered & Paginated
-  const filteredRouteStops = routeStops.filter(stop => {
-    const q = routeSearch.toLowerCase().trim();
-    return !q ||
-      (stop.tracking_code && stop.tracking_code.toLowerCase().includes(q)) ||
-      (stop.client_name && stop.client_name.toLowerCase().includes(q)) ||
-      (stop.address && stop.address.toLowerCase().includes(q));
-  });
-
-  const routeTotalPages = Math.ceil(filteredRouteStops.length / routePerPage) || 1;
-  const paginatedRouteStops = filteredRouteStops.slice((routePage - 1) * routePerPage, routePage * routePerPage);
-
-  // Header Title & Subtitle helper
-  const getHeaderTitle = () => {
-    switch (activeTab) {
-      case 'anomalies': return 'LivrExpress PRO - Détection des anomalies';
-      case 'route': return 'LivrExpress PRO - Optimisation de tournées';
-      case 'chatbot': return 'LivrExpress PRO - Chatbot Livreur';
-      default: return 'LivrExpress PRO - Prédiction des retours';
-    }
-  };
-
-  const getHeaderSubtitle = () => {
-    switch (activeTab) {
-      case 'anomalies': return 'Détection en temps réel des retards de ramassage ou livraisons non clôturées';
-      case 'route': return 'Ordre optimal de livraison et économie de carburant pour vos livreurs';
-      case 'chatbot': return 'Assistant virtuel IA pour les livreurs et l\'assistance terrain';
-      default: return 'Scoring prédictif basé sur le profil client, la ville et le montant du remboursement';
-    }
-  };
 
   return (
     <DashboardLayout activeMenu={activeMenu}>
@@ -253,20 +216,16 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono flex items-center gap-2">
                 <i className="ki-filled ki-technology-4 text-primary text-2xl" />
-                {getHeaderTitle()}
+                LivrExpress PRO - Suite Logistique
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium text-sm text-secondary-foreground">
-                {getHeaderSubtitle()}
+                Analyse en temps réel de vos commandes réelles enregistrées
               </div>
             </div>
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={() => {
-                  if (activeTab === 'predictions') fetchPredictions();
-                  if (activeTab === 'anomalies') fetchAnomalies();
-                  if (activeTab === 'route') fetchRouteOptimization();
-                }}
+                onClick={fetchPredictions}
                 className="kt-btn kt-btn-outline"
               >
                 <i className="ki-filled ki-arrows-loop text-sm me-1" />
@@ -282,47 +241,46 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="grid gap-5 lg:gap-7.5">
               <div className="kt-card kt-card-grid min-w-full">
                 
-                {/* Filter & Search Bar */}
-                <div className="kt-card-header flex-wrap gap-2.5 flex justify-between items-center border-b border-border p-4">
-                  <h3 className="kt-card-title text-base font-bold flex items-center gap-2">
-                    Analyse des Colis
-                    <span className="kt-badge kt-badge-primary rounded-full text-xs px-2 py-0.5 font-semibold">
-                      {filteredPredictions.length} Analyse(s)
-                    </span>
+                {/* Card Header & Filter Bar */}
+                <div className="kt-card-header flex-wrap gap-2">
+                  <h3 className="kt-card-title text-sm">
+                    Affichage de {filteredPredictions.length} prédictions colis
                   </h3>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
-                      <i className="ki-filled ki-magnifier text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2 text-sm" />
-                      <input
-                        type="text"
-                        placeholder="Rechercher code, destinataire..."
-                        value={searchQuery}
-                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        className="kt-input ps-9 text-xs w-52 md:w-64"
-                      />
+                  <div className="flex flex-wrap gap-2 lg:gap-5">
+                    <div className="flex">
+                      <label className="kt-input">
+                        <i className="ki-filled ki-magnifier"></i>
+                        <input
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          placeholder="Rechercher par code ou client..."
+                          type="text"
+                        />
+                      </label>
                     </div>
-
-                    <KtSelect
-                      value={selectedRisk}
-                      onChange={(val) => { setSelectedRisk(val); setCurrentPage(1); }}
-                      placeholder="Niveau de risque"
-                      className="w-40"
-                      options={[
-                        { value: '', label: 'Tous les risques' },
-                        { value: 'Élevé', label: 'Risque Élevé' },
-                        { value: 'Moyen', label: 'Risque Moyen' },
-                        { value: 'Faible', label: 'Risque Faible' }
-                      ]}
-                    />
-
-                    <button
-                      type="button"
-                      className="kt-btn kt-btn-outline"
-                      onClick={() => { setSearchQuery(''); setSelectedRisk(''); setCurrentPage(1); }}
-                    >
-                      Réinitialiser
-                    </button>
+                    <div className="flex flex-wrap gap-2.5">
+                      <KtSelect
+                        value={selectedRisk}
+                        onChange={(val) => { setSelectedRisk(val); setCurrentPage(1); }}
+                        placeholder="Niveau de risque"
+                        className="w-40"
+                        options={[
+                          { value: '', label: 'Tous les risques' },
+                          { value: 'Élevé', label: 'Risque Élevé' },
+                          { value: 'Moyen', label: 'Risque Moyen' },
+                          { value: 'Faible', label: 'Risque Faible' }
+                        ]}
+                      />
+                      <button
+                        className="kt-btn kt-btn-outline"
+                        onClick={() => { setSearchQuery(''); setSelectedRisk(''); setCurrentPage(1); }}
+                      >
+                        Réinitialiser
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -383,7 +341,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                           ) : paginatedPredictions.length === 0 ? (
                             <tr>
                               <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                                Aucun colis ne correspond aux critères de recherche.
+                                Aucun colis trouvé correspondant à vos critères de recherche.
                               </td>
                             </tr>
                           ) : (
@@ -478,50 +436,52 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="grid gap-5 lg:gap-7.5">
               <div className="kt-card kt-card-grid min-w-full">
                 
-                {/* Header & Filter Bar */}
-                <div className="kt-card-header flex-wrap gap-2.5 flex justify-between items-center border-b border-border p-4">
-                  <h3 className="kt-card-title text-base font-bold flex items-center gap-2">
-                    Colis en Anomalie ou Bloqués
-                    <span className="kt-badge kt-badge-destructive rounded-full text-xs px-2 py-0.5 font-semibold">
-                      {filteredAnomalies.length} Détecté(s)
-                    </span>
-                  </h3>
-
+                {/* Card Header & Filter Bar */}
+                <div className="kt-card-header flex flex-wrap gap-4 justify-between items-center py-4 px-6 border-b border-border">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="kt-card-title text-base font-bold text-foreground">
+                      Détection des anomalies ({filteredAnomalies.length})
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Détection en temps réel des retards de ramassage ou livraisons non clôturées sur vos colis réels
+                    </p>
+                  </div>
+                  
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="relative">
                       <i className="ki-filled ki-magnifier text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2 text-sm" />
                       <input
                         type="text"
-                        placeholder="Rechercher code, client, ville..."
-                        value={anomalySearch}
-                        onChange={(e) => { setAnomalySearch(e.target.value); setAnomalyPage(1); }}
-                        className="kt-input ps-9 text-xs w-52 md:w-64"
+                        className="kt-input ps-9 py-2 text-xs w-64"
+                        placeholder="Rechercher code, destinataire, ville..."
+                        value={anomalySearchQuery}
+                        onChange={(e) => { setAnomalySearchQuery(e.target.value); setAnomalyPage(1); }}
                       />
                     </div>
 
                     <KtSelect
-                      value={anomalySeverity}
-                      onChange={(val) => { setAnomalySeverity(val); setAnomalyPage(1); }}
+                      value={selectedAnomalyType}
+                      onChange={(val) => { setSelectedAnomalyType(val); setAnomalyPage(1); }}
                       placeholder="Type d'anomalie"
                       className="w-44"
                       options={[
                         { value: '', label: 'Toutes les anomalies' },
-                        { value: 'destructive', label: 'Bloqués (Critique)' },
-                        { value: 'warning', label: 'Retard / Attention' }
+                        { value: 'Ramassage', label: 'Retard Ramassage' },
+                        { value: 'Inactif', label: 'Inactivité prolongée' },
+                        { value: 'Livraison', label: 'Problème Livraison' }
                       ]}
                     />
 
                     <button
-                      type="button"
-                      className="kt-btn kt-btn-outline"
-                      onClick={() => { setAnomalySearch(''); setAnomalySeverity(''); setAnomalyPage(1); }}
+                      className="kt-btn kt-btn-outline text-xs"
+                      onClick={() => { setAnomalySearchQuery(''); setSelectedAnomalyType(''); setAnomalyPage(1); }}
                     >
                       Réinitialiser
                     </button>
                   </div>
                 </div>
 
-                {/* Table */}
+                {/* Card Content & Table */}
                 <div className="kt-card-content">
                   <div className="grid">
                     <div className="kt-scrollable-x-auto">
@@ -538,22 +498,27 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                 <span className="kt-table-col-label">Destinataire & Ville</span>
                               </span>
                             </th>
-                            <th className="min-w-[160px]">
-                              <span className="kt-table-col">
+                            <th className="min-w-[170px] text-center">
+                              <span className="kt-table-col justify-center">
                                 <span className="kt-table-col-label">Type d'Anomalie</span>
                               </span>
                             </th>
-                            <th className="min-w-[130px] text-center">
+                            <th className="min-w-[120px] text-center">
                               <span className="kt-table-col justify-center">
                                 <span className="kt-table-col-label">Inactivité</span>
                               </span>
                             </th>
-                            <th className="min-w-[260px]">
+                            <th className="min-w-[240px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Description & Action IA</span>
+                                <span className="kt-table-col-label">Description & Impact</span>
                               </span>
                             </th>
-                            <th className="min-w-[120px] text-right">
+                            <th className="min-w-[200px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Action Recommandée</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[110px] text-right">
                               <span className="kt-table-col justify-end">
                                 <span className="kt-table-col-label">Action</span>
                               </span>
@@ -563,23 +528,23 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                         <tbody>
                           {loading ? (
                             <tr>
-                              <td colSpan={6} className="text-center py-8 text-muted-foreground">
+                              <td colSpan={7} className="text-center py-8 text-muted-foreground">
                                 <div className="flex items-center justify-center gap-2">
                                   <div className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
-                                  Analyse du flux logistique...
+                                  Analyse du flux logistique et détection des anomalies...
                                 </div>
                               </td>
                             </tr>
                           ) : paginatedAnomalies.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="text-center py-8 text-success font-semibold">
-                                🎉 Aucune anomalie ne correspond à vos critères de recherche !
+                              <td colSpan={7} className="text-center py-8 text-success font-semibold">
+                                🎉 Aucune anomalie détectée pour les critères sélectionnés !
                               </td>
                             </tr>
                           ) : (
                             paginatedAnomalies.map((an) => (
                               <tr key={an.colis_id} className="hover:bg-accent/40 transition-colors">
-                                <td className="font-mono text-xs font-semibold text-primary">
+                                <td className="font-mono text-xs font-semibold text-foreground">
                                   {an.tracking_code}
                                 </td>
                                 <td>
@@ -588,19 +553,19 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                     <span className="text-[11px] text-muted-foreground">{an.ville}</span>
                                   </div>
                                 </td>
-                                <td>
-                                  <span className={`kt-badge ${an.badge_class} rounded-full text-[11px]`}>
+                                <td className="text-center">
+                                  <span className={`kt-badge ${an.badge_class || 'kt-badge-warning'} rounded-full text-[11px]`}>
                                     {an.title}
                                   </span>
                                 </td>
                                 <td className="text-center font-mono text-xs font-bold text-foreground">
                                   {an.hours_stuck}h
                                 </td>
-                                <td>
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-xs font-medium text-foreground">{an.description}</span>
-                                    <span className="text-[11px] text-primary font-semibold">💡 Recommandation: {an.action_suggested}</span>
-                                  </div>
+                                <td className="text-xs font-medium text-foreground max-w-xs">
+                                  {an.description}
+                                </td>
+                                <td className="text-xs text-secondary-foreground font-semibold max-w-xs">
+                                  {an.action_suggested}
                                 </td>
                                 <td className="text-right">
                                   <button
@@ -622,7 +587,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                   </div>
                 </div>
 
-                {/* Footer Pagination */}
+                {/* Card Footer & Pagination */}
                 <div className="kt-card-footer justify-between md:justify-between flex-col md:flex-row gap-5">
                   <div className="flex items-center gap-2 text-sm text-secondary-foreground">
                     Affichage de {filteredAnomalies.length > 0 ? (anomalyPage - 1) * anomalyPerPage + 1 : 0} à {Math.min(anomalyPage * anomalyPerPage, filteredAnomalies.length)} sur {filteredAnomalies.length} éléments
@@ -637,12 +602,12 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       Précédent
                     </button>
                     <span className="text-xs font-semibold px-2">
-                      Page {anomalyPage} / {anomalyTotalPages}
+                      Page {anomalyPage} / {totalAnomalyPages}
                     </span>
                     <button
                       type="button"
-                      disabled={anomalyPage >= anomalyTotalPages}
-                      onClick={() => setAnomalyPage(prev => Math.min(anomalyTotalPages, prev + 1))}
+                      disabled={anomalyPage >= totalAnomalyPages}
+                      onClick={() => setAnomalyPage(prev => Math.min(totalAnomalyPages, prev + 1))}
                       className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
                     >
                       Suivant
@@ -658,189 +623,72 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
         {/* TAB 3: OPTIMISATION DE TOURNEES */}
         {activeTab === 'route' && (
           <div className="kt-container-fixed">
-            <div className="grid gap-5 lg:gap-7.5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               
-              {/* Summary KPIs */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="kt-card p-4 flex flex-col justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Nombre d'arrêts</span>
-                  <span className="text-2xl font-bold text-foreground mt-1">{routeMetrics.total_stops} colis</span>
-                </div>
-                <div className="kt-card p-4 flex flex-col justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Distance Estimée</span>
-                  <span className="text-2xl font-bold text-primary mt-1">{routeMetrics.estimated_distance_km} km</span>
-                </div>
-                <div className="kt-card p-4 flex flex-col justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Distance Économisée</span>
-                  <span className="text-2xl font-bold text-success mt-1">-{routeMetrics.distance_saved_km} km</span>
-                </div>
-                <div className="kt-card p-4 flex flex-col justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">Économie Carburant</span>
-                  <span className="text-2xl font-bold text-amber-500 mt-1">{routeMetrics.fuel_saved_percent}%</span>
+              {/* Route Summary Metrics */}
+              <div className="lg:col-span-1 flex flex-col gap-4">
+                <div className="kt-card border border-border p-5 flex flex-col gap-3">
+                  <h3 className="font-bold text-base text-foreground">Métriques de Tournée Réelle</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
+                      <span className="text-[11px] text-muted-foreground">Nombre d'arrêt</span>
+                      <span className="text-xl font-bold text-foreground">{routeMetrics.total_stops} colis</span>
+                    </div>
+                    <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
+                      <span className="text-[11px] text-muted-foreground">Distance Estimée</span>
+                      <span className="text-xl font-bold text-primary">{routeMetrics.estimated_distance_km} km</span>
+                    </div>
+                    <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
+                      <span className="text-[11px] text-muted-foreground">Distance Économisée</span>
+                      <span className="text-xl font-bold text-success">-{routeMetrics.distance_saved_km} km</span>
+                    </div>
+                    <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
+                      <span className="text-[11px] text-muted-foreground">Économie Carburant</span>
+                      <span className="text-xl font-bold text-amber-500">{routeMetrics.fuel_saved_percent}%</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showNotification) showNotification('success', 'Itinéraire synchronisé avec l\'application livreur !');
+                    }}
+                    className="kt-btn kt-btn-primary w-full mt-2"
+                  >
+                    🗺️ Lancer le GPS & Navigation
+                  </button>
                 </div>
               </div>
 
-              {/* Table Card */}
-              <div className="kt-card kt-card-grid min-w-full">
-                <div className="kt-card-header flex-wrap gap-2.5 flex justify-between items-center border-b border-border p-4">
-                  <h3 className="kt-card-title text-base font-bold flex items-center gap-2">
-                    Itinéraire et Ordre des Livraisons
-                    <span className="kt-badge kt-badge-primary rounded-full text-xs px-2 py-0.5 font-semibold">
-                      {filteredRouteStops.length} Arrêt(s)
-                    </span>
-                  </h3>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
-                      <i className="ki-filled ki-magnifier text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2 text-sm" />
-                      <input
-                        type="text"
-                        placeholder="Rechercher code, client..."
-                        value={routeSearch}
-                        onChange={(e) => { setRouteSearch(e.target.value); setRoutePage(1); }}
-                        className="kt-input ps-9 text-xs w-52 md:w-64"
-                      />
+              {/* Stop Sequence */}
+              <div className="lg:col-span-2">
+                <div className="kt-card border border-border p-5">
+                  <h3 className="font-bold text-base text-foreground mb-3">Ordre Optimal des Livraisons Réelles (IA)</h3>
+                  {routeStops.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">Aucun colis à planifier pour le moment.</div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {routeStops.map((stop) => (
+                        <div key={stop.stop_number} className="py-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+                              #{stop.stop_number}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-xs text-foreground">{stop.client_name} ({stop.tracking_code})</span>
+                              <span className="text-[11px] text-muted-foreground">{stop.address}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-mono font-semibold text-foreground">ETA: {stop.eta}</span>
+                            <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full">{stop.crbt_amount} DH</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (showNotification) showNotification('success', 'Itinéraire synchronisé avec le GPS livreur !');
-                      }}
-                      className="kt-btn kt-btn-primary text-xs"
-                    >
-                      🗺️ Lancer le GPS & Navigation
-                    </button>
-                  </div>
+                  )}
                 </div>
-
-                {/* Table */}
-                <div className="kt-card-content">
-                  <div className="grid">
-                    <div className="kt-scrollable-x-auto">
-                      <table className="kt-table table-auto kt-table-border">
-                        <thead>
-                          <tr>
-                            <th className="min-w-[80px] text-center">
-                              <span className="kt-table-col justify-center">
-                                <span className="kt-table-col-label">Ordre</span>
-                              </span>
-                            </th>
-                            <th className="min-w-[140px]">
-                              <span className="kt-table-col">
-                                <span className="kt-table-col-label">Code Colis</span>
-                              </span>
-                            </th>
-                            <th className="min-w-[220px]">
-                              <span className="kt-table-col">
-                                <span className="kt-table-col-label">Client & Adresse</span>
-                              </span>
-                            </th>
-                            <th className="min-w-[120px] text-center">
-                              <span className="kt-table-col justify-center">
-                                <span className="kt-table-col-label">Heure (ETA)</span>
-                              </span>
-                            </th>
-                            <th className="min-w-[120px]">
-                              <span className="kt-table-col">
-                                <span className="kt-table-col-label">Montant CRBT</span>
-                              </span>
-                            </th>
-                            <th className="min-w-[120px] text-right">
-                              <span className="kt-table-col justify-end">
-                                <span className="kt-table-col-label">Action</span>
-                              </span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {loading ? (
-                            <tr>
-                              <td colSpan={6} className="text-center py-8 text-muted-foreground">
-                                <div className="flex items-center justify-center gap-2">
-                                  <div className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
-                                  Calcul de la tournée optimale...
-                                </div>
-                              </td>
-                            </tr>
-                          ) : paginatedRouteStops.length === 0 ? (
-                            <tr>
-                              <td colSpan={6} className="text-center py-8 text-muted-foreground">
-                                Aucun arrêt ne correspond aux critères.
-                              </td>
-                            </tr>
-                          ) : (
-                            paginatedRouteStops.map((stop) => (
-                              <tr key={stop.stop_number} className="hover:bg-accent/40 transition-colors">
-                                <td className="text-center">
-                                  <div className="size-7 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs mx-auto">
-                                    #{stop.stop_number}
-                                  </div>
-                                </td>
-                                <td className="font-mono text-xs font-semibold text-primary">
-                                  {stop.tracking_code}
-                                </td>
-                                <td>
-                                  <div className="flex flex-col">
-                                    <span className="font-semibold text-foreground text-xs">{stop.client_name}</span>
-                                    <span className="text-[11px] text-muted-foreground">{stop.address}</span>
-                                  </div>
-                                </td>
-                                <td className="text-center font-mono text-xs font-semibold text-foreground">
-                                  {stop.eta}
-                                </td>
-                                <td className="font-semibold text-foreground text-xs">
-                                  {stop.crbt_amount} DH
-                                </td>
-                                <td className="text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (showNotification) showNotification('info', `Guidage GPS lancé vers ${stop.client_name}`);
-                                    }}
-                                    className="kt-btn kt-btn-xs kt-btn-outline"
-                                  >
-                                    📍 Naviguer
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Pagination */}
-                <div className="kt-card-footer justify-between md:justify-between flex-col md:flex-row gap-5">
-                  <div className="flex items-center gap-2 text-sm text-secondary-foreground">
-                    Affichage de {filteredRouteStops.length > 0 ? (routePage - 1) * routePerPage + 1 : 0} à {Math.min(routePage * routePerPage, filteredRouteStops.length)} sur {filteredRouteStops.length} arrêts
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={routePage <= 1}
-                      onClick={() => setRoutePage(prev => Math.max(1, prev - 1))}
-                      className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
-                    >
-                      Précédent
-                    </button>
-                    <span className="text-xs font-semibold px-2">
-                      Page {routePage} / {routeTotalPages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={routePage >= routeTotalPages}
-                      onClick={() => setRoutePage(prev => Math.min(routeTotalPages, prev + 1))}
-                      className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
-                    >
-                      Suivant
-                    </button>
-                  </div>
-                </div>
-
               </div>
+
             </div>
           </div>
         )}

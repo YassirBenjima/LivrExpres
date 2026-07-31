@@ -862,10 +862,10 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   : activeMenu === 'affiliate' ? 'Affiliate'
                   : activeMenu === 'api_docs' ? 'Documentation API'
                   : activeMenu === 'profile' ? 'Profil'
-                  : activeMenu === 'ai_predictions' ? 'LivrExpress PRO - Prédiction des retours'
-                  : activeMenu === 'ai_anomalies' ? 'LivrExpress PRO - Détection des anomalies'
-                  : activeMenu === 'ai_tournees' ? 'LivrExpress PRO - Optimisation de tournées'
-                  : activeMenu === 'ai_chatbot' ? 'LivrExpress PRO - Chatbot Livreur'
+                  : activeMenu === 'ai_predictions' ? 'Prédiction des retours'
+                  : activeMenu === 'ai_anomalies' ? 'Détection des anomalies'
+                  : activeMenu === 'ai_tournees' ? 'Optimisation de tournées'
+                  : activeMenu === 'ai_chatbot' ? 'Chatbot Livreur'
                   : activeMenu.startsWith('ai') ? 'LivrExpress PRO'
                   : 'Tableau de bord'}
               </span>
