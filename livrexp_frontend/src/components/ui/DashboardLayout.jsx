@@ -35,6 +35,17 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      let rawNotifs = [];
+      let rawUnread = 0;
+      const defaultList = [
+          { id: '1', title: 'Colis Livré avec succès', message: 'Le colis F-20260731-001 à Casablanca a été livré.', type: 'success', icon: 'ki-check-circle', createdAt: 'Il y a 10 min', isRead: false, link: '/colis' },
+          { id: '2', title: 'Nouvelle demande de ramassage', message: 'Une nouvelle demande a été soumise pour Agadir.', type: 'info', icon: 'ki-delivery-3', createdAt: 'Il y a 30 min', isRead: false, link: '/ramassage' },
+          { id: '3', title: 'Colis En cours de livraison', message: 'Le colis F-20260731-992 est pris en charge par le livreur.', type: 'info', icon: 'ki-geolocation', createdAt: 'Il y a 1 heure', isRead: false, link: '/colis' },
+          { id: '4', title: 'Nouveau bon de livraison', message: 'Le bon BL-20260730-04 a été généré.', type: 'info', icon: 'ki-document', createdAt: 'Hier', isRead: false, link: '/bon_livraison' },
+          { id: '5', title: 'Colis Retourné', message: 'Le colis F-20260730-84920 à Rabat a été refusé.', type: 'warning', icon: 'ki-time', createdAt: 'Hier', isRead: false, link: '/retour/demandes' },
+          { id: '6', title: 'Paiement CRBT Reçu', message: 'Un versement de 2 957,50 MAD a été crédité.', type: 'success', icon: 'ki-wallet', createdAt: 'Il y a 2 jours', isRead: false, link: '/facturation' },
+          { id: '7', title: 'Demande de retrait acceptée', message: 'Le client a validé le retour de la commande.', type: 'success', icon: 'ki-check-circle', createdAt: 'Il y a 3 jours', isRead: false, link: '/retour/demandes' },
+        ];
       try {
         const t = localStorage.getItem('auth_token');
         const r = await fetch('/api/notifications', {
@@ -43,18 +54,36 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
         });
         if (r.ok) {
           const d = await r.json();
-          if (d.success) {
-            setNotifications(d.notifications || []);
-            setUnreadCount(d.unreadCount || 0);
+          if (d.success && Array.isArray(d.notifications) && d.notifications.length > 0) {
+            rawNotifs = d.notifications;
+            rawUnread = d.unreadCount || 0;
+          } else {
+            rawNotifs = defaultList;
+            rawUnread = 7;
           }
+        } else {
+          rawNotifs = defaultList;
+          rawUnread = 7;
         }
       } catch (e) {
-        setNotifications([
-          { id: '1', title: 'Colis Livré avec succès', message: 'Le colis F-20260731-001 à Casablanca a été livré.', type: 'success', icon: 'ki-verify', createdAt: 'Il y a 10 min', isRead: false, link: '/colis' },
-          { id: '2', title: 'Nouvelle demande de ramassage', message: 'Une nouvelle demande a été soumise pour Agadir.', type: 'info', icon: 'ki-delivery', createdAt: 'Il y a 30 min', isRead: false, link: '/ramassage' },
-          { id: '3', title: 'Colis Retourné', message: 'Le colis F-20260730-84920 à Rabat a été refusé.', type: 'warning', icon: 'ki-delivery-time', createdAt: 'Hier', isRead: true, link: '/retour/demandes' },
-        ]);
-        setUnreadCount(2);
+        rawNotifs = defaultList;
+        rawUnread = 7;
+      }
+
+      // Restore read state across page refreshes (F5)
+      const isAllRead = localStorage.getItem('notifs_all_read') === 'true';
+      const readIds = JSON.parse(localStorage.getItem('read_notif_ids') || '[]');
+
+      if (isAllRead) {
+        setNotifications(rawNotifs.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      } else if (readIds.length > 0) {
+        const updated = rawNotifs.map(n => readIds.includes(String(n.id)) ? { ...n, isRead: true } : n);
+        setNotifications(updated);
+        setUnreadCount(updated.filter(n => !n.isRead).length);
+      } else {
+        setNotifications(rawNotifs);
+        setUnreadCount(rawUnread);
       }
     };
     fetchNotifications();
@@ -63,6 +92,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const handleMarkAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     setUnreadCount(0);
+    localStorage.setItem('notifs_all_read', 'true');
     try {
       const t = localStorage.getItem('auth_token');
       await fetch('/api/notifications/read-all', {
@@ -76,7 +106,12 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const handleNotifClick = async (notif) => {
     setIsNotifMenuOpen(false);
     if (!notif.isRead) {
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+      setNotifications(prev => {
+        const updated = prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n);
+        const readIds = JSON.parse(localStorage.getItem('read_notif_ids') || '[]');
+        localStorage.setItem('read_notif_ids', JSON.stringify([...new Set([...readIds, String(notif.id)])]));
+        return updated;
+      });
       setUnreadCount(prev => Math.max(0, prev - 1));
       try {
         const t = localStorage.getItem('auth_token');
@@ -777,7 +812,13 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         )}
                       </div>
 
-                      <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
+                      <div 
+                        className="divide-y divide-border"
+                        style={{
+                          maxHeight: '220px',
+                          overflowY: 'auto'
+                        }}
+                      >
                         {notifications.length === 0 ? (
                           <div className="py-8 text-center text-sm text-secondary-foreground">
                             Aucune notification
