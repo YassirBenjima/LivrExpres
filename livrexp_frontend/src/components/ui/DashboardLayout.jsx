@@ -567,9 +567,6 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-users text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">Gestion Clients</span>
-                  <span className="ms-auto">
-                    <span className="kt-badge kt-badge-sm kt-badge-primary" style={{ fontSize: '9px', padding: '1px 5px' }}>PRO</span>
-                  </span>
                 </div>
               </div>}
 
@@ -583,9 +580,6 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-user text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">Livreurs</span>
-                  <span className="ms-auto">
-                    <span className="kt-badge kt-badge-sm kt-badge-primary" style={{ fontSize: '9px', padding: '1px 5px' }}>NEW</span>
-                  </span>
                 </div>
               </div>}
 
