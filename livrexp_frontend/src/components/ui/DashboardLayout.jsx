@@ -459,6 +459,22 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                 )}
               </div>}
 
+              {/* Livreurs — visible to Admin/Super Admin only */}
+              {isAdmin && <div className={`kt-menu-item ${currentActive.startsWith('livreurs') ? 'here show' : ''}`}>
+                <div
+                  className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                  onClick={() => { window.history.pushState({}, '', '/livreurs'); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                >
+                  <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
+                    <i className="ki-filled ki-truck text-lg"></i>
+                  </span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">Livreurs</span>
+                  <span className="ms-auto">
+                    <span className="kt-badge kt-badge-sm kt-badge-primary" style={{ fontSize: '9px', padding: '1px 5px' }}>NEW</span>
+                  </span>
+                </div>
+              </div>}
+
               {/* Affiliate — hidden from ROLE_LIVREUR */}
               {isClientOrFull && <div className={`kt-menu-item ${activeMenu === 'affiliate' ? 'active' : ''}`}>
                 <a className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" href="/affiliate"

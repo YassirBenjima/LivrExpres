@@ -35,6 +35,10 @@ import AffiliatePage from './pages/affiliate/AffiliatePage';
 import ApiDocsPage from './pages/api_docs/ApiDocsPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import DispatchMapPage from './pages/dispatch/DispatchMapPage';
+import LivreurListPage from './pages/livreur/LivreurListPage';
+import LivreurNewPage from './pages/livreur/LivreurNewPage';
+import LivreurFichePage from './pages/livreur/LivreurFichePage';
+import LivreurAutoAssignPage from './pages/livreur/LivreurAutoAssignPage';
 import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
@@ -344,6 +348,16 @@ function App() {
   const bonLivraisonEditMatch = normalizedRoute.match(/^\/bon-livraison\/([^/]+)\/edit$/);
   const editBonId = bonLivraisonEditMatch ? bonLivraisonEditMatch[1] : null;
 
+  // Handle dynamic routing for livreur detail page
+  const livreurFicheMatch = normalizedRoute.match(/^\/livreurs\/(\d+)$/);
+  const livreurFicheId = livreurFicheMatch ? livreurFicheMatch[1] : null;
+
+  const livreurEditMatch = normalizedRoute.match(/^\/livreurs\/(\d+)\/edit$/);
+  const livreurEditId = livreurEditMatch ? livreurEditMatch[1] : null;
+
+  const livreurTourneeMatch = normalizedRoute.match(/^\/livreurs\/(\d+)\/tournee$/);
+  const livreurTourneeId = livreurTourneeMatch ? livreurTourneeMatch[1] : null;
+
   const renderContent = () => {
     if (editProductId) {
       return <StockProductEditPage productId={editProductId} navigate={navigate} showNotification={showNotification} />;
@@ -363,6 +377,14 @@ function App() {
 
     if (stickerProductId) {
       return <StockStickerPage navigate={navigate} id={stickerProductId} isVariant={false} showNotification={showNotification} />;
+    }
+
+    if (livreurFicheId && !livreurEditId && !livreurTourneeId) {
+      return <LivreurFichePage livreurId={livreurFicheId} navigate={navigate} showNotification={showNotification} />;
+    }
+
+    if (livreurTourneeId) {
+      return <LivreurFichePage livreurId={livreurTourneeId} navigate={navigate} showNotification={showNotification} />;
     }
 
     switch (normalizedRoute) {
@@ -432,6 +454,12 @@ function App() {
       case '/dispatch-map':
       case '/suivi/carte':
         return <DispatchMapPage navigate={navigate} showNotification={showNotification} />;
+      case '/livreurs':
+        return <LivreurListPage navigate={navigate} showNotification={showNotification} />;
+      case '/livreurs/new':
+        return <LivreurNewPage navigate={navigate} showNotification={showNotification} />;
+      case '/livreurs/auto-assign':
+        return <LivreurAutoAssignPage navigate={navigate} showNotification={showNotification} />;
       case '/profile':
         return <ProfilePage navigate={navigate} showNotification={showNotification} />;
       case '/register':
