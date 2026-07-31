@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import SafeAvatar from '../../components/ui/SafeAvatar';
@@ -8,20 +9,16 @@ export default function ClientListPage({ navigate, showNotification }) {
   const [loading, setLoading] = useState(true);
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatut, setSelectedStatut] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const [search, setSearch] = useState('');
+  const [filterCity, setFilterCity] = useState('');
+  const [filterStatut, setFilterStatut] = useState('');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(10);
 
-  // Modals state
+  // Modal State
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
-  const [isTarifModalOpen, setIsTarifModalOpen] = useState(false);
-  const [selectedClientForTarif, setSelectedClientForTarif] = useState(null);
-
-  // New Client Form
   const [newClientForm, setNewClientForm] = useState({
     businessName: '',
     fullName: '',
@@ -44,7 +41,6 @@ export default function ClientListPage({ navigate, showNotification }) {
       phone: '0661928301',
       city: 'Casablanca',
       ice: '00281902000039',
-      rc: 'RC-49102',
       colisCount: 142,
       tarifSameCity: 30.00,
       tarifOtherCity: 40.00,
@@ -65,14 +61,13 @@ export default function ClientListPage({ navigate, showNotification }) {
       phone: '0650982103',
       city: 'Rabat',
       ice: '00192837100045',
-      rc: 'RC-38102',
       colisCount: 89,
       tarifSameCity: 35.00,
       tarifOtherCity: 45.00,
       tarifReturn: 15.00,
       creditLimit: 5000.00,
       currentBalance: 5800.00,
-      isCreditExceeded: true, // EXCEEDED
+      isCreditExceeded: true,
       contractRef: 'CTR-2026-0002',
       contractStatus: 'ACTIF',
       contractDate: '15/01/2026',
@@ -86,7 +81,6 @@ export default function ClientListPage({ navigate, showNotification }) {
       phone: '0677112233',
       city: 'Marrakech',
       ice: '00381920100088',
-      rc: 'RC-99102',
       colisCount: 54,
       tarifSameCity: 35.00,
       tarifOtherCity: 50.00,
@@ -107,7 +101,6 @@ export default function ClientListPage({ navigate, showNotification }) {
       phone: '0612345678',
       city: 'Rabat',
       ice: '00448102900012',
-      rc: 'RC-12903',
       colisCount: 210,
       tarifSameCity: 28.00,
       tarifOtherCity: 38.00,
@@ -122,7 +115,7 @@ export default function ClientListPage({ navigate, showNotification }) {
     }
   ];
 
-  const fetchClients = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -143,38 +136,44 @@ export default function ClientListPage({ navigate, showNotification }) {
       } else {
         setClients(DEFAULT_CLIENTS);
       }
-    } catch (err) {
-      console.error('Erreur chargement clients:', err);
+    } catch {
       setClients(DEFAULT_CLIENTS);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchClients();
   }, []);
 
-  // Filter logic
-  const filteredClients = clients.filter(client => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      (client.businessName && client.businessName.toLowerCase().includes(query)) ||
-      (client.fullName && client.fullName.toLowerCase().includes(query)) ||
-      (client.email && client.email.toLowerCase().includes(query)) ||
-      (client.ice && client.ice.toLowerCase().includes(query));
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    const matchesStatut = selectedStatut ? client.status === selectedStatut : true;
-    const matchesCity = selectedCity ? client.city === selectedCity : true;
+  // Cities filter list
+  const cities = [...new Set(clients.map(c => c.city).filter(Boolean))].sort();
+  const cityOptions = [{ value: '', label: 'Toutes les villes' }, ...cities.map(c => ({ value: c, label: c }))];
+  const statutOptions = [
+    { value: '', label: 'Tous les statuts' },
+    { value: 'ACTIF', label: 'Actif' },
+    { value: 'SUSPENDU', label: 'Suspendu' },
+    { value: 'EN_ATTENTE', label: 'En attente' }
+  ];
 
-    return matchesSearch && matchesStatut && matchesCity;
+  const filtered = clients.filter(c => {
+    const q = search.toLowerCase();
+    return (!search || [c.businessName, c.fullName, c.email, c.phone, c.ice, c.city].some(v => v?.toLowerCase().includes(q)))
+      && (!filterCity || c.city === filterCity)
+      && (!filterStatut || c.status === filterStatut);
   });
 
-  const totalEntries = filteredClients.length;
-  const totalPages = Math.ceil(totalEntries / itemsPerPage);
-  const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
 
-  // Action: Toggle Client Active/Disabled Status
+  const handleReset = () => {
+    setSearch('');
+    setFilterCity('');
+    setFilterStatut('');
+    setCurrentPage(1);
+  };
+
   const handleToggleStatus = async (client) => {
     const newStatus = client.status === 'ACTIF' ? 'SUSPENDU' : 'ACTIF';
     setClients(prev => prev.map(c => c.id === client.id ? { ...c, status: newStatus } : c));
@@ -189,7 +188,7 @@ export default function ClientListPage({ navigate, showNotification }) {
         }
       });
     } catch (err) {
-      console.error('Erreur toggle status client:', err);
+      console.error('Erreur status client:', err);
     }
 
     if (showNotification) {
@@ -197,8 +196,7 @@ export default function ClientListPage({ navigate, showNotification }) {
     }
   };
 
-  // Action: Create New Client
-  const handleCreateClient = async (e) => {
+  const handleCreateClient = (e) => {
     e.preventDefault();
     const newClientObj = {
       id: Date.now(),
@@ -208,7 +206,6 @@ export default function ClientListPage({ navigate, showNotification }) {
       phone: newClientForm.phone || '0600000000',
       city: newClientForm.city || 'Casablanca',
       ice: newClientForm.ice || '-',
-      rc: 'RC-' + Math.floor(10000 + Math.random() * 90000),
       colisCount: 0,
       tarifSameCity: parseFloat(newClientForm.tarifSameCity) || 35.00,
       tarifOtherCity: parseFloat(newClientForm.tarifOtherCity) || 45.00,
@@ -230,7 +227,6 @@ export default function ClientListPage({ navigate, showNotification }) {
     }
   };
 
-  // Action: PDF Service Agreement Generator
   const handlePrintContract = (client) => {
     const printWin = window.open('', '_blank', 'width=900,height=1000');
     if (!printWin) return;
@@ -260,18 +256,17 @@ export default function ClientListPage({ navigate, showNotification }) {
         <div class="header">
           <div>
             <div class="logo">Livr<span>Express</span></div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Plateforme Logistique Multi-Client</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Service Facturation & Gestion Clients</div>
           </div>
           <div class="contract-title">
             <h1>CONTRAT DE SERVICE LOGISTIQUE</h1>
             <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Réf: ${client.contractRef}</div>
-            <div style="font-size: 12px; color: #64748b;">Date d'effet: ${client.contractDate}</div>
           </div>
         </div>
 
         <div class="box">
-          <div style="font-weight: 700; color: #0f172a; margin-bottom: 8px;">ENTRE LES SOUSSIGNÉS :</div>
-          <div style="font-size: 13px; color: #475569;">1. <strong>LivrExpress S.A.R.L</strong>, Société de Transport et Logistique - Casablanca.</div>
+          <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">ENTRE LES SOUSSIGNÉS :</div>
+          <div style="font-size: 13px; color: #475569;">1. <strong>LivrExpress S.A.R.L</strong>, Société de Transport et Logistique.</div>
           <div style="font-size: 13px; color: #475569; margin-top: 4px;">2. <strong>${client.businessName}</strong> (Représenté par ${client.fullName}), ICE: ${client.ice}, Ville: ${client.city}.</div>
         </div>
 
@@ -281,47 +276,31 @@ export default function ClientListPage({ navigate, showNotification }) {
             <tr>
               <th>Zone / Prestation</th>
               <th>Tarif Négocié HT (MAD)</th>
-              <th>Délai de Livraison</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Livraison Même Ville (${client.city})</td>
               <td style="font-weight: 700; color: #2563eb;">${client.tarifSameCity.toFixed(2)} MAD</td>
-              <td>Moins de 24 Heures</td>
             </tr>
             <tr>
               <td>Livraison Inter-Villes (National)</td>
               <td style="font-weight: 700; color: #2563eb;">${client.tarifOtherCity.toFixed(2)} MAD</td>
-              <td>24H à 48H</td>
             </tr>
             <tr>
               <td>Traitement Colis Retour Refus</td>
               <td style="font-weight: 700;">${client.tarifReturn.toFixed(2)} MAD</td>
-              <td>Retour Hebdomadaire</td>
             </tr>
           </tbody>
         </table>
 
         <div class="box">
-          <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">ARTICLE 2 — PLAFOND DE CRÉDIT ET CONDITIONS DE VIREMENT</div>
-          <div style="font-size: 13px; color: #475569;">- Plafond de crédit accordé : <strong>${client.creditLimit.toFixed(2)} MAD</strong>.</div>
-          <div style="font-size: 13px; color: #475569;">- Reversement CRBT : Effectué 2 fois par semaine vers le compte RIB enregistré.</div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; margin-top: 60px;">
-          <div>
-            <div style="font-size: 12px; font-weight: 700;">Pour LivrExpress S.A.R.L</div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 40px;">(Signature & Cachet)</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 12px; font-weight: 700;">Pour ${client.businessName}</div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 40px;">(Signature du Client)</div>
-          </div>
+          <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">ARTICLE 2 — PLAFOND DE CRÉDIT</div>
+          <div style="font-size: 13px; color: #475569;">Plafond de crédit accordé : <strong>${client.creditLimit.toFixed(2)} MAD</strong></div>
         </div>
 
         <div class="footer">
-          Document contractuel généré par la plateforme LivrExpress - Version 2026 Multi-Tenant
+          Document contractuel généré par la plateforme LivrExpress
         </div>
 
         <script>
@@ -335,10 +314,9 @@ export default function ClientListPage({ navigate, showNotification }) {
     printWin.document.close();
   };
 
-  // Export CSV Clients
-  const handleExportClientsCsv = () => {
-    let content = `BOUTIQUE,REPRÉSENTANT,EMAIL,TÉLÉPHONE,VILLE,ICE,COLIS_EXPÉDIÉS,TARIF_MÊME_VILLE,TARIF_HORS_VILLE,PLAFOND_CRÉDIT,SOLDE_ACTUEL,STATUT\n` +
-      filteredClients.map(c => `"${c.businessName}","${c.fullName}","${c.email}","${c.phone}","${c.city}","${c.ice}",${c.colisCount},${c.tarifSameCity},${c.tarifOtherCity},${c.creditLimit},${c.currentBalance},"${c.status}"`).join("\n");
+  const handleExportCsv = () => {
+    let content = `BOUTIQUE,REPRÉSENTANT,EMAIL,TÉLÉPHONE,VILLE,ICE,COLIS,TARIF_VILLE,TARIF_NATIONAL,PLAFOND_CRÉDIT,SOLDE,STATUT\n` +
+      filtered.map(c => `"${c.businessName}","${c.fullName}","${c.email}","${c.phone}","${c.city}","${c.ice}",${c.colisCount},${c.tarifSameCity},${c.tarifOtherCity},${c.creditLimit},${c.currentBalance},"${c.status}"`).join("\n");
 
     const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -350,341 +328,274 @@ export default function ClientListPage({ navigate, showNotification }) {
     document.body.removeChild(link);
 
     if (showNotification) {
-      showNotification('success', 'Export de la liste des clients CSV téléchargé avec succès !');
+      showNotification('success', 'Export des clients CSV téléchargé avec succès !');
     }
   };
-
-  const SkeletonRow = () => (
-    <tr className="animate-pulse">
-      {[...Array(8)].map((_, i) => (
-        <td key={i} className="py-4">
-          <div
-            style={{
-              height: '14px',
-              borderRadius: '6px',
-              background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.4s infinite',
-              width: '85%',
-            }}
-          />
-        </td>
-      ))}
-    </tr>
-  );
 
   return (
     <DashboardLayout activeMenu="clients">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Header Title & Actions */}
+        {/* Page Header (Matching App Design) */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">📋 Gestion des Clients & Multi-Tenant</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">Gestion des Clients</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total clients enregistrés :</span>
-                <span className="text-base text-foreground font-medium me-3">{clients.length}</span>
-                <span className="text-base text-secondary-foreground">Clients Actifs :</span>
-                <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 me-3">
-                  {clients.filter(c => c.status === 'ACTIF').length}
-                </span>
+                <span className="text-base text-secondary-foreground">Total:</span>
+                <span className="text-base text-foreground font-medium me-2">{filtered.length} client{filtered.length !== 1 ? 's' : ''}</span>
+                <span className="text-base text-secondary-foreground">Actifs:</span>
+                <span className="text-base text-foreground font-medium me-2">{clients.filter(c => c.status === 'ACTIF').length}</span>
               </div>
             </div>
 
-            <div className="flex items-center flex-wrap gap-2.5">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={handleExportClientsCsv}
                 className="kt-btn kt-btn-outline cursor-pointer"
+                onClick={handleExportCsv}
               >
-                <i className="ki-filled ki-file-down text-base me-1"></i>
-                Export Excel / CSV
+                <i className="ki-filled ki-file-down text-base me-1" /> Export CSV
               </button>
               <button
                 type="button"
-                onClick={() => setIsNewClientModalOpen(true)}
                 className="kt-btn kt-btn-primary cursor-pointer"
+                onClick={() => setIsNewClientModalOpen(true)}
               >
-                <i className="ki-filled ki-plus text-base me-1"></i>
-                Nouveau Client
+                Ajouter un client
               </button>
             </div>
           </div>
         </div>
 
-        {/* Multi-Tenant KPI Summary Cards */}
-        <div className="kt-container-fixed mb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Comptes Clients Actifs</span>
-              <span className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
-                {clients.filter(c => c.status === 'ACTIF').length} / {clients.length}
-              </span>
-            </div>
-
-            <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Total Colis Multi-Clients</span>
-              <span className="text-xl font-semibold text-foreground">
-                {clients.reduce((sum, c) => sum + (c.colisCount || 0), 0)} colis
-              </span>
-            </div>
-
-            <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Portefeuille Clients (CRBT)</span>
-              <span className="text-xl font-semibold text-foreground">
-                {clients.reduce((sum, c) => sum + (c.currentBalance || 0), 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
-              </span>
-            </div>
-
-            <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Dépassement Crédit</span>
-              <span className="text-xl font-semibold text-rose-600 dark:text-rose-400">
-                {clients.filter(c => c.isCreditExceeded || c.currentBalance > c.creditLimit).length} client(s)
-              </span>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Main Table Container */}
+        {/* Table Container (Matching App Design) */}
         <div className="kt-container-fixed">
           <div className="grid gap-5 lg:gap-7.5">
             <div className="kt-card kt-card-grid min-w-full">
 
-              {/* Table Header Filters */}
+              {/* Card Header & Filters */}
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm font-semibold">Affichage de {totalEntries} client(s)</h3>
-                <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
+                <h3 className="kt-card-title text-sm">
+                  Affichage de {filtered.length} client{filtered.length !== 1 ? 's' : ''}
+                </h3>
+                <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
                     <label className="kt-input">
-                      <i className="ki-filled ki-magnifier"></i>
+                      <i className="ki-filled ki-magnifier" />
                       <input
-                        value={searchQuery}
-                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder="Rechercher boutique, ICE, email..."
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                        placeholder="Rechercher un client ou boutique"
                         type="text"
                       />
                     </label>
                   </div>
-
                   <div className="flex flex-wrap gap-2.5">
                     <KtSelect
-                      value={selectedStatut}
-                      onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
-                      className="w-36"
-                      options={[
-                        { value: '', label: 'Tous les statuts' },
-                        { value: 'ACTIF', label: 'Compte Actif' },
-                        { value: 'SUSPENDU', label: 'Compte Suspendu' },
-                        { value: 'EN_ATTENTE', label: 'En attente' },
-                      ]}
-                    />
-
-                    <KtSelect
-                      value={selectedCity}
-                      onChange={(val) => { setSelectedCity(val); setCurrentPage(1); }}
+                      value={filterCity}
+                      onChange={(val) => { setFilterCity(val); setCurrentPage(1); }}
                       placeholder="Ville"
-                      className="w-36"
-                      options={[
-                        { value: '', label: 'Toutes les villes' },
-                        { value: 'Casablanca', label: 'Casablanca' },
-                        { value: 'Rabat', label: 'Rabat' },
-                        { value: 'Marrakech', label: 'Marrakech' },
-                        { value: 'Tanger', label: 'Tanger' },
-                      ]}
+                      className="w-40"
+                      options={cityOptions}
                     />
-
-                    <button
-                      className="kt-btn kt-btn-outline"
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedStatut('');
-                        setSelectedCity('');
-                        setCurrentPage(1);
-                      }}
-                    >
+                    <KtSelect
+                      value={filterStatut}
+                      onChange={(val) => { setFilterStatut(val); setCurrentPage(1); }}
+                      placeholder="Statut"
+                      className="w-40"
+                      options={statutOptions}
+                    />
+                    <button className="kt-btn kt-btn-outline" onClick={handleReset}>
                       Réinitialiser
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Table Body */}
+              {/* Table */}
               <div className="kt-card-content">
-                <div className="kt-scrollable-x-auto">
-                  <table className="kt-table table-auto kt-table-border">
-                    <thead>
-                      <tr>
-                        <th className="min-w-[180px]">Boutique / Client</th>
-                        <th className="min-w-[160px]">Contact & Ville</th>
-                        <th className="min-w-[140px]">Tarif Livraison</th>
-                        <th className="min-w-[150px]">Solde & Crédit</th>
-                        <th className="min-w-[140px]">Contrat</th>
-                        <th className="min-w-[110px]">Statut Compte</th>
-                        <th className="min-w-[160px] text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        [...Array(4)].map((_, i) => <SkeletonRow key={i} />)
-                      ) : paginatedClients.length === 0 ? (
+                <div className="grid">
+                  <div className="kt-scrollable-x-auto">
+                    <table className="kt-table table-auto kt-table-border">
+                      <thead>
                         <tr>
-                          <td colSpan={7} className="text-secondary-foreground text-center py-8">
-                            Aucun client trouvé.
-                          </td>
+                          <th className="min-w-[200px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Boutique / Client</span></span>
+                          </th>
+                          <th className="min-w-[130px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Ville</span></span>
+                          </th>
+                          <th className="min-w-[150px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Tarif Livraison</span></span>
+                          </th>
+                          <th className="min-w-[150px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Solde & Crédit</span></span>
+                          </th>
+                          <th className="min-w-[120px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Contrat</span></span>
+                          </th>
+                          <th className="min-w-[110px]">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Statut</span></span>
+                          </th>
+                          <th className="min-w-[160px] text-right">
+                            <span className="kt-table-col"><span className="kt-table-col-label">Actions</span></span>
+                          </th>
                         </tr>
-                      ) : (
-                        paginatedClients.map((client) => {
-                          const isExceeded = client.isCreditExceeded || client.currentBalance > client.creditLimit;
-                          return (
-                            <tr key={client.id}>
-                              <td>
-                                <div className="flex items-center gap-3">
-                                  <SafeAvatar
-                                    src={client.avatar}
-                                    name={client.businessName || client.fullName}
-                                    size={36}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-foreground text-sm">{client.businessName}</span>
-                                    <span className="text-xs text-muted-foreground">{client.fullName} • ICE: {client.ice}</span>
-                                  </div>
-                                </div>
-                              </td>
-
-                              <td>
-                                <div className="flex flex-col text-xs">
-                                  <span className="font-medium text-foreground">{client.email}</span>
-                                  <span className="text-muted-foreground">{client.phone} • <strong className="text-foreground">{client.city}</strong></span>
-                                </div>
-                              </td>
-
-                              <td>
-                                <div className="flex flex-col text-xs">
-                                  <span className="font-semibold text-primary">Même ville: {client.tarifSameCity.toFixed(2)} MAD</span>
-                                  <span className="text-secondary-foreground">National: {client.tarifOtherCity.toFixed(2)} MAD</span>
-                                </div>
-                              </td>
-
-                              <td>
-                                <div className="flex flex-col text-xs">
-                                  <span className="font-bold text-foreground">Solde: {client.currentBalance.toFixed(2)} MAD</span>
-                                  <span className="text-muted-foreground">Plafond: {client.creditLimit.toFixed(2)} MAD</span>
-                                  {isExceeded && (
-                                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 flex items-center gap-1">
-                                      <i className="ki-solid ki-shield-cross text-xs" />
-                                      Crédit Dépassé (Blocage)
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-
-                              <td>
-                                <div className="flex flex-col text-xs">
-                                  <span className="font-mono font-medium text-foreground">{client.contractRef}</span>
-                                  <span className={`font-semibold ${client.contractStatus === 'ACTIF' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                    {client.contractStatus} ({client.contractDate})
-                                  </span>
-                                </div>
-                              </td>
-
-                              <td>
-                                <span className={`kt-badge ${client.status === 'ACTIF' ? 'kt-badge-success' : 'kt-badge-destructive'} kt-badge-outline rounded-[30px]`}>
-                                  <span className="kt-badge-dot size-1.5"></span>
-                                  {client.status === 'ACTIF' ? 'Actif' : 'Suspendu'}
-                                </span>
-                              </td>
-
-                              <td className="text-right">
-                                <div className="flex items-center justify-end gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePrintContract(client)}
-                                    className="kt-btn kt-btn-xs kt-btn-outline cursor-pointer"
-                                    title="Télécharger le contrat de service PDF"
-                                  >
-                                    <i className="ki-filled ki-document text-xs me-1"></i>
-                                    Contrat PDF
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleStatus(client)}
-                                    className={`kt-btn kt-btn-xs ${client.status === 'ACTIF' ? 'kt-btn-outline text-rose-600 border-rose-500/30' : 'kt-btn-primary'} cursor-pointer`}
-                                  >
-                                    {client.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
-                                  </button>
-                                </div>
-                              </td>
+                      </thead>
+                      <tbody>
+                        {loading ? (
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <tr key={`skel-${i}`}>
+                              {Array.from({ length: 7 }).map((_, j) => (
+                                <td key={j}>
+                                  <div style={{ height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--accent) 25%, var(--border) 50%, var(--accent) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', width: j === 6 ? '80px' : '100%' }} />
+                                </td>
+                              ))}
                             </tr>
-                          );
-                        })
+                          ))
+                        ) : paginated.length > 0 ? (
+                          paginated.map((c) => {
+                            const isExceeded = c.isCreditExceeded || c.currentBalance > c.creditLimit;
+                            return (
+                              <tr key={c.id}>
+                                {/* Client / Boutique */}
+                                <td>
+                                  <div className="flex items-center gap-2.5">
+                                    <SafeAvatar
+                                      name={c.businessName || c.fullName}
+                                      size={36}
+                                    />
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-foreground font-medium text-sm">{c.businessName}</span>
+                                      <span className="text-xs text-secondary-foreground">{c.fullName} • {c.phone}</span>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Ville */}
+                                <td className="text-foreground font-normal">{c.city}</td>
+
+                                {/* Tarif Livraison */}
+                                <td>
+                                  <div className="flex flex-col text-xs">
+                                    <span className="font-semibold text-primary">Même ville: {c.tarifSameCity.toFixed(2)} MAD</span>
+                                    <span className="text-secondary-foreground">National: {c.tarifOtherCity.toFixed(2)} MAD</span>
+                                  </div>
+                                </td>
+
+                                {/* Solde & Crédit */}
+                                <td>
+                                  <div className="flex flex-col text-xs">
+                                    <span className="font-bold text-foreground">Solde: {c.currentBalance.toFixed(2)} MAD</span>
+                                    <span className="text-secondary-foreground">Plafond: {c.creditLimit.toFixed(2)} MAD</span>
+                                    {isExceeded && (
+                                      <span className="text-[10px] font-bold text-destructive mt-0.5 flex items-center gap-1">
+                                        <i className="ki-solid ki-shield-cross text-xs" />
+                                        Crédit Dépassé
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Contrat */}
+                                <td>
+                                  <div className="flex flex-col text-xs">
+                                    <span className="font-mono text-foreground font-medium">{c.contractRef}</span>
+                                    <span className={`font-medium ${c.contractStatus === 'ACTIF' ? 'text-success' : 'text-warning'}`}>{c.contractStatus}</span>
+                                  </div>
+                                </td>
+
+                                {/* Statut */}
+                                <td>
+                                  <span className={`kt-badge ${c.status === 'ACTIF' ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline rounded-[30px]`}>
+                                    <span className="kt-badge-dot size-1.5" />
+                                    {c.status === 'ACTIF' ? 'Actif' : 'Suspendu'}
+                                  </span>
+                                </td>
+
+                                {/* Actions */}
+                                <td className="text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePrintContract(c)}
+                                      className="kt-btn kt-btn-xs kt-btn-outline cursor-pointer"
+                                      title="Contrat de service PDF"
+                                    >
+                                      <i className="ki-filled ki-document text-xs me-1" />
+                                      Contrat
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleStatus(c)}
+                                      className={`kt-btn kt-btn-xs ${c.status === 'ACTIF' ? 'kt-btn-outline' : 'kt-btn-primary'} cursor-pointer`}
+                                    >
+                                      {c.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={7} className="py-8 text-center text-secondary-foreground">
+                              Aucun client correspondant
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Footer */}
+                  <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
+                    <div className="flex items-center gap-2 order-2 md:order-1">
+                      Afficher
+                      <KtSelect
+                        value={String(perPage)}
+                        onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
+                        className="w-16"
+                        options={[{ value: '5', label: '5' }, { value: '10', label: '10' }, { value: '20', label: '20' }]}
+                      />
+                      par page
+                    </div>
+                    <div className="flex items-center gap-4 order-1 md:order-2">
+                      <span>
+                        Affichage de {Math.min(filtered.length, (currentPage - 1) * perPage + 1)} à {Math.min(filtered.length, currentPage * perPage)} sur {filtered.length} clients
+                      </span>
+                      {totalPages > 1 && (
+                        <div className="flex gap-1">
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}>Précédent</button>
+                          <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}>Suivant</button>
+                        </div>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Footer Pagination */}
-                <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
-                  <div className="flex items-center gap-2">
-                    Afficher
-                    <KtSelect
-                      value={String(itemsPerPage)}
-                      onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
-                      className="w-16"
-                      options={[
-                        { value: '5', label: '5' },
-                        { value: '10', label: '10' },
-                        { value: '20', label: '20' },
-                      ]}
-                    />
-                    par page
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span>
-                      Affichage de {Math.min(totalEntries, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalEntries, currentPage * itemsPerPage)} sur {totalEntries} clients
-                    </span>
-                    {totalPages > 1 && (
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          className="kt-btn kt-btn-sm kt-btn-outline px-2"
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        >
-                          Précédent
-                        </button>
-                        <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
-                        <button
-                          type="button"
-                          className="kt-btn kt-btn-sm kt-btn-outline px-2"
-                          disabled={currentPage === totalPages}
-                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        >
-                          Suivant
-                        </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
-
               </div>
+
             </div>
           </div>
         </div>
 
         {/* MODAL: CREATE NEW CLIENT */}
-        {isNewClientModalOpen && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
-            <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        {isNewClientModalOpen && createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+            onClick={() => setIsNewClientModalOpen(false)}
+          >
+            <div
+              className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center pb-3 border-b border-border">
-                <h3 className="font-bold text-base">Nouveau Compte Client Multi-Tenant</h3>
+                <h3 className="font-bold text-base text-foreground">Nouveau Client Multi-Tenant</h3>
                 <button
+                  type="button"
                   onClick={() => setIsNewClientModalOpen(false)}
                   className="text-muted-foreground hover:text-foreground font-bold text-lg border-0 bg-transparent cursor-pointer"
                 >
@@ -695,7 +606,7 @@ export default function ClientListPage({ navigate, showNotification }) {
               <form onSubmit={handleCreateClient} className="flex flex-col gap-4 mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Nom de la Boutique / Raison Sociale</label>
+                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Raison Sociale / Boutique</label>
                     <input
                       type="text"
                       required
@@ -707,7 +618,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Nom Complet Représentant</label>
+                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Représentant Legal</label>
                     <input
                       type="text"
                       required
@@ -747,7 +658,7 @@ export default function ClientListPage({ navigate, showNotification }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Ville de Résidence</label>
+                    <label className="text-xs font-semibold text-secondary-foreground block mb-1">Ville</label>
                     <select
                       className="kt-input"
                       value={newClientForm.city}
@@ -775,7 +686,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                 </div>
 
                 <hr className="border-border my-1" />
-                <h4 className="text-xs font-bold uppercase text-primary">Tarification Négociée & Plafond Crédit</h4>
+                <h4 className="text-xs font-bold uppercase text-primary">Tarification & Plafond Crédit</h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -790,7 +701,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif Inter-Villes</label>
+                    <label className="text-[11px] font-semibold text-secondary-foreground block mb-1">Tarif National</label>
                     <input
                       type="number"
                       step="0.5"
@@ -805,7 +716,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                     <input
                       type="number"
                       step="500"
-                      className="kt-input text-xs font-bold text-emerald-600"
+                      className="kt-input text-xs font-bold text-success"
                       value={newClientForm.creditLimit}
                       onChange={(e) => setNewClientForm({ ...newClientForm, creditLimit: e.target.value })}
                     />
@@ -829,7 +740,8 @@ export default function ClientListPage({ navigate, showNotification }) {
                 </div>
               </form>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
       </main>
