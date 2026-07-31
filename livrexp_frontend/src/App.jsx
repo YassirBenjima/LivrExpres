@@ -81,6 +81,7 @@ function App() {
     '/bon-livraison/new',
     '/dispatch-map',
     '/profile',
+    '/ai',
   ];
 
   // Returns true if the path is allowed for ROLE_LIVREUR
