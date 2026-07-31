@@ -181,9 +181,10 @@ class DashboardController extends AbstractController
             ];
         }
 
-        // Get volume statistics for active days
+        // Get volume statistics for active days (recorded vs delivered)
         $volumeQb = $colisRepo->createQueryBuilder('c')
-            ->select("SUBSTRING(c.createdAt, 1, 10) as dateStr, COUNT(c.id) as cnt")
+            ->select("SUBSTRING(c.createdAt, 1, 10) as dateStr, COUNT(c.id) as cnt, SUM(CASE WHEN c.etat = :livre THEN 1 ELSE 0 END) as cntLivres")
+            ->setParameter('livre', Colis::ETAT_LIVRE)
             ->groupBy('dateStr')
             ->orderBy('dateStr', 'DESC')
             ->setMaxResults(7);
@@ -194,6 +195,7 @@ class DashboardController extends AbstractController
 
         $chartLabels = [];
         $chartData = [];
+        $chartDataLivres = [];
         
         if (!empty($volumeStats)) {
             foreach ($volumeStats as $stat) {
@@ -204,12 +206,14 @@ class DashboardController extends AbstractController
                     $chartLabels[] = $stat['dateStr'];
                 }
                 $chartData[] = (int) $stat['cnt'];
+                $chartDataLivres[] = (int) $stat['cntLivres'];
             }
         } else {
             for ($i = 6; $i >= 0; $i--) {
                 $dt = (new \DateTimeImmutable("-$i days"));
                 $chartLabels[] = $dt->format('d M');
                 $chartData[] = 0;
+                $chartDataLivres[] = 0;
             }
         }
 
@@ -226,6 +230,7 @@ class DashboardController extends AbstractController
             'recentColis' => $recentColisData,
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,
+            'chartDataLivres' => $chartDataLivres,
         ]);
     }
 }

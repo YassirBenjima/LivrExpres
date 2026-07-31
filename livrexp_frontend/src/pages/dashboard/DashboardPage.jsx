@@ -19,7 +19,8 @@ const mockDataFallback = {
     { id: 5, trackingCode: 'F-20260622-0001', productNature: 'Sac à Main', etatLabel: 'Créé', etatBadgeClass: 'kt-badge-primary', createdAt: '22 Jun, 2026 11:05', city: 'Fès', price: 380.00 }
   ],
   chartLabels: ['17 Jun', '18 Jun', '19 Jun', '20 Jun', '21 Jun', '22 Jun', '23 Jun'],
-  chartData: [8, 14, 12, 19, 24, 21, 28]
+  chartData: [8, 14, 12, 19, 24, 21, 28],
+  chartDataLivres: [6, 11, 9, 15, 20, 17, 23]
 };
 
 export default function DashboardPage({ dashboardData = null, loading = false, refetchData }) {
@@ -36,10 +37,16 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     container.innerHTML = "";
 
     const options = {
-      series: [{
-        name: 'Colis enregistrés',
-        data: data.chartData
-      }],
+      series: [
+        {
+          name: 'Colis enregistrés',
+          data: data.chartData || [8, 14, 12, 19, 24, 21, 28]
+        },
+        {
+          name: 'Colis livrés',
+          data: data.chartDataLivres || [6, 11, 9, 15, 20, 17, 23]
+        }
+      ],
       chart: {
         type: 'area',
         height: 250,
@@ -47,7 +54,12 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
         zoom: { enabled: false },
         fontFamily: 'Inter, system-ui, sans-serif'
       },
-      colors: ['#3e97ff'],
+      colors: ['#3e97ff', '#27d37f'],
+      legend: {
+        show: true,
+        position: 'top',
+        horizontalAlign: 'right'
+      },
       dataLabels: { enabled: false },
       stroke: { curve: 'smooth', width: 3 },
       fill: {
