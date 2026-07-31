@@ -269,8 +269,8 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                 <span className="kt-table-col-label">Montant CRBT</span>
                               </span>
                             </th>
-                            <th className="min-w-[180px]">
-                              <span className="kt-table-col">
+                            <th className="min-w-[180px] text-center">
+                              <span className="kt-table-col justify-center">
                                 <span className="kt-table-col-label">Score de Risque IA</span>
                               </span>
                             </th>
@@ -324,8 +324,8 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                   <td className="font-semibold text-foreground text-xs">
                                     {p.crbt ? p.crbt.toFixed(2) : '0.00'} DH
                                   </td>
-                                  <td>
-                                    <div className="flex items-center gap-2">
+                                  <td className="text-center">
+                                    <div className="flex items-center justify-center gap-2">
                                       <div className="w-16 bg-accent/50 h-2 rounded-full overflow-hidden">
                                         <div
                                           className={`h-full rounded-full ${
