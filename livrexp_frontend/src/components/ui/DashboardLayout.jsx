@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUserRoles } from '../../hooks/useAuth';
 import SuperAdminAIChatbot from '../ai/SuperAdminAIChatbot';
+import LivreurAIChatbotWidget from '../ai/LivreurAIChatbotWidget';
 
 export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const currentActive = activeMenu || activeItem || 'dashboard';
@@ -662,15 +663,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Optimisation de tournées</span>
                       </a>
                     </div>
-                    {isLivreur && (
-                      <div className={`kt-menu-item ${currentActive === 'ai_chatbot' ? 'active' : ''}`}>
-                        <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/chatbot-livreur"
-                          onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/chatbot-livreur'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                          <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Chatbot Livreur</span>
-                        </a>
-                      </div>
-                    )}
+
                   </div>
                 )}
               </div>
@@ -1193,6 +1186,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
       {/* Super Admin AI Chatbot Widget (Floating bottom-right, visible exclusively for ROLE_SUPER_ADMIN) */}
       <SuperAdminAIChatbot />
+      {/* Livreur AI Chatbot Widget (Floating bottom-right, visible exclusively for ROLE_LIVREUR) */}
+      <LivreurAIChatbotWidget />
     </div>
   );
 }
