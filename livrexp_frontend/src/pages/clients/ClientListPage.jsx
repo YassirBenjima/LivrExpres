@@ -228,84 +228,368 @@ export default function ClientListPage({ navigate, showNotification }) {
   };
 
   const handlePrintContract = (client) => {
-    const printWin = window.open('', '_blank', 'width=900,height=1000');
+    const printWin = window.open('', '_blank', 'width=950,height=1000');
     if (!printWin) return;
+
+    const todayDate = new Date().toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
 
     printWin.document.write(`
       <!DOCTYPE html>
       <html lang="fr">
       <head>
         <meta charset="UTF-8">
-        <title>Contrat de Service - ${client.businessName}</title>
+        <title>Contrat de Service Logistique - ${client.businessName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-          body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; margin: 0; }
-          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
-          .logo { font-size: 26px; font-weight: 800; color: #2563eb; }
-          .logo span { color: #0f172a; }
-          .contract-title { text-align: right; }
-          .contract-title h1 { margin: 0; font-size: 18px; color: #0f172a; }
-          .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-          th { background: #f1f5f9; text-align: left; padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 12px; }
-          td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
-          .footer { margin-top: 50px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+          
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+
+          * { box-sizing: border-box; }
+          
+          body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            color: #0f172a;
+            background: #ffffff;
+            line-height: 1.5;
+            padding: 30px;
+            margin: 0;
+            font-size: 13px;
+          }
+
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+          }
+
+          .brand {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .logo-text {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+            letter-spacing: -0.5px;
+          }
+
+          .logo-text span { color: #0f172a; }
+
+          .company-sub {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 2px;
+          }
+
+          .contract-badge-box {
+            text-align: right;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 16px;
+            border-radius: 8px;
+          }
+
+          .contract-title-h1 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 4px 0;
+          }
+
+          .contract-ref {
+            font-family: monospace;
+            font-size: 12px;
+            color: #2563eb;
+            font-weight: 700;
+          }
+
+          .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-left: 3px solid #2563eb;
+            padding-left: 10px;
+            margin: 22px 0 10px 0;
+          }
+
+          .parties-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+          }
+
+          .party-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+          }
+
+          .party-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+          }
+
+          .party-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+          }
+
+          .party-detail {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 2px;
+          }
+
+          .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+          }
+
+          .pricing-table th {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: left;
+            padding: 10px 14px;
+          }
+
+          .pricing-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12.5px;
+          }
+
+          .pricing-table tr:nth-child(even) {
+            background-color: #f8fafc;
+          }
+
+          .price-tag {
+            font-weight: 800;
+            color: #2563eb;
+          }
+
+          .article-text {
+            font-size: 12px;
+            color: #334155;
+            text-align: justify;
+            margin-bottom: 10px;
+          }
+
+          .highlight-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .signatures-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 35px;
+            page-break-inside: avoid;
+          }
+
+          .signature-box {
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: justify-between;
+            background: #fafafa;
+          }
+
+          .signature-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+          }
+
+          .signature-stamp-area {
+            font-size: 11px;
+            color: #94a3b8;
+            font-style: italic;
+            margin-top: 40px;
+            text-align: center;
+          }
+
+          .footer-legal {
+            margin-top: 30px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.4;
+          }
+
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
         </style>
       </head>
       <body>
+
+        {/* Header */}
         <div class="header">
-          <div>
-            <div class="logo">Livr<span>Express</span></div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Service Facturation & Gestion Clients</div>
+          <div class="brand">
+            <div class="logo-text">Livr<span>Express</span></div>
+            <div class="company-sub">LivrExpress S.A.R.L • Transport, Messagerie & Logistique e-Commerce</div>
           </div>
-          <div class="contract-title">
-            <h1>CONTRAT DE SERVICE LOGISTIQUE</h1>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Réf: ${client.contractRef}</div>
+          <div class="contract-badge-box">
+            <div class="contract-title-h1">Contrat Cadre de Service</div>
+            <div class="contract-ref">Réf: ${client.contractRef}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Date d'effet : ${todayDate}</div>
           </div>
         </div>
 
-        <div class="box">
-          <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">ENTRE LES SOUSSIGNÉS :</div>
-          <div style="font-size: 13px; color: #475569;">1. <strong>LivrExpress S.A.R.L</strong>, Société de Transport et Logistique.</div>
-          <div style="font-size: 13px; color: #475569; margin-top: 4px;">2. <strong>${client.businessName}</strong> (Représenté par ${client.fullName}), ICE: ${client.ice}, Ville: ${client.city}.</div>
+        {/* Section 1: Parties */}
+        <div class="section-title">Article 1 — Identification des Parties Contracting</div>
+        <div class="parties-grid">
+          <div class="party-card">
+            <div class="party-header">Le Prestataire</div>
+            <div class="party-name">LivrExpress S.A.R.L AU</div>
+            <div class="party-detail"><strong>Siège Social:</strong> Bd d'Anfa, Casablanca, Maroc</div>
+            <div class="party-detail"><strong>RC:</strong> 482910 | <strong>ICE:</strong> 00192830100029</div>
+            <div class="party-detail"><strong>Service Client:</strong> support@livrexpress.ma | 0522-001122</div>
+          </div>
+
+          <div class="party-card">
+            <div class="party-header">Le Client (Partenaire e-Commerce)</div>
+            <div class="party-name">${client.businessName}</div>
+            <div class="party-detail"><strong>Représenté par:</strong> ${client.fullName}</div>
+            <div class="party-detail"><strong>Ville:</strong> ${client.city} | <strong>Tél:</strong> ${client.phone}</div>
+            <div class="party-detail"><strong>Email:</strong> ${client.email}</div>
+            <div class="party-detail"><strong>N° ICE / IF:</strong> ${client.ice || 'Non renseigné'}</div>
+          </div>
         </div>
 
-        <div style="font-weight: 700; font-size: 14px; margin-bottom: 10px; color: #0f172a;">ARTICLE 1 — GRILLE TARIFAIRE ACCORDÉE</div>
-        <table>
+        {/* Section 2: Objet */}
+        <div class="section-title">Article 2 — Objet & Périmètre d'Intervention</div>
+        <div class="article-text">
+          Le présent contrat a pour objet de définir les conditions organisationnelles, juridiques et financières dans lesquelles la société <strong>LivrExpress S.A.R.L</strong> assure pour le compte de <strong>${client.businessName}</strong> les prestations de ramassage, d'expédition, de suivi digitalisé, de livraison au destinataire final ainsi que l'encaissement des montants en Contre-Remboursement (CRBT).
+        </div>
+
+        {/* Section 3: Grille Tarifaire */}
+        <div class="section-title">Article 3 — Conditions Financières & Grille Tarifaire</div>
+        <table class="pricing-table">
           <thead>
             <tr>
-              <th>Zone / Prestation</th>
-              <th>Tarif Négocié HT (MAD)</th>
+              <th>Nature de la Prestation</th>
+              <th>Couverture Géographique</th>
+              <th>Délai Garanti</th>
+              <th>Tarif Négocié HT</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Livraison Même Ville (${client.city})</td>
-              <td style="font-weight: 700; color: #2563eb;">${client.tarifSameCity.toFixed(2)} MAD</td>
+              <td><strong>Livraison Urbaine Locale</strong></td>
+              <td>Même ville (${client.city})</td>
+              <td>24 Heures</td>
+              <td class="price-tag">${client.tarifSameCity.toFixed(2)} MAD</td>
             </tr>
             <tr>
-              <td>Livraison Inter-Villes (National)</td>
-              <td style="font-weight: 700; color: #2563eb;">${client.tarifOtherCity.toFixed(2)} MAD</td>
+              <td><strong>Livraison Nationale Inter-Villes</strong></td>
+              <td>Toutes les villes du Royaume</td>
+              <td>24h - 48h</td>
+              <td class="price-tag">${client.tarifOtherCity.toFixed(2)} MAD</td>
             </tr>
             <tr>
-              <td>Traitement Colis Retour Refus</td>
-              <td style="font-weight: 700;">${client.tarifReturn.toFixed(2)} MAD</td>
+              <td><strong>Gestion Colis Refusé / Retour</strong></td>
+              <td>Retour à l'expédition Client</td>
+              <td>72h max</td>
+              <td class="price-tag">${client.tarifReturn.toFixed(2)} MAD</td>
             </tr>
           </tbody>
         </table>
 
-        <div class="box">
-          <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">ARTICLE 2 — PLAFOND DE CRÉDIT</div>
-          <div style="font-size: 13px; color: #475569;">Plafond de crédit accordé : <strong>${client.creditLimit.toFixed(2)} MAD</strong></div>
+        {/* Section 4: Cash-on-Delivery */}
+        <div class="section-title">Article 4 — Reversement des Fonds (CRBT) & Réconciliation</div>
+        <div class="article-text">
+          Les fonds collectés auprès des destinataires finaux au titre des livraisons payées en espèces sont sécurisés par LivrExpress. Le reversement s'effectue hebdomadairement par virement bancaire sur le compte indiqué par le Client, déduction faite des frais de transport négociés. Un état de réconciliation comptable automatique est mis à disposition sur la plateforme.
         </div>
 
-        <div class="footer">
-          Document contractuel généré par la plateforme LivrExpress
+        {/* Highlight Box Credit */}
+        <div class="highlight-box">
+          <div>
+            <div style="font-weight: 700; color: #1e3a8a;">Plafond d'Encours & Crédit Autorisé</div>
+            <div style="font-size: 11.5px; color: #1e40af;">Conformément à la politique d'analyse des risques LivrExpress.</div>
+          </div>
+          <div style="font-size: 16px; font-weight: 800; color: #1d4ed8; font-family: monospace;">
+            ${client.creditLimit.toFixed(2)} MAD
+          </div>
+        </div>
+
+        {/* Section 5: Durée & Signatures */}
+        <div class="section-title">Article 5 — Durée & Prise d'Effet</div>
+        <div class="article-text">
+          Le présent contrat est conclu pour une durée indéterminée à compter de sa signature. Il peut être résilié par l'une ou l'autre des parties sous réserve d'un préavis écrit de trente (30) jours.
+        </div>
+
+        {/* Signatures */}
+        <div class="signatures-container">
+          <div class="signature-box">
+            <div class="signature-title">Pour le Client : ${client.businessName}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Mention manuscrite "Lu et approuvé"</div>
+            <div class="signature-stamp-area">Signature & Cachet Officiel</div>
+          </div>
+
+          <div class="signature-box" style="border-color: #93c5fd; background: #f0f9ff;">
+            <div class="signature-title" style="color: #1e40af;">Pour LivrExpress S.A.R.L :</div>
+            <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">La Direction Commerciale & Logistique</div>
+            <div class="signature-stamp-area" style="color: #2563eb;">Signature Électronique Certifiée</div>
+          </div>
+        </div>
+
+        {/* Footer Legal */}
+        <div class="footer-legal">
+          LivrExpress S.A.R.L AU — Capitale Social: 1.000.000 DH — Registre de Commerce: N° 482910 Casablanca — ICE: 00192830100029<br/>
+          Ce document constitue une convention légale régie par le droit commercial marocain.
         </div>
 
         <script>
           window.onload = function() {
-            setTimeout(function() { window.print(); }, 300);
+            setTimeout(function() { window.print(); }, 400);
           };
         </script>
       </body>
