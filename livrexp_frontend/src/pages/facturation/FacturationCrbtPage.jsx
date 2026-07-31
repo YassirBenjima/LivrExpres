@@ -223,21 +223,42 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
   // Open Virement Modal
   const openVirementModal = (crbtItem) => {
+    if (!crbtItem) return;
     setSelectedCrbtForVirement(crbtItem);
     setVirementForm({
       refVirement: `VIR-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}-${Math.floor(1000 + Math.random() * 9000)}`,
       banque: 'Attijariwafa Bank',
-      montant: crbtItem.totalNet,
+      montant: crbtItem.totalNet || 0,
       dateVirement: new Date().toISOString().slice(0, 10),
-      note: `Virement CRBT pour ${crbtItem.client}`
+      note: `Virement CRBT pour ${crbtItem.client || 'Client'}`
     });
     setIsVirementModalOpen(true);
   };
 
   // Confirm Virement
-  const handleConfirmVirement = (e) => {
+  const handleConfirmVirement = async (e) => {
     e.preventDefault();
     if (!selectedCrbtForVirement) return;
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/facturation/virement/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          crbt_id: selectedCrbtForVirement.id,
+          ref_virement: virementForm.refVirement,
+          banque: virementForm.banque,
+          montant: virementForm.montant
+        })
+      });
+    } catch (err) {
+      console.error('Erreur API Virement:', err);
+    }
 
     setEntries(prev => prev.map(item => item.id === selectedCrbtForVirement.id ? {
       ...item,
@@ -248,7 +269,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
     setIsVirementModalOpen(false);
     if (showNotification) {
-      showNotification('success', `Virement ${virementForm.refVirement} de ${virementForm.montant.toFixed(2)} MAD exécuté avec succès !`);
+      showNotification('success', `Virement ${virementForm.refVirement} de ${Number(virementForm.montant).toFixed(2)} MAD exécuté avec succès !`);
     }
   };
 
@@ -483,13 +504,17 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                                   <i className="ki-filled ki-file-down text-xs"></i>
                                   Facture PDF
                                 </button>
-                                {crbt.statut !== 'PAYE' ? (
+                                {crbt.statut !== 'PAYE' && crbt.statut !== 'Payé' && crbt.statut !== 'paye' ? (
                                   <button
                                     type="button"
-                                    onClick={() => openVirementModal(crbt)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      openVirementModal(crbt);
+                                    }}
                                     className="kt-btn kt-btn-xs kt-btn-primary cursor-pointer"
                                   >
-                                    <i className="ki-filled ki-check text-xs"></i>
+                                    <i className="ki-filled ki-check text-xs me-1"></i>
                                     Virer
                                   </button>
                                 ) : (
@@ -559,8 +584,8 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
         {/* MODAL: EXECUTE VIREMENT */}
         {isVirementModalOpen && selectedCrbtForVirement && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-background border border-border rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
+            <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center pb-3 border-b border-border">
                 <h3 className="font-bold text-base">Exécuter un Virement Bancaire CRBT</h3>
                 <button
