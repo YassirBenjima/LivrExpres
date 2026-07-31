@@ -163,54 +163,6 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 Analyse en temps réel de vos commandes réelles enregistrées
               </div>
             </div>
-
-            {/* Sub Tabs */}
-            <div className="flex items-center p-1 bg-accent/30 rounded-lg border border-border overflow-x-auto max-w-full flex-nowrap whitespace-nowrap shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('predictions');
-                  window.history.pushState({}, '', '/ai/prediction-retours');
-                }}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'predictions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <i className="ki-filled ki-graph-up text-xs me-1" />
-                Prédiction Retours
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('anomalies');
-                  window.history.pushState({}, '', '/ai/anomalies');
-                }}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'anomalies' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <i className="ki-filled ki-shield-cross text-xs me-1" />
-                Détection Anomalies
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('route');
-                  window.history.pushState({}, '', '/ai/tournees-optimisees');
-                }}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'route' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <i className="ki-filled ki-route text-xs me-1" />
-                Itinéraires & Tournées
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('chatbot');
-                  window.history.pushState({}, '', '/ai/chatbot-livreur');
-                }}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'chatbot' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <i className="ki-filled ki-messages text-xs me-1" />
-                Chatbot Livreur
-              </button>
-            </div>
           </div>
         </div>
 
