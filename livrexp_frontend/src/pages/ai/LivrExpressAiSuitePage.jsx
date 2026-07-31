@@ -437,47 +437,46 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
               <div className="kt-card kt-card-grid min-w-full">
                 
                 {/* Card Header & Filter Bar */}
-                <div className="kt-card-header flex flex-wrap gap-4 justify-between items-center py-4 px-6 border-b border-border">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="kt-card-title text-base font-bold text-foreground">
-                      Détection des anomalies ({filteredAnomalies.length})
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Détection en temps réel des retards de ramassage ou livraisons non clôturées sur vos colis réels
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
-                      <i className="ki-filled ki-magnifier text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2 text-sm" />
-                      <input
-                        type="text"
-                        className="kt-input ps-9 py-2 text-xs w-64"
-                        placeholder="Rechercher code, destinataire, ville..."
-                        value={anomalySearchQuery}
-                        onChange={(e) => { setAnomalySearchQuery(e.target.value); setAnomalyPage(1); }}
-                      />
+                <div className="kt-card-header flex-wrap gap-2">
+                  <h3 className="kt-card-title text-sm">
+                    Affichage de {filteredAnomalies.length} colis en anomalie
+                  </h3>
+                  <div className="flex flex-wrap gap-2 lg:gap-5">
+                    <div className="flex">
+                      <label className="kt-input">
+                        <i className="ki-filled ki-magnifier"></i>
+                        <input
+                          value={anomalySearchQuery}
+                          onChange={(e) => {
+                            setAnomalySearchQuery(e.target.value);
+                            setAnomalyPage(1);
+                          }}
+                          placeholder="Rechercher un colis"
+                          type="text"
+                        />
+                      </label>
                     </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      <KtSelect
+                        value={selectedAnomalyType}
+                        onChange={(val) => { setSelectedAnomalyType(val); setAnomalyPage(1); }}
+                        placeholder="Type d'anomalie"
+                        className="w-40"
+                        options={[
+                          { value: '', label: 'Toutes les anomalies' },
+                          { value: 'Ramassage', label: 'Retard Ramassage' },
+                          { value: 'Inactif', label: 'Inactivité prolongée' },
+                          { value: 'Livraison', label: 'Problème Livraison' }
+                        ]}
+                      />
 
-                    <KtSelect
-                      value={selectedAnomalyType}
-                      onChange={(val) => { setSelectedAnomalyType(val); setAnomalyPage(1); }}
-                      placeholder="Type d'anomalie"
-                      className="w-44"
-                      options={[
-                        { value: '', label: 'Toutes les anomalies' },
-                        { value: 'Ramassage', label: 'Retard Ramassage' },
-                        { value: 'Inactif', label: 'Inactivité prolongée' },
-                        { value: 'Livraison', label: 'Problème Livraison' }
-                      ]}
-                    />
-
-                    <button
-                      className="kt-btn kt-btn-outline text-xs"
-                      onClick={() => { setAnomalySearchQuery(''); setSelectedAnomalyType(''); setAnomalyPage(1); }}
-                    >
-                      Réinitialiser
-                    </button>
+                      <button
+                        className="kt-btn kt-btn-outline"
+                        onClick={() => { setAnomalySearchQuery(''); setSelectedAnomalyType(''); setAnomalyPage(1); }}
+                      >
+                        Réinitialiser
+                      </button>
+                    </div>
                   </div>
                 </div>
 
