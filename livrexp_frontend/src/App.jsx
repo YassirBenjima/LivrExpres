@@ -35,6 +35,7 @@ import AffiliatePage from './pages/affiliate/AffiliatePage';
 import ApiDocsPage from './pages/api_docs/ApiDocsPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import DispatchMapPage from './pages/dispatch/DispatchMapPage';
+import ClientListPage from './pages/clients/ClientListPage';
 import LivreurListPage from './pages/livreur/LivreurListPage';
 import LivreurNewPage from './pages/livreur/LivreurNewPage';
 import LivreurFichePage from './pages/livreur/LivreurFichePage';
@@ -454,6 +455,8 @@ function App() {
       case '/dispatch-map':
       case '/suivi/carte':
         return <DispatchMapPage navigate={navigate} showNotification={showNotification} />;
+      case '/clients':
+        return <ClientListPage navigate={navigate} showNotification={showNotification} />;
       case '/livreurs':
         return <LivreurListPage navigate={navigate} showNotification={showNotification} />;
       case '/livreurs/new':
