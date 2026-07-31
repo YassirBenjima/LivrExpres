@@ -115,7 +115,7 @@ export default function LivreurNewPage({ navigate, showNotification }) {
                       </div>
                     </div>
                     <div className="shrink-0 self-center lg:self-auto flex items-center justify-center">
-                      <i className="ki-filled ki-truck dark:hidden text-primary" style={{ fontSize: '80px', lineHeight: '1' }} />
+                      <i className="ki-filled ki-delivery-3 dark:hidden text-primary" style={{ fontSize: '80px', lineHeight: '1' }} />
                     </div>
                   </div>
                 </div>

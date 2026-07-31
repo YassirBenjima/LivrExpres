@@ -315,7 +315,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                                           onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'picked_up'); }}
                                         >
                                           <span className="kt-menu-icon">
-                                            <i className="ki-filled ki-truck text-success"></i>
+                                            <i className="ki-filled ki-delivery text-success"></i>
                                           </span>
                                           <span className="kt-menu-title">Marquer ramassé</span>
                                         </button>
