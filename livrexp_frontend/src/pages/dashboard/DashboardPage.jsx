@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
 const defaultStatusColors = {
@@ -10,8 +9,195 @@ const defaultStatusColors = {
   'Retourné': '#f8285a',
 };
 
+// ── Native SVG Area Chart Component ──────────────────────────────────────────
+function SvgTrendAreaChart({ data }) {
+  const [hoverIndex, setHoverIndex] = useState(null);
+  if (!data || data.length === 0) return null;
+
+  const width = 600;
+  const height = 240;
+  const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.total || 0, d.livres || 0)), 10);
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+
+  const pointsTotal = data.map((d, i) => {
+    const x = padding.left + (i / Math.max(data.length - 1, 1)) * chartW;
+    const y = padding.top + chartH - ((d.total || 0) / maxVal) * chartH;
+    return { x, y, data: d, index: i };
+  });
+
+  const pointsLivres = data.map((d, i) => {
+    const x = padding.left + (i / Math.max(data.length - 1, 1)) * chartW;
+    const y = padding.top + chartH - ((d.livres || 0) / maxVal) * chartH;
+    return { x, y, data: d, index: i };
+  });
+
+  const createD = (pts) => {
+    if (pts.length === 0) return '';
+    return pts.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+  };
+
+  const dTotalLine = createD(pointsTotal);
+  const dTotalArea = `${dTotalLine} L ${pointsTotal[pointsTotal.length - 1].x.toFixed(1)} ${(padding.top + chartH).toFixed(1)} L ${padding.left} ${(padding.top + chartH).toFixed(1)} Z`;
+
+  const dLivresLine = createD(pointsLivres);
+  const dLivresArea = `${dLivresLine} L ${pointsLivres[pointsLivres.length - 1].x.toFixed(1)} ${(padding.top + chartH).toFixed(1)} L ${padding.left} ${(padding.top + chartH).toFixed(1)} Z`;
+
+  const hoveredItem = hoverIndex !== null ? data[hoverIndex] : null;
+
+  return (
+    <div className="relative w-full">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible select-none">
+        <defs>
+          <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1b84ff" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#1b84ff" stopOpacity="0.0" />
+          </linearGradient>
+          <linearGradient id="gradLivres" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#27d37f" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#27d37f" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+          const y = padding.top + chartH * (1 - ratio);
+          const val = Math.round(maxVal * ratio);
+          return (
+            <g key={idx}>
+              <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="var(--border)" strokeDasharray="4 4" opacity="0.5" />
+              <text x={padding.left - 8} y={y + 4} textAnchor="end" className="text-[10px] fill-muted-foreground font-mono">{val}</text>
+            </g>
+          );
+        })}
+
+        {/* Areas */}
+        <path d={dTotalArea} fill="url(#gradTotal)" />
+        <path d={dLivresArea} fill="url(#gradLivres)" />
+
+        {/* Lines */}
+        <path d={dTotalLine} fill="none" stroke="#1b84ff" strokeWidth="2.5" strokeLinecap="round" />
+        <path d={dLivresLine} fill="none" stroke="#27d37f" strokeWidth="2.5" strokeLinecap="round" />
+
+        {/* Dots & Interactivity */}
+        {pointsTotal.map((pt, i) => (
+          <g key={i} className="cursor-pointer" onMouseEnter={() => setHoverIndex(i)} onMouseLeave={() => setHoverIndex(null)}>
+            <circle cx={pt.x} cy={pt.y} r={hoverIndex === i ? 6 : 4} fill="#1b84ff" stroke="#ffffff" strokeWidth="2" />
+            <circle cx={pointsLivres[i].x} cy={pointsLivres[i].y} r={hoverIndex === i ? 6 : 4} fill="#27d37f" stroke="#ffffff" strokeWidth="2" />
+            <text x={pt.x} y={height - 8} textAnchor="middle" className="text-[10px] fill-muted-foreground">{pt.data.date}</text>
+          </g>
+        ))}
+      </svg>
+
+      {/* Floating Tooltip */}
+      {hoveredItem && (
+        <div className="absolute top-2 right-4 bg-background border border-border p-2.5 rounded-lg shadow-lg text-xs z-10">
+          <div className="font-bold text-foreground mb-1">{hoveredItem.date}</div>
+          <div className="text-primary font-medium">Total: {hoveredItem.total} colis</div>
+          <div className="text-success font-medium">Livrés: {hoveredItem.livres} colis</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Native SVG Donut Chart Component ─────────────────────────────────────────
+function SvgStatusDonutChart({ data }) {
+  if (!data || data.length === 0) return null;
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  let cumulativeAngle = 0;
+  const slices = data.map(d => {
+    const angle = total > 0 ? (d.value / total) * 360 : 0;
+    const startAngle = cumulativeAngle;
+    cumulativeAngle += angle;
+    return { ...d, angle, startAngle };
+  });
+
+  const getCoordinatesForAngle = (angleInDegrees, radius = 40) => {
+    const angleInRadians = (angleInDegrees - 90) * (Math.PI / 180);
+    return {
+      x: 50 + radius * Math.cos(angleInRadians),
+      y: 50 + radius * Math.sin(angleInRadians)
+    };
+  };
+
+  return (
+    <div className="relative size-48 mx-auto flex items-center justify-center">
+      <svg viewBox="0 0 100 100" className="size-full overflow-visible transform -rotate-90">
+        {slices.map((slice, i) => {
+          if (slice.value === 0) return null;
+          const start = getCoordinatesForAngle(slice.startAngle);
+          const end = getCoordinatesForAngle(slice.startAngle + slice.angle);
+          const largeArcFlag = slice.angle > 180 ? 1 : 0;
+          const pathData = [
+            `M ${start.x} ${start.y}`,
+            `A 40 40 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
+            `L 50 50`,
+          ].join(' ');
+
+          return (
+            <path
+              key={i}
+              d={pathData}
+              fill={slice.color || defaultStatusColors[slice.name] || '#3f4254'}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <title>{`${slice.name}: ${slice.value} colis`}</title>
+            </path>
+          );
+        })}
+        {/* Inner cutout for Donut style */}
+        <circle cx="50" cy="50" r="26" fill="var(--card, #ffffff)" />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+        <span className="text-xl font-bold text-mono text-foreground">{total}</span>
+        <span className="text-[10px] text-muted-foreground uppercase font-medium">Total</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Native SVG Bar Chart Component (Villes) ──────────────────────────────────
+function SvgCityBarChart({ data }) {
+  if (!data || data.length === 0) return null;
+  const maxVal = Math.max(...data.map(d => Math.max(d.total || 0, d.livres || 0)), 10);
+
+  return (
+    <div className="w-full space-y-3 pt-2">
+      {data.map((c) => {
+        const pctTotal = (c.total / maxVal) * 100;
+        const pctLivres = (c.livres / maxVal) * 100;
+        return (
+          <div key={c.city} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">{c.city}</span>
+              <span className="text-muted-foreground font-mono">
+                <span className="text-success font-bold">{c.livres}</span> / {c.total} livrés ({c.rate}%)
+              </span>
+            </div>
+            <div className="w-full h-3.5 bg-accent/40 rounded-full overflow-hidden flex relative">
+              <div
+                className="h-full bg-primary/40 rounded-full transition-all duration-500 absolute top-0 left-0"
+                style={{ width: `${pctTotal}%` }}
+              />
+              <div
+                className="h-full bg-success rounded-full transition-all duration-500 relative z-10"
+                style={{ width: `${pctLivres}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main Dashboard Component ──────────────────────────────────────────────────
 export default function DashboardPage({ navigate }) {
-  const [period, setPeriod]       = useState('month'); // 'today', 'week', 'month', 'year'
+  const [period, setPeriod]       = useState('month');
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading]     = useState(true);
 
@@ -29,7 +215,6 @@ export default function DashboardPage({ navigate }) {
         if (d.success) setAnalytics(d);
       }
     } catch {
-      // Fallback data if API unreachable
       setAnalytics({
         kpis: {
           today: { colisCrees: 12, colisLivres: 9, colisRetournes: 1, colisEnCours: 2, caToday: 3450 },
@@ -37,13 +222,13 @@ export default function DashboardPage({ navigate }) {
           comparison: { currentMonthTotal: 142, prevMonthTotal: 118, volumeGrowth: 20.3, currentMonthCa: 54300, prevMonthCa: 46200, caGrowth: 17.5 },
         },
         trendData: [
-          { date: '18 Jul', fullDate: '2026-07-18', total: 10, livres: 8, retours: 1 },
-          { date: '20 Jul', fullDate: '2026-07-20', total: 15, livres: 12, retours: 2 },
-          { date: '22 Jul', fullDate: '2026-07-22', total: 18, livres: 15, retours: 1 },
-          { date: '24 Jul', fullDate: '2026-07-24', total: 22, livres: 18, retours: 2 },
-          { date: '26 Jul', fullDate: '2026-07-26', total: 19, livres: 16, retours: 1 },
-          { date: '28 Jul', fullDate: '2026-07-28', total: 25, livres: 20, retours: 3 },
-          { date: '30 Jul', fullDate: '2026-07-30', total: 33, livres: 26, retours: 4 },
+          { date: '18 Jul', total: 10, livres: 8, retours: 1 },
+          { date: '20 Jul', total: 15, livres: 12, retours: 2 },
+          { date: '22 Jul', total: 18, livres: 15, retours: 1 },
+          { date: '24 Jul', total: 22, livres: 18, retours: 2 },
+          { date: '26 Jul', total: 19, livres: 16, retours: 1 },
+          { date: '28 Jul', total: 25, livres: 20, retours: 3 },
+          { date: '30 Jul', total: 33, livres: 26, retours: 4 },
         ],
         statusData: [
           { name: 'Livré', value: 95, color: '#27d37f' },
@@ -65,13 +250,8 @@ export default function DashboardPage({ navigate }) {
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
-  const handleExportCSV = () => {
-    window.location.href = '/api/analytics/export';
-  };
-
-  const handlePrintPDF = () => {
-    window.print();
-  };
+  const handleExportCSV = () => { window.location.href = '/api/analytics/export'; };
+  const handlePrintPDF = () => { window.print(); };
 
   const kpis = analytics?.kpis || {};
   const today = kpis.today || {};
@@ -85,7 +265,7 @@ export default function DashboardPage({ navigate }) {
     <DashboardLayout activeMenu="dashboard">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Page Header & Actions */}
+        {/* Header Section */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
@@ -95,7 +275,6 @@ export default function DashboardPage({ navigate }) {
               </div>
             </div>
             <div className="flex items-center flex-wrap gap-2.5">
-              {/* Period Selector */}
               <div className="flex items-center border border-border rounded-lg bg-accent/30 p-1">
                 {[
                   { key: 'today', label: "Aujourd'hui" },
@@ -113,8 +292,6 @@ export default function DashboardPage({ navigate }) {
                   </button>
                 ))}
               </div>
-
-              {/* Export Buttons */}
               <button type="button" className="kt-btn kt-btn-outline" onClick={handleExportCSV}>
                 <i className="ki-filled ki-file-down text-base" /> Export Excel
               </button>
@@ -128,21 +305,20 @@ export default function DashboardPage({ navigate }) {
         <div className="kt-container-fixed">
           <div className="grid gap-5 lg:gap-7.5">
 
-            {/* KPI Alert Banner if Return Rate > 10% */}
+            {/* KPI Alert Banner */}
             {global.alertReturnRate && (
               <div className="flex gap-3 border rounded-xl p-4 bg-destructive/10 border-destructive/30 text-destructive items-start">
                 <i className="ki-filled ki-information-2 text-xl shrink-0 mt-0.5" />
                 <div className="text-sm leading-relaxed">
                   <strong className="font-semibold block mb-0.5">Alerte KPI — Taux de retour critique ({global.tauxRetourGlobal}%)</strong>
-                  Le taux de retour global dépasse le seuil autorisé de 10%. Veuillez vérifier les colis en retour et optimiser les affectations de livraison par zone.
+                  Le taux de retour global dépasse le seuil autorisé de 10%. Veuillez vérifier les colis en retour et optimiser les affectations par zone.
                 </div>
               </div>
             )}
 
-            {/* Top KPI Cards (4 Cards) */}
+            {/* Top KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-              {/* Card 1: Colis du jour */}
               <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
                 <div className="mt-4 ms-5 text-primary flex items-center justify-between pe-5">
                   <i className="ki-filled ki-delivery-3 text-3xl" />
@@ -157,24 +333,18 @@ export default function DashboardPage({ navigate }) {
                 </div>
               </div>
 
-              {/* Card 2: Taux de livraison global */}
               <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
                 <div className="mt-4 ms-5 text-success flex items-center justify-between pe-5">
                   <i className="ki-filled ki-verify text-3xl" />
-                  <span className="kt-badge kt-badge-success kt-badge-outline rounded-full text-xs">
-                    Global
-                  </span>
+                  <span className="kt-badge kt-badge-success kt-badge-outline rounded-full text-xs">Global</span>
                 </div>
                 <div className="flex flex-col gap-1 pb-4 px-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-semibold text-mono text-success">{global.tauxLivraisonGlobal ?? 0}%</span>
-                  </div>
+                  <span className="text-3xl font-semibold text-mono text-success">{global.tauxLivraisonGlobal ?? 0}%</span>
                   <span className="text-sm font-normal text-secondary-foreground">Taux de livraison global</span>
                   <span className="text-xs text-muted-foreground">{global.colisLivres ?? 0} livrés sur {global.totalColis ?? 0} colis</span>
                 </div>
               </div>
 
-              {/* Card 3: Chiffre d'Affaires du mois */}
               <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
                 <div className="mt-4 ms-5 text-warning flex items-center justify-between pe-5">
                   <i className="ki-filled ki-dollar text-3xl" />
@@ -191,13 +361,10 @@ export default function DashboardPage({ navigate }) {
                 </div>
               </div>
 
-              {/* Card 4: Comparaison Mensuelle */}
               <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
                 <div className="mt-4 ms-5 text-info flex items-center justify-between pe-5">
                   <i className="ki-filled ki-chart-line-star text-3xl" />
-                  <span className="kt-badge kt-badge-info kt-badge-outline rounded-full text-xs">
-                    Comparatif
-                  </span>
+                  <span className="kt-badge kt-badge-info kt-badge-outline rounded-full text-xs">Comparatif</span>
                 </div>
                 <div className="flex flex-col gap-1 pb-4 px-5">
                   <div className="flex items-center gap-2">
@@ -216,76 +383,31 @@ export default function DashboardPage({ navigate }) {
             {/* Row 2: Charts Section */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5">
 
-              {/* Chart 1: Evolution temporelle (Area Chart 2 cols) */}
+              {/* Chart 1: Evolution Temporelle */}
               <div className="xl:col-span-2 kt-card">
                 <div className="kt-card-header">
                   <div>
                     <h3 className="kt-card-title">Évolution des Livraisons</h3>
                     <p className="text-xs text-secondary-foreground mt-0.5">Volume quotidien des colis créés et livrés</p>
                   </div>
-                  <span className="kt-badge kt-badge-outline rounded-full text-xs font-medium">
-                    {period === 'today' ? "Aujourd'hui" : period === 'week' ? '7 derniers jours' : period === 'year' ? 'Cette année' : '30 derniers jours'}
-                  </span>
-                </div>
-                <div className="kt-card-content p-5 lg:p-7.5 pt-2">
-                  <div className="h-[320px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#1b84ff" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#1b84ff" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorLivres" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#27d37f" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#27d37f" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                        <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
-                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
-                        <Tooltip
-                          contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '10px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                          labelStyle={{ fontWeight: 'bold', color: 'var(--foreground)' }}
-                        />
-                        <Legend verticalAlign="top" height={36} align="right" />
-                        <Area type="monotone" dataKey="total" name="Total Colis" stroke="#1b84ff" strokeWidth={2.5} fillOpacity={1} fill="url(#colorTotal)" />
-                        <Area type="monotone" dataKey="livres" name="Livrés" stroke="#27d37f" strokeWidth={2.5} fillOpacity={1} fill="url(#colorLivres)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <div className="flex items-center gap-4 text-xs font-medium">
+                    <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-primary" /> Total</span>
+                    <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-success" /> Livrés</span>
                   </div>
+                </div>
+                <div className="kt-card-content p-5 lg:p-7.5">
+                  <SvgTrendAreaChart data={trendData} />
                 </div>
               </div>
 
-              {/* Chart 2: Répartition par Statut (Pie Chart 1 col) */}
+              {/* Chart 2: Donut Status Chart */}
               <div className="xl:col-span-1 kt-card">
                 <div className="kt-card-header">
                   <h3 className="kt-card-title">Répartition par Statut</h3>
                 </div>
-                <div className="kt-card-content p-5 lg:p-7.5 pt-0 flex flex-col items-center justify-center">
-                  <div className="h-[240px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={statusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={3}
-                          dataKey="value"
-                        >
-                          {statusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color || defaultStatusColors[entry.name] || '#3f4254'} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Status Legend List */}
-                  <div className="w-full grid grid-cols-2 gap-2 mt-2">
+                <div className="kt-card-content p-5 lg:p-7.5 flex flex-col items-center justify-center">
+                  <SvgStatusDonutChart data={statusData} />
+                  <div className="w-full grid grid-cols-2 gap-2 mt-5">
                     {statusData.map((s) => (
                       <div key={s.name} className="flex items-center justify-between p-2 rounded-lg bg-accent/40 border border-border/40">
                         <div className="flex items-center gap-2">
@@ -301,39 +423,25 @@ export default function DashboardPage({ navigate }) {
 
             </div>
 
-            {/* Row 3: Carte thermique / Breakdown par Ville */}
+            {/* Row 3: City Performance Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-7.5">
 
-              {/* City Performance Chart (BarChart 2 cols) */}
               <div className="lg:col-span-2 kt-card">
                 <div className="kt-card-header">
                   <div>
                     <h3 className="kt-card-title">Volume et Performance par Ville</h3>
-                    <p className="text-xs text-secondary-foreground mt-0.5">Zones géographiques à fort trafic</p>
+                    <p className="text-xs text-secondary-foreground mt-0.5">Taux de succès des livraisons par zone géographique</p>
                   </div>
                 </div>
-                <div className="kt-card-content p-5 lg:p-7.5 pt-2">
-                  <div className="h-[280px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={cityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                        <XAxis dataKey="city" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
-                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '10px' }} />
-                        <Legend verticalAlign="top" height={36} align="right" />
-                        <Bar dataKey="total" name="Total Colis" fill="#1b84ff" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="livres" name="Colis Livrés" fill="#27d37f" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                <div className="kt-card-content p-5 lg:p-7.5">
+                  <SvgCityBarChart data={cityData} />
                 </div>
               </div>
 
-              {/* Top Villes Summary Table (1 col) */}
               <div className="lg:col-span-1 kt-card">
                 <div className="kt-card-header">
                   <h3 className="kt-card-title">Top Villes</h3>
-                  <span className="text-xs text-secondary-foreground">Taux de succès</span>
+                  <span className="text-xs text-secondary-foreground">Chiffre d'Affaires</span>
                 </div>
                 <div className="kt-card-table pb-3">
                   <table className="kt-table align-middle text-sm text-muted-foreground">
