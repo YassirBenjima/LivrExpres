@@ -627,7 +627,10 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-primary w-[20px]">
                     <i className="ki-filled ki-technology-4 text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Intelligence Artificielle</span>
+                  <span className="kt-menu-title text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    LivrExpress PRO
+                    <span className="kt-badge kt-badge-primary kt-badge-outline text-[10px] px-1 py-0.2 rounded font-bold">PRO</span>
+                  </span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isAiMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -807,6 +810,22 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
               )}
+              {activeMenu.startsWith('ai') && activeMenu !== 'ai_suite' && (
+                <>
+                  <a 
+                    href="/ai/prediction-retours" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/ai/prediction-retours');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    LivrExpress PRO
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {activeMenu === 'dashboard' ? 'Tableau de bord'
                   : activeMenu === 'colis_list' ? 'Liste des colis'
@@ -837,6 +856,11 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   : activeMenu === 'affiliate' ? 'Affiliate'
                   : activeMenu === 'api_docs' ? 'Documentation API'
                   : activeMenu === 'profile' ? 'Profil'
+                  : activeMenu === 'ai_predictions' ? 'LivrExpress PRO — Prédiction des retours'
+                  : activeMenu === 'ai_anomalies' ? 'LivrExpress PRO — Détection des anomalies'
+                  : activeMenu === 'ai_tournees' ? 'LivrExpress PRO — Optimisation de tournées'
+                  : activeMenu === 'ai_chatbot' ? 'LivrExpress PRO — Chatbot Livreur'
+                  : activeMenu.startsWith('ai') ? 'LivrExpress PRO'
                   : 'Tableau de bord'}
               </span>
             </div>
