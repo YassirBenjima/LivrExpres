@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
 export default function LivrExpressAiSuitePage({ navigate, showNotification, defaultTab = 'predictions', activeMenu = 'ai_predictions' }) {
   const getInitialTab = () => {
@@ -13,6 +14,12 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
   const [loading, setLoading] = useState(true);
+
+  // Search & Filter state for predictions table
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRisk, setSelectedRisk] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   // AI Predictions State
   const [predictions, setPredictions] = useState([]);
@@ -147,11 +154,26 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
     }
   };
 
+  // Predictions Filtered & Paginated
+  const filteredPredictions = predictions.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || 
+      (p.tracking_code && p.tracking_code.toLowerCase().includes(q)) ||
+      (p.destinataire && p.destinataire.toLowerCase().includes(q)) ||
+      (p.ville && p.ville.toLowerCase().includes(q));
+
+    const matchesRisk = !selectedRisk || (p.prediction && p.prediction.risk_level === selectedRisk);
+    return matchesSearch && matchesRisk;
+  });
+
+  const totalPages = Math.ceil(filteredPredictions.length / perPage) || 1;
+  const paginatedPredictions = filteredPredictions.slice((currentPage - 1) * perPage, currentPage * perPage);
+
   return (
     <DashboardLayout activeMenu={activeMenu}>
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Header */}
+        {/* Page Header */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
@@ -163,97 +185,219 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 Analyse en temps réel de vos commandes réelles enregistrées
               </div>
             </div>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={fetchPredictions}
+                className="kt-btn kt-btn-outline"
+              >
+                <i className="ki-filled ki-arrows-loop text-sm me-1" />
+                Recalculer IA
+              </button>
+            </div>
           </div>
         </div>
 
         {/* TAB 1: PREDICTION DES RETOURS */}
         {activeTab === 'predictions' && (
           <div className="kt-container-fixed">
-            <div className="grid gap-5">
-              <div className="kt-card border border-border p-5">
-                <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
-                  <div>
-                    <h3 className="text-base font-bold text-foreground">Prédiction des Colis à Risque de Retour</h3>
-                    <p className="text-xs text-muted-foreground">Scoring prédictif calculé sur vos commandes réelles (historique client, ville et montant CRBT)</p>
+            <div className="grid gap-5 lg:gap-7.5">
+              <div className="kt-card kt-card-grid min-w-full">
+                
+                {/* Card Header & Filter Bar */}
+                <div className="kt-card-header flex-wrap gap-2">
+                  <h3 className="kt-card-title text-sm">
+                    Affichage de {filteredPredictions.length} prédictions colis
+                  </h3>
+                  <div className="flex flex-wrap gap-2 lg:gap-5">
+                    <div className="flex">
+                      <label className="kt-input">
+                        <i className="ki-filled ki-magnifier"></i>
+                        <input
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          placeholder="Rechercher par code ou client..."
+                          type="text"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      <KtSelect
+                        value={selectedRisk}
+                        onChange={(val) => { setSelectedRisk(val); setCurrentPage(1); }}
+                        placeholder="Niveau de risque"
+                        className="w-40"
+                        options={[
+                          { value: '', label: 'Tous les risques' },
+                          { value: 'Élevé', label: 'Risque Élevé' },
+                          { value: 'Moyen', label: 'Risque Moyen' },
+                          { value: 'Faible', label: 'Risque Faible' }
+                        ]}
+                      />
+                      <button
+                        className="kt-btn kt-btn-outline"
+                        onClick={() => { setSearchQuery(''); setSelectedRisk(''); setCurrentPage(1); }}
+                      >
+                        Réinitialiser
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={fetchPredictions} className="kt-btn kt-btn-sm kt-btn-outline">
-                    <i className="ki-filled ki-arrows-loop text-xs me-1" />
-                    Recalculer IA
-                  </button>
                 </div>
 
-                <div className="kt-scrollable-x-auto">
-                  <table className="kt-table table-auto kt-table-border">
-                    <thead>
-                      <tr>
-                        <th>Colis & Code</th>
-                        <th>Destinataire & Ville</th>
-                        <th>Montant CRBT</th>
-                        <th>Score de Risque IA</th>
-                        <th>Facteurs Détectés</th>
-                        <th>Recommandation IA</th>
-                        <th className="text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Analyse prédictive IA de vos colis en cours...</td>
-                        </tr>
-                      ) : predictions.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Aucun colis enregistré en base de données. Créez un colis dans le module Colis pour voir son analyse IA.</td>
-                        </tr>
-                      ) : (
-                        predictions.map((p) => {
-                          const pred = p.prediction || {};
-                          return (
-                            <tr key={p.colis_id}>
-                              <td className="font-mono text-xs font-semibold text-foreground">{p.tracking_code}</td>
-                              <td>
-                                <div className="flex flex-col">
-                                  <span className="font-semibold text-foreground text-xs">{p.destinataire}</span>
-                                  <span className="text-[11px] text-muted-foreground">{p.ville}</span>
+                {/* Card Content & Table */}
+                <div className="kt-card-content">
+                  <div className="grid">
+                    <div className="kt-scrollable-x-auto">
+                      <table className="kt-table table-auto kt-table-border">
+                        <thead>
+                          <tr>
+                            <th className="min-w-[140px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Code Colis</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[180px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Destinataire & Ville</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[130px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Montant CRBT</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[180px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Score de Risque IA</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[240px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Facteurs Détectés</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[220px]">
+                              <span className="kt-table-col">
+                                <span className="kt-table-col-label">Recommandation IA</span>
+                              </span>
+                            </th>
+                            <th className="min-w-[120px] text-right">
+                              <span className="kt-table-col justify-end">
+                                <span className="kt-table-col-label">Action</span>
+                              </span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {loading ? (
+                            <tr>
+                              <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
+                                  Analyse prédictive des colis en cours...
                                 </div>
-                              </td>
-                              <td className="font-semibold text-foreground">{p.crbt} DH</td>
-                              <td>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 bg-accent/40 h-2 rounded-full overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${pred.risk_score > 60 ? 'bg-destructive' : pred.risk_score > 30 ? 'bg-warning' : 'bg-success'}`}
-                                      style={{ width: `${pred.risk_score || 0}%` }}
-                                    />
-                                  </div>
-                                  <span className={`kt-badge kt-badge-${pred.badge_color || 'primary'} kt-badge-outline rounded-full text-[11px]`}>
-                                    {pred.risk_score}% ({pred.risk_level})
-                                  </span>
-                                </div>
-                              </td>
-                              <td>
-                                <ul className="list-disc list-inside text-[11px] text-secondary-foreground space-y-0.5">
-                                  {(pred.factors || []).map((f, i) => <li key={i}>{f}</li>)}
-                                </ul>
-                              </td>
-                              <td className="text-xs text-foreground font-medium max-w-xs">{pred.recommendation}</td>
-                              <td className="text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (showNotification) showNotification('info', `Appel de confirmation pré-livraison lancé pour ${p.destinataire}`);
-                                  }}
-                                  className="kt-btn kt-btn-xs kt-btn-outline"
-                                >
-                                  📞 Confirmer
-                                </button>
                               </td>
                             </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
+                          ) : paginatedPredictions.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                                Aucun colis trouvé correspondant à vos critères de recherche.
+                              </td>
+                            </tr>
+                          ) : (
+                            paginatedPredictions.map((p) => {
+                              const pred = p.prediction || {};
+                              return (
+                                <tr key={p.colis_id} className="hover:bg-accent/40 transition-colors">
+                                  <td className="font-mono text-xs font-semibold text-foreground">
+                                    {p.tracking_code}
+                                  </td>
+                                  <td>
+                                    <div className="flex flex-col">
+                                      <span className="font-semibold text-foreground text-xs">{p.destinataire}</span>
+                                      <span className="text-[11px] text-muted-foreground">{p.ville}</span>
+                                    </div>
+                                  </td>
+                                  <td className="font-semibold text-foreground text-xs">
+                                    {p.crbt ? p.crbt.toFixed(2) : '0.00'} DH
+                                  </td>
+                                  <td>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-16 bg-accent/50 h-2 rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full ${
+                                            pred.risk_score > 60 ? 'bg-destructive' : pred.risk_score > 30 ? 'bg-warning' : 'bg-success'
+                                          }`}
+                                          style={{ width: `${pred.risk_score || 0}%` }}
+                                        />
+                                      </div>
+                                      <span className={`kt-badge kt-badge-${pred.badge_color || 'primary'} kt-badge-outline rounded-full text-[11px]`}>
+                                        {pred.risk_score}% ({pred.risk_level})
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <ul className="list-disc list-inside text-[11px] text-secondary-foreground space-y-0.5">
+                                      {(pred.factors || []).map((f, i) => (
+                                        <li key={i}>{f}</li>
+                                      ))}
+                                    </ul>
+                                  </td>
+                                  <td className="text-xs text-foreground font-medium max-w-xs">
+                                    {pred.recommendation}
+                                  </td>
+                                  <td className="text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (showNotification) showNotification('info', `Appel de pré-livraison lancé pour ${p.destinataire}`);
+                                      }}
+                                      className="kt-btn kt-btn-xs kt-btn-outline"
+                                    >
+                                      📞 Confirmer
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Card Footer & Pagination */}
+                <div className="kt-card-footer justify-between md:justify-between flex-col md:flex-row gap-5">
+                  <div className="flex items-center gap-2 text-sm text-secondary-foreground">
+                    Affichage de {filteredPredictions.length > 0 ? (currentPage - 1) * perPage + 1 : 0} à {Math.min(currentPage * perPage, filteredPredictions.length)} sur {filteredPredictions.length} éléments
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
+                    >
+                      Précédent
+                    </button>
+                    <span className="text-xs font-semibold px-2">
+                      Page {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -263,11 +407,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
         {activeTab === 'anomalies' && (
           <div className="kt-container-fixed">
             <div className="grid gap-5">
-              <div className="kt-card border border-border p-5">
+              <div className="kt-card kt-card-grid min-w-full p-5">
                 <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
                   <div>
                     <h3 className="text-base font-bold text-foreground">Colis en Anomalie ou Bloqués</h3>
-                    <p className="text-xs text-muted-foreground">Détection en temps réel des retard de ramassage ou livraisons non clôturées sur vos colis réels</p>
+                    <p className="text-xs text-muted-foreground">Détection en temps réel des retards de ramassage ou livraisons non clôturées sur vos colis réels</p>
                   </div>
                   <span className="kt-badge kt-badge-destructive rounded-full">
                     {anomalies.length} Colis analysé(s)
