@@ -1,697 +1,369 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
-const mockDataFallback = {
-  totalColis: 142,
-  colisLivres: 95,
-  colisEnPreparation: 15,
-  colisExpedies: 22,
-  colisRetournes: 10,
-  colisCrees: 12,
-  totalCrbt: 54300.00,
-  crbtLivres: 38200.00,
-  crbtEnCours: 16100.00,
-  recentColis: [
-    { id: 1, trackingCode: 'F-20260623-0005', productNature: 'Téléphone portable', etatLabel: 'Livré', etatBadgeClass: 'kt-badge-success', createdAt: '23 Jun, 2026 10:30', city: 'Casablanca', price: 1200.00 },
-    { id: 2, trackingCode: 'F-20260623-0004', productNature: 'Veste Cuir', etatLabel: 'En préparation', etatBadgeClass: 'kt-badge-warning', createdAt: '23 Jun, 2026 09:15', city: 'Rabat', price: 450.00 },
-    { id: 3, trackingCode: 'F-20260622-0003', productNature: 'Crème Visage', etatLabel: 'Expédié', etatBadgeClass: 'kt-badge-info', createdAt: '22 Jun, 2026 17:45', city: 'Marrakech', price: 290.00 },
-    { id: 4, trackingCode: 'F-20260622-0002', productNature: 'Chaussures Sport', etatLabel: 'Retourné', etatBadgeClass: 'kt-badge-destructive', createdAt: '22 Jun, 2026 14:20', city: 'Tanger', price: 650.00 },
-    { id: 5, trackingCode: 'F-20260622-0001', productNature: 'Sac à Main', etatLabel: 'Créé', etatBadgeClass: 'kt-badge-primary', createdAt: '22 Jun, 2026 11:05', city: 'Fès', price: 380.00 }
-  ],
-  chartLabels: ['17 Jun', '18 Jun', '19 Jun', '20 Jun', '21 Jun', '22 Jun', '23 Jun'],
-  chartData: [8, 14, 12, 19, 24, 21, 28]
+const defaultStatusColors = {
+  'Livré': '#27d37f',
+  'Expédié': '#1b84ff',
+  'En préparation': '#f6c000',
+  'Créé': '#7239ea',
+  'Retourné': '#f8285a',
 };
 
-export default function DashboardPage({ dashboardData = null, loading = false, refetchData }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const data = dashboardData || mockDataFallback;
+export default function DashboardPage({ navigate }) {
+  const [period, setPeriod]       = useState('month'); // 'today', 'week', 'month', 'year'
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading]     = useState(true);
 
-  // ApexCharts initialization
-  useEffect(() => {
-    if (!data || !window.ApexCharts) return;
+  const headers = () => {
+    const t = localStorage.getItem('auth_token');
+    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+  };
 
-    const container = document.querySelector("#real_earnings_chart");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const options = {
-      series: [{
-        name: 'Colis enregistrés',
-        data: data.chartData
-      }],
-      chart: {
-        type: 'area',
-        height: 250,
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        fontFamily: 'Inter, system-ui, sans-serif'
-      },
-      colors: ['#3e97ff'],
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth', width: 3 },
-      fill: {
-        type: 'gradient',
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.45,
-          opacityTo: 0.05,
-          stops: [0, 100]
-        }
-      },
-      xaxis: {
-        categories: data.chartLabels,
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: {
-          style: {
-            colors: '#7c8286',
-            fontSize: '12px'
-          }
-        }
-      },
-      yaxis: {
-        min: 0,
-        tickAmount: 5,
-        axisTicks: { show: false },
-        labels: {
-          style: {
-            colors: '#7c8286',
-            fontSize: '12px'
-          },
-          formatter: function (val) {
-            return parseInt(val);
-          }
-        }
-      },
-      grid: {
-        borderColor: 'rgba(0,0,0,0.05)',
-        strokeDashArray: 4
-      },
-      tooltip: {
-        theme: 'light'
+  const loadAnalytics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/analytics/advanced?period=${period}`, { headers: headers(), credentials: 'include' });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.success) setAnalytics(d);
       }
-    };
+    } catch {
+      // Fallback data if API unreachable
+      setAnalytics({
+        kpis: {
+          today: { colisCrees: 12, colisLivres: 9, colisRetournes: 1, colisEnCours: 2, caToday: 3450 },
+          global: { totalColis: 142, colisLivres: 95, colisRetournes: 14, tauxLivraisonGlobal: 66.9, tauxRetourGlobal: 9.8, alertReturnRate: false, caToday: 3450, caMonth: 54300, caYear: 382000 },
+          comparison: { currentMonthTotal: 142, prevMonthTotal: 118, volumeGrowth: 20.3, currentMonthCa: 54300, prevMonthCa: 46200, caGrowth: 17.5 },
+        },
+        trendData: [
+          { date: '18 Jul', fullDate: '2026-07-18', total: 10, livres: 8, retours: 1 },
+          { date: '20 Jul', fullDate: '2026-07-20', total: 15, livres: 12, retours: 2 },
+          { date: '22 Jul', fullDate: '2026-07-22', total: 18, livres: 15, retours: 1 },
+          { date: '24 Jul', fullDate: '2026-07-24', total: 22, livres: 18, retours: 2 },
+          { date: '26 Jul', fullDate: '2026-07-26', total: 19, livres: 16, retours: 1 },
+          { date: '28 Jul', fullDate: '2026-07-28', total: 25, livres: 20, retours: 3 },
+          { date: '30 Jul', fullDate: '2026-07-30', total: 33, livres: 26, retours: 4 },
+        ],
+        statusData: [
+          { name: 'Livré', value: 95, color: '#27d37f' },
+          { name: 'Expédié', value: 22, color: '#1b84ff' },
+          { name: 'En préparation', value: 15, color: '#f6c000' },
+          { name: 'Créé', value: 12, color: '#7239ea' },
+          { name: 'Retourné', value: 10, color: '#f8285a' },
+        ],
+        cityData: [
+          { city: 'Casablanca', total: 58, livres: 45, retours: 4, rate: 77.6, ca: 24500 },
+          { city: 'Rabat', total: 34, livres: 26, retours: 3, rate: 76.5, ca: 14200 },
+          { city: 'Marrakech', total: 22, livres: 15, retours: 2, rate: 68.2, ca: 8900 },
+          { city: 'Tanger', total: 16, livres: 11, retours: 1, rate: 68.8, ca: 5600 },
+          { city: 'Agadir', total: 12, livres: 8, retours: 1, rate: 66.7, ca: 4100 },
+        ]
+      });
+    } finally { setLoading(false); }
+  }, [period]);
 
-    const chart = new window.ApexCharts(container, options);
-    chart.render();
+  useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
-    return () => {
-      chart.destroy();
-    };
-  }, [data]);
+  const handleExportCSV = () => {
+    window.location.href = '/api/analytics/export';
+  };
 
-  if (loading) {
-    return (
-      <DashboardLayout activeMenu="dashboard">
-        <main className="grow pt-5 dashboard-content-shift" role="content">
-          
-          {/* Title Container Skeleton */}
-          <div className="kt-container-fixed">
-            <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-              <div className="flex flex-col justify-center gap-2">
-                <div className="h-6 w-32 shimmer rounded-md"></div>
-                <div className="h-4 w-96 shimmer rounded-md"></div>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-28 shimmer rounded-md"></div>
-                <div className="h-9 w-28 shimmer rounded-md"></div>
-              </div>
-            </div>
-          </div>
+  const handlePrintPDF = () => {
+    window.print();
+  };
 
-          {/* Core Content Grid Skeleton */}
-          <div className="kt-container-fixed">
-            <div className="grid gap-5 lg:gap-7.5">
-              
-              {/* Top Cards Grid Skeleton */}
-              <div className="grid lg:grid-cols-3 gap-y-5 lg:gap-7.5 items-stretch">
-                <div className="lg:col-span-1">
-                  <div className="grid grid-cols-2 gap-5 lg:gap-7.5 h-full items-stretch">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="kt-card flex-col justify-between gap-6 h-full p-5 bg-card border border-border/50">
-                        <div className="size-8 rounded-lg shimmer"></div>
-                        <div className="flex flex-col gap-2 mt-4">
-                          <div className="h-7 w-12 shimmer rounded-md"></div>
-                          <div className="h-3 w-16 shimmer rounded-md"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Welcome Card Skeleton */}
-                <div className="lg:col-span-2">
-                  <div className="kt-card h-full p-10 bg-card border border-border/50 flex flex-col justify-between gap-4">
-                    <div className="flex flex-col gap-4 max-w-[60%]">
-                      <div className="flex -space-x-2">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="size-10 rounded-full shimmer border-2 border-background"></div>
-                        ))}
-                      </div>
-                      <div className="h-10 w-48 shimmer rounded-md"></div>
-                      <div className="h-3 w-full shimmer rounded-md"></div>
-                      <div className="h-3 w-3/4 shimmer rounded-md"></div>
-                    </div>
-                    <div className="h-4 w-28 shimmer rounded-md mt-4"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mid Grid Skeleton */}
-              <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
-                {/* Highlights Skeleton */}
-                <div className="lg:col-span-1">
-                  <div className="kt-card h-full p-5 lg:p-7.5 flex flex-col gap-5 border border-border/50">
-                    <div className="h-5 w-24 shimmer rounded-md mb-2"></div>
-                    <div className="flex flex-col gap-2">
-                      <div className="h-3 w-32 shimmer rounded-md"></div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-40 shimmer rounded-md"></div>
-                        <div className="h-5 w-12 shimmer rounded-full"></div>
-                      </div>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="h-2 w-full shimmer rounded-xs my-2"></div>
-                    {/* Legend boxes */}
-                    <div className="flex items-center flex-wrap gap-4">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <span className="rounded-full size-2 shimmer"></span>
-                          <div className="h-3 w-16 shimmer rounded-md"></div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-b border-border/50 my-2"></div>
-                    {/* Detailed CRBT rows */}
-                    <div className="grid gap-4">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="flex justify-between items-center">
-                          <div className="flex items-center gap-1.5">
-                            <div className="size-4 rounded shimmer"></div>
-                            <div className="h-3.5 w-20 shimmer rounded-md"></div>
-                          </div>
-                          <div className="flex gap-4">
-                            <div className="h-3.5 w-16 shimmer rounded-md"></div>
-                            <div className="h-3.5 w-8 shimmer rounded-md"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chart Card Skeleton */}
-                <div className="lg:col-span-2">
-                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col justify-between">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="h-5 w-48 shimmer rounded-md"></div>
-                      <div className="h-8 w-28 shimmer rounded-md"></div>
-                    </div>
-                    {/* Fake Chart bars */}
-                    <div className="flex items-end gap-3 h-52 pt-4 px-2">
-                      {[15, 30, 25, 45, 60, 50, 75, 40, 65, 80, 55, 90].map((h, i) => (
-                        <div
-                          key={i}
-                          className="shimmer w-full rounded-t-md hover:opacity-80 transition-all duration-300"
-                          style={{ height: `${h}%` }}
-                        ></div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Grid Skeleton */}
-              <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
-                {/* Performance stats skeleton */}
-                <div className="lg:col-span-1">
-                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col gap-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex flex-col gap-1">
-                        <div className="h-5 w-28 shimmer rounded-md"></div>
-                        <div className="h-3.5 w-36 shimmer rounded-md"></div>
-                      </div>
-                      <div className="size-8 rounded-full shimmer"></div>
-                    </div>
-                    <div className="h-3 w-full shimmer rounded-md"></div>
-                    <div className="h-3 w-5/6 shimmer rounded-md mb-4"></div>
-                    <div className="flex rounded-lg bg-accent/30 gap-10 p-5 mt-auto">
-                      <div className="flex flex-col gap-3">
-                        <div className="h-3 w-16 shimmer rounded-md"></div>
-                        <div className="h-4 w-20 shimmer rounded-md"></div>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <div className="h-3 w-16 shimmer rounded-md"></div>
-                        <div className="flex -space-x-2">
-                          {[...Array(3)].map((_, i) => (
-                            <div key={i} className="size-[30px] rounded-full shimmer border-2 border-background"></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Table Card Skeleton */}
-                <div className="lg:col-span-2">
-                  <div className="kt-card h-full p-5 lg:p-7.5 border border-border/50 flex flex-col gap-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="h-5 w-44 shimmer rounded-md"></div>
-                      <div className="h-8 w-44 shimmer rounded-md"></div>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      {[...Array(4)].map((_, r) => (
-                        <div key={r} className="flex items-center justify-between py-3 border-b border-border/30 last:border-b-0">
-                          <div className="flex items-center gap-3 w-1/3">
-                            <div className="size-4 shimmer rounded"></div>
-                            <div className="flex flex-col gap-1.5 w-full">
-                              <div className="h-4 w-3/4 shimmer rounded-md"></div>
-                              <div className="h-3 w-1/2 shimmer rounded-md"></div>
-                            </div>
-                          </div>
-                          <div className="h-5 w-20 shimmer rounded-full"></div>
-                          <div className="h-3.5 w-24 shimmer rounded-md"></div>
-                          <div className="flex flex-col gap-1 w-20 items-end">
-                            <div className="h-3.5 w-12 shimmer rounded-md"></div>
-                            <div className="h-3 w-16 shimmer rounded-md"></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </main>
-      </DashboardLayout>
-    );
-  }
-
-  // Filter recent colis based on search query
-  const filteredColis = data.recentColis.filter(colis => 
-    colis.trackingCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    colis.productNature.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    colis.city.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const percentLivre = data.totalColis > 0 ? (data.colisLivres / data.totalColis * 100) : 0;
-  const percentRetour = data.totalColis > 0 ? (data.colisRetournes / data.totalColis * 100) : 0;
-  const percentAutre = 100 - percentLivre - percentRetour;
+  const kpis = analytics?.kpis || {};
+  const today = kpis.today || {};
+  const global = kpis.global || {};
+  const comp = kpis.comparison || {};
+  const trendData = analytics?.trendData || [];
+  const statusData = analytics?.statusData || [];
+  const cityData = analytics?.cityData || [];
 
   return (
     <DashboardLayout activeMenu="dashboard">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
-        
-        {/* Title container */}
+
+        {/* Page Header & Actions */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">
-                Dashboard
-              </h1>
+              <h1 className="text-xl font-medium leading-none text-mono">Tableau de Bord Analytics</h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Aperçu global de l'activité logistique et financière de LivrExpress
+                Statistiques globales, performances logistiques et suivi du chiffre d'affaires
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <a className="kt-btn kt-btn-outline" href="/colis/new">
-                Nouveau Colis
-              </a>
-              <a className="kt-btn kt-btn-primary" href="/bon-livraison/new">
-                Nouveau Bon
-              </a>
+            <div className="flex items-center flex-wrap gap-2.5">
+              {/* Period Selector */}
+              <div className="flex items-center border border-border rounded-lg bg-accent/30 p-1">
+                {[
+                  { key: 'today', label: "Aujourd'hui" },
+                  { key: 'week', label: '7 jours' },
+                  { key: 'month', label: 'Ce mois' },
+                  { key: 'year', label: 'Cette année' },
+                ].map(p => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setPeriod(p.key)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${period === p.key ? 'bg-primary text-primary-foreground shadow-sm' : 'text-secondary-foreground hover:text-foreground'}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Export Buttons */}
+              <button type="button" className="kt-btn kt-btn-outline" onClick={handleExportCSV}>
+                <i className="ki-filled ki-file-down text-base" /> Export Excel
+              </button>
+              <button type="button" className="kt-btn kt-btn-primary" onClick={handlePrintPDF}>
+                <i className="ki-filled ki-printer text-base" /> Rapport PDF
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Core Content Grid */}
         <div className="kt-container-fixed">
           <div className="grid gap-5 lg:gap-7.5">
-            
-            {/* Top Cards Grid */}
-            <div className="grid lg:grid-cols-3 gap-y-5 lg:gap-7.5 items-stretch">
-              <div className="lg:col-span-1">
-                <div className="grid grid-cols-2 gap-5 lg:gap-7.5 h-full items-stretch">
-                  
-                  {/* Total Colis Card */}
-                  <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
-                    <div className="mt-4 ms-5 text-primary">
-                      <i className="ki-filled ki-package text-3xl"></i>
-                    </div>
-                    <div className="flex flex-col gap-1 pb-4 px-5">
-                      <span className="text-3xl font-semibold text-mono">
-                        {data.totalColis}
-                      </span>
-                      <span className="text-sm font-normal text-secondary-foreground">
-                        Total Colis
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Colis Livres Card */}
-                  <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
-                    <div className="mt-4 ms-5 text-success">
-                      <i className="ki-filled ki-verify text-3xl"></i>
-                    </div>
-                    <div className="flex flex-col gap-1 pb-4 px-5">
-                      <span className="text-3xl font-semibold text-mono text-success">
-                        {data.colisLivres}
-                      </span>
-                      <span className="text-sm font-normal text-secondary-foreground">
-                        Colis Livrés
-                      </span>
-                    </div>
-                  </div>
+            {/* KPI Alert Banner if Return Rate > 10% */}
+            {global.alertReturnRate && (
+              <div className="flex gap-3 border rounded-xl p-4 bg-destructive/10 border-destructive/30 text-destructive items-start">
+                <i className="ki-filled ki-information-2 text-xl shrink-0 mt-0.5" />
+                <div className="text-sm leading-relaxed">
+                  <strong className="font-semibold block mb-0.5">Alerte KPI — Taux de retour critique ({global.tauxRetourGlobal}%)</strong>
+                  Le taux de retour global dépasse le seuil autorisé de 10%. Veuillez vérifier les colis en retour et optimiser les affectations de livraison par zone.
+                </div>
+              </div>
+            )}
 
-                  {/* Colis En Cours Card */}
-                  <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
-                    <div className="mt-4 ms-5 text-info">
-                      <i className="ki-filled ki-delivery-3 text-3xl"></i>
-                    </div>
-                    <div className="flex flex-col gap-1 pb-4 px-5">
-                      <span className="text-3xl font-semibold text-mono text-info">
-                        {data.colisExpedies + data.colisEnPreparation}
-                      </span>
-                      <span className="text-sm font-normal text-secondary-foreground">
-                        Colis En Cours
-                      </span>
-                    </div>
-                  </div>
+            {/* Top KPI Cards (4 Cards) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-                  {/* Colis Retournes Card */}
-                  <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
-                    <div className="mt-4 ms-5 text-destructive">
-                      <i className="ki-filled ki-delivery-time text-3xl"></i>
-                    </div>
-                    <div className="flex flex-col gap-1 pb-4 px-5">
-                      <span className="text-3xl font-semibold text-mono text-destructive">
-                        {data.colisRetournes}
-                      </span>
-                      <span className="text-sm font-normal text-secondary-foreground">
-                        Colis Retournés
-                      </span>
-                    </div>
-                  </div>
-
+              {/* Card 1: Colis du jour */}
+              <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
+                <div className="mt-4 ms-5 text-primary flex items-center justify-between pe-5">
+                  <i className="ki-filled ki-delivery-3 text-3xl" />
+                  <span className="kt-badge kt-badge-primary kt-badge-outline rounded-full text-xs">
+                    +{today.colisCrees ?? 0} aujourd'hui
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 pb-4 px-5">
+                  <span className="text-3xl font-semibold text-mono">{today.colisCrees ?? 0}</span>
+                  <span className="text-sm font-normal text-secondary-foreground">Colis créés aujourd'hui</span>
+                  <span className="text-xs text-muted-foreground">{today.colisLivres ?? 0} livrés • {today.colisEnCours ?? 0} en cours</span>
                 </div>
               </div>
 
-              {/* Welcome Banner Card */}
-              <div className="lg:col-span-2">
-                <div className="kt-card h-full welcome-callout-card">
-                  <div className="kt-card-content p-10 bg-no-repeat bg-[length:40%] bg-[right_center] lg:bg-[right_10%_center]">
-                    <div className="flex flex-col justify-center gap-4 max-w-[60%]">
-                      <div className="flex -space-x-2">
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-4.png" alt="Avatar"/>
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-1.png" alt="Avatar"/>
-                        <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-10" src="/assets/media/avatars/300-2.png" alt="Avatar"/>
-                        <span className="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 font-semibold leading-none text-2xs size-10 text-white text-xs ring-background bg-green-500">
-                          S
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-semibold text-mono">
-                        LivrExpress<br/>Tableau de Bord
-                      </h2>
-                      <p className="text-sm font-normal text-secondary-foreground leading-5.5">
-                        Gérez vos colis, vos ramassages, vos retours et vos bons de livraison en toute simplicité avec notre interface d'administration temps réel.
-                      </p>
-                    </div>
+              {/* Card 2: Taux de livraison global */}
+              <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
+                <div className="mt-4 ms-5 text-success flex items-center justify-between pe-5">
+                  <i className="ki-filled ki-verify text-3xl" />
+                  <span className="kt-badge kt-badge-success kt-badge-outline rounded-full text-xs">
+                    Global
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 pb-4 px-5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-semibold text-mono text-success">{global.tauxLivraisonGlobal ?? 0}%</span>
                   </div>
-                  <div className="kt-card-footer justify-center">
-                    <a className="kt-link kt-link-underlined kt-link-dashed" href="/colis/">
-                      Gérer les Colis
-                    </a>
-                  </div>
+                  <span className="text-sm font-normal text-secondary-foreground">Taux de livraison global</span>
+                  <span className="text-xs text-muted-foreground">{global.colisLivres ?? 0} livrés sur {global.totalColis ?? 0} colis</span>
                 </div>
               </div>
+
+              {/* Card 3: Chiffre d'Affaires du mois */}
+              <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
+                <div className="mt-4 ms-5 text-warning flex items-center justify-between pe-5">
+                  <i className="ki-filled ki-dollar text-3xl" />
+                  {comp.caGrowth !== undefined && (
+                    <span className={`kt-badge ${comp.caGrowth >= 0 ? 'kt-badge-success' : 'kt-badge-destructive'} kt-badge-outline rounded-full text-xs`}>
+                      {comp.caGrowth >= 0 ? '+' : ''}{comp.caGrowth}% vs m-1
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1 pb-4 px-5">
+                  <span className="text-3xl font-semibold text-mono">{(global.caMonth ?? 0).toLocaleString('fr-FR')} MAD</span>
+                  <span className="text-sm font-normal text-secondary-foreground">Chiffre d'affaires (Ce mois)</span>
+                  <span className="text-xs text-muted-foreground">Jour: {(global.caToday ?? 0).toLocaleString('fr-FR')} MAD • Année: {(global.caYear ?? 0).toLocaleString('fr-FR')} MAD</span>
+                </div>
+              </div>
+
+              {/* Card 4: Comparaison Mensuelle */}
+              <div className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-stats-gradient">
+                <div className="mt-4 ms-5 text-info flex items-center justify-between pe-5">
+                  <i className="ki-filled ki-chart-line-star text-3xl" />
+                  <span className="kt-badge kt-badge-info kt-badge-outline rounded-full text-xs">
+                    Comparatif
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 pb-4 px-5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-semibold text-mono">{comp.currentMonthTotal ?? 0}</span>
+                    <span className="text-xs text-muted-foreground">vs {comp.prevMonthTotal ?? 0} m-1</span>
+                  </div>
+                  <span className="text-sm font-normal text-secondary-foreground">Volume de colis ce mois</span>
+                  <span className={`text-xs font-semibold ${comp.volumeGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
+                    {comp.volumeGrowth >= 0 ? '▲ +' : '▼ '}{comp.volumeGrowth}% par rapport au mois dernier
+                  </span>
+                </div>
+              </div>
+
             </div>
 
-            {/* Mid Grid (Highlights and Volume Chart) */}
-            <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
-              {/* Highlights Card */}
-              <div className="lg:col-span-1">
-                <div className="kt-card h-full">
-                  <div className="kt-card-header">
-                    <h3 className="kt-card-title">Highlights</h3>
+            {/* Row 2: Charts Section */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-7.5">
+
+              {/* Chart 1: Evolution temporelle (Area Chart 2 cols) */}
+              <div className="xl:col-span-2 kt-card">
+                <div className="kt-card-header">
+                  <div>
+                    <h3 className="kt-card-title">Évolution des Livraisons</h3>
+                    <p className="text-xs text-secondary-foreground mt-0.5">Volume quotidien des colis créés et livrés</p>
                   </div>
-                  <div className="kt-card-content flex flex-col gap-4 p-5 lg:p-7.5 lg:pt-4">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-normal text-secondary-foreground">
-                        Recettes CRBT (Livrés)
-                      </span>
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-2xl font-bold text-mono text-primary">
-                          {data.crbtLivres.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
-                        </span>
-                        <span className="kt-badge kt-badge-outline kt-badge-success kt-badge-sm">
-                          +{percentLivre.toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="flex items-center gap-1 mb-1.5">
-                      <div className="bg-green-500 h-2 rounded-xs" style={{ width: `${percentLivre}%` }}></div>
-                      <div className="bg-destructive h-2 rounded-xs" style={{ width: `${percentRetour}%` }}></div>
-                      <div className="bg-violet-500 h-2 rounded-xs" style={{ width: `${percentAutre}%` }}></div>
-                    </div>
-
-                    {/* Color legends */}
-                    <div className="flex items-center flex-wrap gap-4 mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="rounded-full size-2 bg-green-500"></span>
-                        <span className="text-sm font-normal text-foreground">
-                          Livré ({percentLivre.toFixed(1)}%)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="rounded-full size-2 bg-red-500"></span>
-                        <span className="text-sm font-normal text-foreground">
-                          Retourné ({percentRetour.toFixed(1)}%)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="rounded-full size-2 bg-violet-500"></span>
-                        <span className="text-sm font-normal text-foreground">
-                          En cours ({percentAutre.toFixed(1)}%)
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="border-b border-input"></div>
-
-                    {/* Detailed CRBT Metrics */}
-                    <div className="grid gap-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <i className="ki-filled ki-wallet text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT Total</span>
-                        </div>
-                        <div className="flex items-center text-sm font-medium text-foreground gap-6">
-                          <span>{data.totalCrbt.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                          <span>100%</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <i className="ki-filled ki-verify text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT Livré</span>
-                        </div>
-                        <div className="flex items-center text-sm font-medium text-foreground gap-6">
-                          <span>{data.crbtLivres.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                          <span className="flex items-center gap-0.5 text-green-500">
-                            <i className="ki-filled ki-arrow-up"></i>
-                            {data.totalCrbt > 0 ? ((data.crbtLivres / data.totalCrbt) * 100).toFixed(1) : 0}%
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <i className="ki-filled ki-delivery-3 text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT En Transit</span>
-                        </div>
-                        <div className="flex items-center text-sm font-medium text-foreground gap-6">
-                          <span>{data.crbtEnCours.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
-                          <span className="flex items-center gap-0.5 text-green-500">
-                            <i className="ki-filled ki-arrow-up"></i>
-                            {data.totalCrbt > 0 ? ((data.crbtEnCours / data.totalCrbt) * 100).toFixed(1) : 0}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
+                  <span className="kt-badge kt-badge-outline rounded-full text-xs font-medium">
+                    {period === 'today' ? "Aujourd'hui" : period === 'week' ? '7 derniers jours' : period === 'year' ? 'Cette année' : '30 derniers jours'}
+                  </span>
+                </div>
+                <div className="kt-card-content p-5 lg:p-7.5 pt-2">
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#1b84ff" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#1b84ff" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="colorLivres" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#27d37f" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#27d37f" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                        <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '10px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                          labelStyle={{ fontWeight: 'bold', color: 'var(--foreground)' }}
+                        />
+                        <Legend verticalAlign="top" height={36} align="right" />
+                        <Area type="monotone" dataKey="total" name="Total Colis" stroke="#1b84ff" strokeWidth={2.5} fillOpacity={1} fill="url(#colorTotal)" />
+                        <Area type="monotone" dataKey="livres" name="Livrés" stroke="#27d37f" strokeWidth={2.5} fillOpacity={1} fill="url(#colorLivres)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
-              {/* Volume Chart Card */}
-              <div className="lg:col-span-2">
-                <div className="kt-card h-full">
-                  <div className="kt-card-header">
-                    <h3 className="kt-card-title">Volume des Colis Enregistrés</h3>
-                    <div className="flex gap-5">
-                      <select className="kt-select w-36" defaultValue="1">
-                        <option value="1">7 jours</option>
-                      </select>
-                    </div>
+              {/* Chart 2: Répartition par Statut (Pie Chart 1 col) */}
+              <div className="xl:col-span-1 kt-card">
+                <div className="kt-card-header">
+                  <h3 className="kt-card-title">Répartition par Statut</h3>
+                </div>
+                <div className="kt-card-content p-5 lg:p-7.5 pt-0 flex flex-col items-center justify-center">
+                  <div className="h-[240px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={statusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {statusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || defaultStatusColors[entry.name] || '#3f4254'} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="kt-card-content flex flex-col justify-end items-stretch grow px-3 py-1">
-                    <div id="real_earnings_chart" style={{ minHeight: '250px', width: '100%' }}></div>
+
+                  {/* Status Legend List */}
+                  <div className="w-full grid grid-cols-2 gap-2 mt-2">
+                    {statusData.map((s) => (
+                      <div key={s.name} className="flex items-center justify-between p-2 rounded-lg bg-accent/40 border border-border/40">
+                        <div className="flex items-center gap-2">
+                          <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                          <span className="text-xs font-medium text-foreground truncate">{s.name}</span>
+                        </div>
+                        <span className="text-xs font-bold text-mono me-1">{s.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
+
             </div>
 
-            {/* Bottom Grid (Performance and Recent Colis Table) */}
-            <div className="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
-              
-              {/* Performance / Stats Card */}
-              <div className="lg:col-span-1">
-                <div className="kt-card h-full">
-                  <div className="kt-card-content lg:p-7.5 lg:pt-6 p-5">
-                    <div className="flex items-center justify-between flex-wrap gap-5 mb-7.5">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xl font-semibold text-mono">Performance</span>
-                        <span className="text-sm font-semibold text-foreground">Statistiques Globales</span>
-                      </div>
-                      <i className="ki-filled ki-delivery-3 text-3xl text-primary"></i>
-                    </div>
-                    <p className="text-sm font-normal text-foreground leading-5.5 mb-8">
-                      Visualisez la performance et la répartition de vos livraisons. Vos données sont mises à jour en temps réel.
-                    </p>
-                    <div className="flex rounded-lg bg-accent/50 gap-10 p-5">
-                      <div className="flex flex-col gap-5">
-                        <div className="flex items-center gap-1.5 text-sm font-normal text-foreground">
-                          <i className="ki-filled ki-geolocation text-base text-muted-foreground"></i>
-                          Plateforme
-                        </div>
-                        <div className="text-sm font-medium text-foreground pt-1.5">LivrExpress</div>
-                      </div>
-                      <div className="flex flex-col gap-5">
-                        <div className="flex items-center gap-1.5 text-sm font-normal text-foreground">
-                          <i className="ki-filled ki-users text-base text-muted-foreground"></i>
-                          Livreurs
-                        </div>
-                        <div className="flex -space-x-2">
-                          <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="/assets/media/avatars/300-4.png" alt="Avatar"/>
-                          <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="/assets/media/avatars/300-1.png" alt="Avatar"/>
-                          <img className="hover:z-5 relative shrink-0 rounded-full ring-1 ring-background size-[30px]" src="/assets/media/avatars/300-2.png" alt="Avatar"/>
-                          <span className="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 font-semibold leading-none text-2xs size-[30px] text-white text-xs ring-background bg-green-500">
-                            +5
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+            {/* Row 3: Carte thermique / Breakdown par Ville */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-7.5">
+
+              {/* City Performance Chart (BarChart 2 cols) */}
+              <div className="lg:col-span-2 kt-card">
+                <div className="kt-card-header">
+                  <div>
+                    <h3 className="kt-card-title">Volume et Performance par Ville</h3>
+                    <p className="text-xs text-secondary-foreground mt-0.5">Zones géographiques à fort trafic</p>
                   </div>
-                  <div className="kt-card-footer justify-center">
-                    <a className="kt-link kt-link-underlined kt-link-dashed" href="/colis/">
-                      Consulter l'historique
-                    </a>
+                </div>
+                <div className="kt-card-content p-5 lg:p-7.5 pt-2">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={cityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                        <XAxis dataKey="city" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '10px' }} />
+                        <Legend verticalAlign="top" height={36} align="right" />
+                        <Bar dataKey="total" name="Total Colis" fill="#1b84ff" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="livres" name="Colis Livrés" fill="#27d37f" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
-              {/* Recent Colis Table Card */}
-              <div className="lg:col-span-2">
-                <div className="kt-card kt-card-grid h-full min-w-full">
-                  <div className="kt-card-header">
-                    <h3 className="kt-card-title">Derniers Colis Enregistrés</h3>
-                    <div className="kt-input max-w-48">
-                      <i className="ki-filled ki-magnifier"></i>
-                      <input 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Rechercher..." 
-                        type="text" 
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="kt-card-table">
-                    <div className="grid">
-                      <div className="kt-scrollable-x-auto">
-                        <table className="kt-table kt-table-border table-fixed">
-                          <thead>
-                            <tr>
-                              <th className="w-[50px]">
-                                <input className="kt-checkbox kt-checkbox-sm" type="checkbox" />
-                              </th>
-                              <th className="w-[280px]">Code &amp; Nature</th>
-                              <th className="w-[125px]">État</th>
-                              <th className="w-[135px]">Date d'Enregistrement</th>
-                              <th className="w-[150px]">Ville &amp; Prix</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredColis.length > 0 ? (
-                              filteredColis.map((colis) => (
-                                <tr key={colis.id}>
-                                  <td>
-                                    <input className="kt-checkbox kt-checkbox-sm" type="checkbox" />
-                                  </td>
-                                  <td>
-                                    <div className="flex flex-col gap-2">
-                                      <a className="leading-none font-semibold text-sm text-mono hover:text-primary" href={`/colis/${colis.id}/edit`}>
-                                        {colis.trackingCode}
-                                      </a>
-                                      <span className="text-2sm text-secondary-foreground font-normal leading-3">
-                                        {colis.productNature}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <span className={`kt-badge ${colis.etatBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
-                                      {colis.etatLabel}
-                                    </span>
-                                  </td>
-                                  <td className="text-sm font-normal text-secondary-foreground">
-                                    {colis.createdAt}
-                                  </td>
-                                  <td>
-                                    <div className="flex flex-col gap-1">
-                                      <span className="font-medium text-sm text-foreground">{colis.city}</span>
-                                      <span className="text-2sm text-primary font-semibold leading-3">
-                                        {colis.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
-                                      </span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))
-                            ) : (
-                              <tr>
-                                <td colSpan={5} className="py-8 text-center text-secondary-foreground">
-                                  Aucun colis correspondant
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Datatable Footer */}
-                      <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
-                        <div className="flex items-center gap-2 order-2 md:order-1">
-                          Afficher 
-                          <select className="kt-select w-16" defaultValue="5">
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                          </select> 
-                          par page
-                        </div>
-                        <div className="flex items-center gap-4 order-1 md:order-2">
-                          <span>
-                            Affichage de {filteredColis.length} sur {data.recentColis.length} entrées
-                          </span>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
+              {/* Top Villes Summary Table (1 col) */}
+              <div className="lg:col-span-1 kt-card">
+                <div className="kt-card-header">
+                  <h3 className="kt-card-title">Top Villes</h3>
+                  <span className="text-xs text-secondary-foreground">Taux de succès</span>
+                </div>
+                <div className="kt-card-table pb-3">
+                  <table className="kt-table align-middle text-sm text-muted-foreground">
+                    <thead>
+                      <tr>
+                        <th className="py-2.5 ps-5 text-start font-medium text-secondary-foreground">Ville</th>
+                        <th className="py-2.5 text-center font-medium text-secondary-foreground">Total</th>
+                        <th className="py-2.5 text-center font-medium text-secondary-foreground">Taux</th>
+                        <th className="py-2.5 pe-5 text-end font-medium text-secondary-foreground">CA (MAD)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cityData.length === 0 ? (
+                        <tr><td colSpan={4} className="py-6 text-center text-secondary-foreground">Aucune donnée ville</td></tr>
+                      ) : cityData.map((c) => (
+                        <tr key={c.city} className="border-b border-border/40 hover:bg-accent/30">
+                          <td className="py-2.5 ps-5 font-semibold text-foreground">{c.city}</td>
+                          <td className="py-2.5 text-center text-foreground font-medium">{c.total}</td>
+                          <td className="py-2.5 text-center">
+                            <span className={`kt-badge kt-badge-outline rounded-full text-xs ${c.rate >= 75 ? 'kt-badge-success' : c.rate >= 50 ? 'kt-badge-warning' : 'kt-badge-destructive'}`}>
+                              {c.rate}%
+                            </span>
+                          </td>
+                          <td className="py-2.5 pe-5 text-end text-foreground font-medium">
+                            {c.ca.toLocaleString('fr-FR')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 

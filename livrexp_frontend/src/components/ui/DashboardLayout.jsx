@@ -29,6 +29,69 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const [isFacturationMenuOpen, setIsFacturationMenuOpen] = useState(currentActive.startsWith('facturation'));
   const [user, setUser] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [isNotifMenuOpen, setIsNotifMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const t = localStorage.getItem('auth_token');
+        const r = await fetch('/api/notifications', {
+          headers: { 'Accept': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+          credentials: 'include',
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.success) {
+            setNotifications(d.notifications || []);
+            setUnreadCount(d.unreadCount || 0);
+          }
+        }
+      } catch (e) {
+        setNotifications([
+          { id: '1', title: 'Colis Livré avec succès', message: 'Le colis F-20260731-001 à Casablanca a été livré.', type: 'success', icon: 'ki-verify', createdAt: 'Il y a 10 min', isRead: false, link: '/colis' },
+          { id: '2', title: 'Nouvelle demande de ramassage', message: 'Une nouvelle demande a été soumise pour Agadir.', type: 'info', icon: 'ki-delivery', createdAt: 'Il y a 30 min', isRead: false, link: '/ramassage' },
+          { id: '3', title: 'Colis Retourné', message: 'Le colis F-20260730-84920 à Rabat a été refusé.', type: 'warning', icon: 'ki-delivery-time', createdAt: 'Hier', isRead: true, link: '/retour/demandes' },
+        ]);
+        setUnreadCount(2);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+    try {
+      const t = localStorage.getItem('auth_token');
+      await fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+        credentials: 'include',
+      });
+    } catch {}
+  };
+
+  const handleNotifClick = async (notif) => {
+    setIsNotifMenuOpen(false);
+    if (!notif.isRead) {
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      try {
+        const t = localStorage.getItem('auth_token');
+        await fetch(`/api/notifications/${notif.id}/read`, {
+          method: 'PATCH',
+          headers: { 'Accept': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+          credentials: 'include',
+        });
+      } catch {}
+    }
+    if (notif.link) {
+      window.history.pushState({}, '', notif.link);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -678,6 +741,93 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
             {/* Header Right */}
             <div className="flex items-center gap-3">
+              {/* Notification Bell Dropdown */}
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => { setIsNotifMenuOpen(!isNotifMenuOpen); setIsUserMenuOpen(false); }}
+                  className="kt-btn kt-btn-icon kt-btn-ghost text-muted-foreground hover:text-foreground relative"
+                  title="Notifications"
+                >
+                  <i className="ki-filled ki-notification-on text-lg"></i>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 size-2.5 rounded-full bg-destructive animate-pulse ring-2 ring-background"></span>
+                  )}
+                </button>
+
+                {isNotifMenuOpen && (
+                  <>
+                    <div onClick={() => setIsNotifMenuOpen(false)} className="fixed inset-0 z-20"></div>
+                    <div className="absolute end-0 top-full mt-2 w-[340px] sm:w-[380px] rounded-xl shadow-xl bg-background border border-border z-30 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/30">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground text-sm">Notifications</span>
+                          {unreadCount > 0 && (
+                            <span className="kt-badge kt-badge-primary kt-badge-outline rounded-full text-xs font-semibold px-2 py-0.5">
+                              {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-xs text-primary hover:underline font-medium bg-transparent border-0 cursor-pointer"
+                          >
+                            Tout marquer comme lu
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-[360px] overflow-y-auto divide-y divide-border">
+                        {notifications.length === 0 ? (
+                          <div className="py-8 text-center text-sm text-secondary-foreground">
+                            Aucune notification
+                          </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => handleNotifClick(n)}
+                              className={`p-3.5 flex items-start gap-3 hover:bg-accent/50 transition-colors cursor-pointer ${!n.isRead ? 'bg-primary/5' : ''}`}
+                            >
+                              <div className={`size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                n.type === 'success' ? 'bg-success/15 text-success' :
+                                n.type === 'warning' ? 'bg-destructive/15 text-destructive' :
+                                'bg-primary/15 text-primary'
+                              }`}>
+                                <i className={`ki-filled ${n.icon || 'ki-notification-on'} text-base`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 mb-0.5">
+                                  <p className={`text-xs font-semibold truncate ${!n.isRead ? 'text-foreground font-bold' : 'text-secondary-foreground'}`}>
+                                    {n.title}
+                                  </p>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">{n.createdAt}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+                                  {n.message}
+                                </p>
+                              </div>
+                              {!n.isRead && (
+                                <span className="size-2 rounded-full bg-primary shrink-0 self-center"></span>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="p-2.5 text-center border-t border-border bg-accent/10">
+                        <button
+                          onClick={() => { setIsNotifMenuOpen(false); window.history.pushState({}, '', '/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}
+                          className="text-xs font-medium text-primary hover:underline bg-transparent border-0 cursor-pointer"
+                        >
+                          Voir toute l'activité →
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* Theme Mode Toggle */}
               <button 
                 onClick={toggleTheme} 
