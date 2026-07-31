@@ -157,7 +157,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono flex items-center gap-2">
                 <i className="ki-filled ki-technology-4 text-primary text-2xl" />
-                LivrExpress PRO — Suite Logistique
+                LivrExpress PRO - Suite Logistique
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium text-sm text-secondary-foreground">
                 Analyse en temps réel de vos commandes réelles enregistrées
