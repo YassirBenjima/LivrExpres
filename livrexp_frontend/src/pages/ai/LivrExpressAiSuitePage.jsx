@@ -1,250 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 
-const MOCK_PREDICTIONS = [
-  {
-    colis_id: 991,
-    tracking_code: 'CMD-94810',
-    destinataire: 'Youssef Alami',
-    ville: 'Oujda',
-    crbt: 1850.00,
-    prediction: {
-      risk_score: 88,
-      risk_level: 'Élevé',
-      badge_color: 'destructive',
-      factors: [
-        "Ville à taux de retour historique élevé (Oujda: +25%)",
-        "Montant CRBT élevé (1850.00 DH): Risque de refus (+25%)",
-        "Numéro de téléphone incomplet (+30%)"
-      ],
-      recommendation: "Recommandé : Effectuer un appel de pré-confirmation téléphonique avant le départ du livreur."
-    }
-  },
-  {
-    colis_id: 992,
-    tracking_code: 'CMD-88301',
-    destinataire: 'Hassan Chraibi',
-    ville: 'Tanger',
-    crbt: 1420.00,
-    prediction: {
-      risk_score: 68,
-      risk_level: 'Élevé',
-      badge_color: 'destructive',
-      factors: [
-        "Passage précédent marqué 'Destinataire absent' (+35%)",
-        "Ville à taux de retour historique élevé (Tanger: +15%)"
-      ],
-      recommendation: "Recommandé : Planifier un rendez-vous horaire strict via WhatsApp."
-    }
-  },
-  {
-    colis_id: 993,
-    tracking_code: 'CMD-77102',
-    destinataire: 'Meriem Benjelloun',
-    ville: 'Casablanca',
-    crbt: 450.00,
-    prediction: {
-      risk_score: 42,
-      risk_level: 'Moyen',
-      badge_color: 'warning',
-      factors: [
-        "Montant CRBT modéré (450.00 DH) (+12%)",
-        "Livraison en résidence fermée (accès restreint)"
-      ],
-      recommendation: "Envoyer une notification WhatsApp de confirmation d'adresse."
-    }
-  },
-  {
-    colis_id: 994,
-    tracking_code: 'CMD-66205',
-    destinataire: 'Omar Tazi',
-    ville: 'Marrakech',
-    crbt: 290.00,
-    prediction: {
-      risk_score: 18,
-      risk_level: 'Faible',
-      badge_color: 'success',
-      factors: [
-        "Client fidèle avec 98% de taux d'acceptation historique",
-        "Adresse géographique géolocalisée et vérifiée"
-      ],
-      recommendation: "Livraison standard prioritaire."
-    }
-  },
-  {
-    colis_id: 995,
-    tracking_code: 'CMD-55109',
-    destinataire: 'Sara Bennani',
-    ville: 'Rabat',
-    crbt: 780.00,
-    prediction: {
-      risk_score: 28,
-      risk_level: 'Faible',
-      badge_color: 'success',
-      factors: [
-        "Adresse Agdal confirmée par appel préalable",
-        "Montant standard"
-      ],
-      recommendation: "Livraison standard programmée."
-    }
-  }
-];
+export default function LivrExpressAiSuitePage({ navigate, showNotification, defaultTab = 'predictions', activeMenu = 'ai_predictions' }) {
+  const getInitialTab = () => {
+    const path = window.location.pathname;
+    if (path.includes('anomalies')) return 'anomalies';
+    if (path.includes('tournees') || path.includes('itineraire')) return 'route';
+    if (path.includes('chatbot')) return 'chatbot';
+    if (path.includes('prediction')) return 'predictions';
+    return defaultTab;
+  };
 
-const MOCK_ANOMALIES = [
-  {
-    colis_id: 8801,
-    tracking_code: 'CMD-99410',
-    destinataire: 'Karim Idrissi',
-    ville: 'Casablanca',
-    etat: 'En attente',
-    hours_stuck: 52.0,
-    severity: 'CRITICAL',
-    badge_class: 'kt-badge-destructive',
-    title: 'Retard de Ramassage Majeur',
-    description: 'Colis bloqué chez le marchand depuis 52h sans ramassage effectif.',
-    action_suggested: 'Ré-assigner d\'urgence au livreur zone Maârif.'
-  },
-  {
-    colis_id: 8802,
-    tracking_code: 'CMD-88390',
-    destinataire: 'Fatima Ezzahra',
-    ville: 'Oujda',
-    etat: 'Expédié',
-    hours_stuck: 64.5,
-    severity: 'CRITICAL',
-    badge_class: 'kt-badge-destructive',
-    title: 'Colis Bloqué en Transit Inter-villes',
-    description: 'Expédié depuis le hub Casablanca vers Oujda depuis 64h sans scan d\'arrivée.',
-    action_suggested: 'Consulter le bordereau de transporteur d\'axe.'
-  },
-  {
-    colis_id: 8803,
-    tracking_code: 'CMD-77215',
-    destinataire: 'Amine Bennis',
-    ville: 'Tanger',
-    etat: 'En cours',
-    hours_stuck: 38.2,
-    severity: 'WARNING',
-    badge_class: 'kt-badge-warning',
-    title: 'Livraison Non Résolue (> 36h)',
-    description: 'Tournée démarrée il y a 38h sans statut final (Livré/Retour/Report).',
-    action_suggested: 'Appeler directement le livreur assigné pour clôture.'
-  },
-  {
-    colis_id: 8804,
-    tracking_code: 'CMD-66108',
-    destinataire: 'Nadia Filali',
-    ville: 'Marrakech',
-    etat: 'En cours',
-    hours_stuck: 29.0,
-    severity: 'WARNING',
-    badge_class: 'kt-badge-warning',
-    title: 'Échec Répété sans Relance',
-    description: '2 passages infructueux marqués sans appel de confirmation.',
-    action_suggested: 'Déclencher la relance automatique WhatsApp.'
-  }
-];
-
-const MOCK_ROUTE_STOPS = [
-  {
-    stop_number: 1,
-    colis_id: 701,
-    tracking_code: 'CMD-94820',
-    client_name: 'Amine Mansouri',
-    phone: '0661234567',
-    address: '14 Bd Mohamed V, Maârif, Casablanca',
-    crbt_amount: 650.00,
-    eta: '09:15',
-    status: 'PENDING',
-    priority: 'HAUTE'
-  },
-  {
-    stop_number: 2,
-    colis_id: 702,
-    tracking_code: 'CMD-88310',
-    client_name: 'Khadija Naciri',
-    phone: '0669876543',
-    address: '42 Rue Zerktouni, Gauthier, Casablanca',
-    crbt_amount: 1200.00,
-    eta: '09:35',
-    status: 'PENDING',
-    priority: 'NORMALE'
-  },
-  {
-    stop_number: 3,
-    colis_id: 703,
-    tracking_code: 'CMD-77140',
-    client_name: 'Reda El Fassi',
-    phone: '0665544332',
-    address: '88 Bd d\'Anfa, Racine, Casablanca',
-    crbt_amount: 890.00,
-    eta: '10:05',
-    status: 'PENDING',
-    priority: 'NORMALE'
-  },
-  {
-    stop_number: 4,
-    colis_id: 704,
-    tracking_code: 'CMD-66230',
-    client_name: 'Sanaa Chraibi',
-    phone: '0661122334',
-    address: '23 Av. Hassan II, Centre-Ville, Casablanca',
-    crbt_amount: 450.00,
-    eta: '10:35',
-    status: 'PENDING',
-    priority: 'NORMALE'
-  },
-  {
-    stop_number: 5,
-    colis_id: 705,
-    tracking_code: 'CMD-55120',
-    client_name: 'Mehdi Toumi',
-    phone: '0667788990',
-    address: '5 Bd de la Corniche, Aïn Diab, Casablanca',
-    crbt_amount: 1650.00,
-    eta: '11:10',
-    status: 'PENDING',
-    priority: 'NORMALE'
-  },
-  {
-    stop_number: 6,
-    colis_id: 706,
-    tracking_code: 'CMD-44090',
-    client_name: 'Zineb Berrada',
-    phone: '0663322110',
-    address: '12 Rue Normandie, Bourgogne, Casablanca',
-    crbt_amount: 320.00,
-    eta: '11:45',
-    status: 'PENDING',
-    priority: 'NORMALE'
-  }
-];
-
-export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
-  const [activeTab, setActiveTab] = useState('predictions'); // 'predictions', 'anomalies', 'route', 'chatbot'
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [loading, setLoading] = useState(true);
 
   // AI Predictions State
-  const [predictions, setPredictions] = useState(MOCK_PREDICTIONS);
+  const [predictions, setPredictions] = useState([]);
   
   // AI Anomalies State
-  const [anomalies, setAnomalies] = useState(MOCK_ANOMALIES);
+  const [anomalies, setAnomalies] = useState([]);
 
   // AI Route State
-  const [routeStops, setRouteStops] = useState(MOCK_ROUTE_STOPS);
+  const [routeStops, setRouteStops] = useState([]);
   const [routeMetrics, setRouteMetrics] = useState({
-    total_stops: 6,
-    estimated_distance_km: 14.4,
-    estimated_time_minutes: 132,
-    distance_saved_km: 16.4,
-    fuel_saved_percent: 21.0
+    total_stops: 0,
+    estimated_distance_km: 0,
+    estimated_time_minutes: 0,
+    distance_saved_km: 0,
+    fuel_saved_percent: 0
   });
 
   // Livreur Chatbot State
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'bot',
-      text: "Bonjour ! Je suis votre Assistant IA Livreur. Comment puis-je optimiser votre journée ?",
+      text: "Bonjour ! Je suis votre Assistant IA Livreur. Posez-moi une question sur vos commandes réelles ou votre tournée.",
       quick_actions: [
         { label: "📍 Voir ma tournée optimisée", action: "OPEN_ROUTE" },
         { label: "⚠️ Colis à risque de retour", action: "CHECK_RISK" }
@@ -263,16 +53,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.predictions && data.predictions.length > 0) {
-          setPredictions(data.predictions);
-        } else {
-          setPredictions(MOCK_PREDICTIONS);
-        }
-      } else {
-        setPredictions(MOCK_PREDICTIONS);
+        setPredictions(data.predictions || []);
       }
     } catch (e) {
-      setPredictions(MOCK_PREDICTIONS);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -287,16 +71,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.anomalies && data.anomalies.length > 0) {
-          setAnomalies(data.anomalies);
-        } else {
-          setAnomalies(MOCK_ANOMALIES);
-        }
-      } else {
-        setAnomalies(MOCK_ANOMALIES);
+        setAnomalies(data.anomalies || []);
       }
     } catch (e) {
-      setAnomalies(MOCK_ANOMALIES);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -311,17 +89,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.stops && data.stops.length > 0) {
-          setRouteStops(data.stops);
-          if (data.metrics) setRouteMetrics(data.metrics);
-        } else {
-          setRouteStops(MOCK_ROUTE_STOPS);
-        }
-      } else {
-        setRouteStops(MOCK_ROUTE_STOPS);
+        setRouteStops(data.stops || []);
+        if (data.metrics) setRouteMetrics(data.metrics);
       }
     } catch (e) {
-      setRouteStops(MOCK_ROUTE_STOPS);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -376,7 +148,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
   };
 
   return (
-    <DashboardLayout activeMenu="ai_suite">
+    <DashboardLayout activeMenu={activeMenu}>
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
         {/* Header */}
@@ -385,26 +157,32 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono flex items-center gap-2">
                 <i className="ki-filled ki-technology-4 text-primary text-2xl" />
-                Suite IA & Prédictions Avancées
+                Intelligence Artificielle & Logistique
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium text-sm text-secondary-foreground">
-                Intelligence Artificielle • Prédiction des retours • Tournées optimisées • Détection d'anomalies
+                Analyse en temps réel de vos commandes réelles enregistrées
               </div>
             </div>
 
-            {/* Navigation Tabs */}
+            {/* Sub Tabs */}
             <div className="flex items-center p-1 bg-accent/30 rounded-lg border border-border">
               <button
                 type="button"
-                onClick={() => setActiveTab('predictions')}
+                onClick={() => {
+                  setActiveTab('predictions');
+                  window.history.pushState({}, '', '/ai/prediction-retours');
+                }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'predictions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <i className="ki-filled ki-graph-up text-xs me-1" />
-                Risques de Retour
+                Prédiction Retours
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('anomalies')}
+                onClick={() => {
+                  setActiveTab('anomalies');
+                  window.history.pushState({}, '', '/ai/anomalies');
+                }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'anomalies' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <i className="ki-filled ki-shield-cross text-xs me-1" />
@@ -412,15 +190,21 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('route')}
+                onClick={() => {
+                  setActiveTab('route');
+                  window.history.pushState({}, '', '/ai/tournees-optimisees');
+                }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'route' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <i className="ki-filled ki-route text-xs me-1" />
-                Itinéraires IA
+                Itinéraires & Tournées
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('chatbot')}
+                onClick={() => {
+                  setActiveTab('chatbot');
+                  window.history.pushState({}, '', '/ai/chatbot-livreur');
+                }}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'chatbot' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <i className="ki-filled ki-messages text-xs me-1" />
@@ -438,7 +222,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
                 <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
                   <div>
                     <h3 className="text-base font-bold text-foreground">Prédiction des Colis à Risque de Retour</h3>
-                    <p className="text-xs text-muted-foreground">Scoring prédictif basé sur le profil client, la ville et le montant du remboursement</p>
+                    <p className="text-xs text-muted-foreground">Scoring prédictif calculé sur vos commandes réelles (historique client, ville et montant CRBT)</p>
                   </div>
                   <button onClick={fetchPredictions} className="kt-btn kt-btn-sm kt-btn-outline">
                     <i className="ki-filled ki-arrows-loop text-xs me-1" />
@@ -462,11 +246,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
                     <tbody>
                       {loading ? (
                         <tr>
-                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Calcul prédictif IA en cours...</td>
+                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Analyse prédictive IA de vos colis en cours...</td>
                         </tr>
                       ) : predictions.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Aucun colis à analyser.</td>
+                          <td colSpan={7} className="text-center py-6 text-muted-foreground">Aucun colis enregistré en base de données. Créez un colis dans le module Colis pour voir son analyse IA.</td>
                         </tr>
                       ) : (
                         predictions.map((p) => {
@@ -531,10 +315,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
                 <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
                   <div>
                     <h3 className="text-base font-bold text-foreground">Colis en Anomalie ou Bloqués</h3>
-                    <p className="text-xs text-muted-foreground">Détection automatique des colis sans changement de statut depuis 24h à 48h</p>
+                    <p className="text-xs text-muted-foreground">Détection en temps réel des retard de ramassage ou livraisons non clôturées sur vos colis réels</p>
                   </div>
                   <span className="kt-badge kt-badge-destructive rounded-full">
-                    {anomalies.length} Anomalie(s) active(s)
+                    {anomalies.length} Colis analysé(s)
                   </span>
                 </div>
 
@@ -543,7 +327,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
                     <div className="col-span-full text-center py-6 text-muted-foreground">Analyse du flux logistique...</div>
                   ) : anomalies.length === 0 ? (
                     <div className="col-span-full text-center py-8 text-success font-semibold">
-                      🎉 Aucune anomalie détectée dans le réseau logistique !
+                      🎉 Aucune anomalie détectée dans vos colis réels !
                     </div>
                   ) : (
                     anomalies.map((an) => (
@@ -586,11 +370,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
               {/* Route Summary Metrics */}
               <div className="lg:col-span-1 flex flex-col gap-4">
                 <div className="kt-card border border-border p-5 flex flex-col gap-3">
-                  <h3 className="font-bold text-base text-foreground">Métriques de la Tournée</h3>
+                  <h3 className="font-bold text-base text-foreground">Métriques de Tournée Réelle</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
                       <span className="text-[11px] text-muted-foreground">Nombre d'arrêt</span>
-                      <span className="text-xl font-bold text-foreground">{routeMetrics.total_stops} clients</span>
+                      <span className="text-xl font-bold text-foreground">{routeMetrics.total_stops} colis</span>
                     </div>
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
                       <span className="text-[11px] text-muted-foreground">Distance Estimée</span>
@@ -620,26 +404,30 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
               {/* Stop Sequence */}
               <div className="lg:col-span-2">
                 <div className="kt-card border border-border p-5">
-                  <h3 className="font-bold text-base text-foreground mb-3">Ordre Optimal des Livraisons (IA)</h3>
-                  <div className="divide-y divide-border">
-                    {routeStops.map((stop) => (
-                      <div key={stop.stop_number} className="py-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
-                            #{stop.stop_number}
+                  <h3 className="font-bold text-base text-foreground mb-3">Ordre Optimal des Livraisons Réelles (IA)</h3>
+                  {routeStops.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">Aucun colis à planifier pour le moment.</div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {routeStops.map((stop) => (
+                        <div key={stop.stop_number} className="py-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+                              #{stop.stop_number}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-xs text-foreground">{stop.client_name} ({stop.tracking_code})</span>
+                              <span className="text-[11px] text-muted-foreground">{stop.address}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-xs text-foreground">{stop.client_name} ({stop.tracking_code})</span>
-                            <span className="text-[11px] text-muted-foreground">{stop.address}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-mono font-semibold text-foreground">ETA: {stop.eta}</span>
+                            <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full">{stop.crbt_amount} DH</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono font-semibold text-foreground">ETA: {stop.eta}</span>
-                          <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full">{stop.crbt_amount} DH</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -654,7 +442,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
               <div className="p-4 border-b border-border bg-accent/20 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <i className="ki-filled ki-messages text-primary text-xl" />
-                  <h3 className="font-bold text-sm text-foreground">Assistant IA Livreur (Terrain)</h3>
+                  <h3 className="font-bold text-sm text-foreground">Assistant IA Livreur (Terrain & Colis Réels)</h3>
                 </div>
                 <span className="kt-badge kt-badge-success kt-badge-outline rounded-full">En ligne</span>
               </div>
@@ -698,7 +486,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification }) {
                   value={inputMsg}
                   onChange={(e) => setInputMsg(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                  placeholder="Posez une question sur votre tournée ou un colis..."
+                  placeholder="Posez une question ou entrez un numéro de commande réel..."
                   className="kt-input grow"
                 />
                 <button

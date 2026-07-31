@@ -466,10 +466,18 @@ function App() {
         return <LivreurAutoAssignPage navigate={navigate} showNotification={showNotification} />;
       case '/profile':
         return <ProfilePage navigate={navigate} showNotification={showNotification} />;
+      case '/ai/prediction-retours':
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} defaultTab="predictions" activeMenu="ai_predictions" />;
+      case '/ai/anomalies':
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} defaultTab="anomalies" activeMenu="ai_anomalies" />;
+      case '/ai/tournees-optimisees':
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} defaultTab="route" activeMenu="ai_tournees" />;
+      case '/ai/chatbot-livreur':
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} defaultTab="chatbot" activeMenu="ai_chatbot" />;
       case '/ai/suite':
       case '/ai/dashboard':
       case '/ai':
-        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} />;
+        return <LivrExpressAiSuitePage navigate={navigate} showNotification={showNotification} defaultTab="predictions" activeMenu="ai_predictions" />;
       case '/register':
         return <RegisterPage navigate={navigate} />;
       case '/forgot-password':
