@@ -619,7 +619,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
               </div>}
 
               {/* Intelligence Artificielle (IA) Accordion */}
-              {isClientOrFull && <div className={`kt-menu-item ${currentActive.startsWith('ai') ? 'here show' : ''}`}>
+              <div className={`kt-menu-item ${currentActive.startsWith('ai') ? 'here show' : ''}`}>
                 <div
                   className="kt-menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                   onClick={() => setIsAiMenuOpen(!isAiMenuOpen)}
@@ -637,20 +637,24 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                 </div>
                 {isAiMenuOpen && (
                   <div className="kt-menu-accordion gap-1 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-border flex flex-col">
-                    <div className={`kt-menu-item ${currentActive === 'ai_predictions' ? 'active' : ''}`}>
-                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/prediction-retours"
-                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/prediction-retours'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Prédiction des retours</span>
-                      </a>
-                    </div>
-                    <div className={`kt-menu-item ${currentActive === 'ai_anomalies' ? 'active' : ''}`}>
-                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/anomalies"
-                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/anomalies'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Détection des anomalies</span>
-                      </a>
-                    </div>
+                    {!isLivreur && (
+                      <div className={`kt-menu-item ${currentActive === 'ai_predictions' ? 'active' : ''}`}>
+                        <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/prediction-retours"
+                          onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/prediction-retours'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                          <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Prédiction des retours</span>
+                        </a>
+                      </div>
+                    )}
+                    {!isLivreur && (
+                      <div className={`kt-menu-item ${currentActive === 'ai_anomalies' ? 'active' : ''}`}>
+                        <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/anomalies"
+                          onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/anomalies'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                          <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Détection des anomalies</span>
+                        </a>
+                      </div>
+                    )}
                     <div className={`kt-menu-item ${currentActive === 'ai_tournees' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/tournees-optimisees"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/tournees-optimisees'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
@@ -658,16 +662,18 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Optimisation de tournées</span>
                       </a>
                     </div>
-                    <div className={`kt-menu-item ${currentActive === 'ai_chatbot' ? 'active' : ''}`}>
-                      <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/chatbot-livreur"
-                        onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/chatbot-livreur'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                        <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Chatbot Livreur</span>
-                      </a>
-                    </div>
+                    {isLivreur && (
+                      <div className={`kt-menu-item ${currentActive === 'ai_chatbot' ? 'active' : ''}`}>
+                        <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/chatbot-livreur"
+                          onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/chatbot-livreur'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
+                          <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
+                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Chatbot Livreur</span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>}
+              </div>
 
             </div>
           </div>

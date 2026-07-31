@@ -15,6 +15,22 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const [activeTab, setActiveTab] = useState(getInitialTab());
   const [loading, setLoading] = useState(true);
 
+  // Sync tab with URL on navigation / click
+  useEffect(() => {
+    const syncTab = () => {
+      const path = window.location.pathname;
+      if (path.includes('anomalies')) setActiveTab('anomalies');
+      else if (path.includes('tournees') || path.includes('itineraire')) setActiveTab('route');
+      else if (path.includes('chatbot')) setActiveTab('chatbot');
+      else if (path.includes('prediction')) setActiveTab('predictions');
+      else setActiveTab(defaultTab);
+    };
+
+    syncTab();
+    window.addEventListener('popstate', syncTab);
+    return () => window.removeEventListener('popstate', syncTab);
+  }, [defaultTab, activeMenu]);
+
   // Search & Filter state for predictions table
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('');
