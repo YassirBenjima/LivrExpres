@@ -25,6 +25,7 @@ const mockDataFallback = {
 
 export default function DashboardPage({ dashboardData = null, loading = false, refetchData }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [period, setPeriod] = useState('7');
   const data = dashboardData || mockDataFallback;
 
   // ApexCharts initialization
@@ -541,14 +542,24 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                 </div>
               </div>
 
-              {/* Volume Chart Card */}
+              {/* Volume & Livraisons Chart Card */}
               <div className="lg:col-span-2">
                 <div className="kt-card h-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Volume des Colis Enregistrés</h3>
+                    <h3 className="kt-card-title">Évolution des Colis</h3>
                     <div className="flex gap-5">
-                      <select className="kt-select w-36" defaultValue="1">
-                        <option value="1">7 jours</option>
+                      <select 
+                        className="kt-select w-36" 
+                        value={period} 
+                        onChange={(e) => {
+                          setPeriod(e.target.value);
+                          if (refetchData) refetchData(e.target.value);
+                        }}
+                      >
+                        <option value="today">Aujourd'hui</option>
+                        <option value="7">7 jours</option>
+                        <option value="month">Ce mois</option>
+                        <option value="year">Cette année</option>
                       </select>
                     </div>
                   </div>
