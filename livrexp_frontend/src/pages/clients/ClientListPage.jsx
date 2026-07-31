@@ -581,7 +581,7 @@ export default function ClientListPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* Footer Legal */}
+        <!-- Footer Legal -->
         <div class="footer-legal">
           LivrExpress S.A.R.L AU — Capitale Social: 1.000.000 DH — Registre de Commerce: N° 482910 Casablanca — ICE: 00192830100029<br/>
           Ce document constitue une convention légale régie par le droit commercial marocain.
