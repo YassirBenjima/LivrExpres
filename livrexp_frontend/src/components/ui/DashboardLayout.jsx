@@ -219,11 +219,11 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
         <div className="kt-sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0" id="sidebar_header">
           <a href="/dashboard" className="dark:hidden">
             <img className="default-logo min-h-[22px] max-w-none" src="/assets/media/app/default-logo.svg" alt="LivrExpress Logo" />
-            <img className="small-logo min-h-[22px] max-w-none" src="/assets/media/app/mini-logo.svg" alt="Logo" />
+            <img className="small-logo min-h-[22px] max-w-none" src="/assets/media/app/default-logo.svg" alt="Logo" />
           </a>
           <a href="/dashboard" className="hidden dark:block">
             <img className="default-logo min-h-[22px] max-w-none" src="/assets/media/app/default-logo-dark.svg" alt="LivrExpress Logo" />
-            <img className="small-logo min-h-[22px] max-w-none" src="/assets/media/app/mini-logo.svg" alt="Logo" />
+            <img className="small-logo min-h-[22px] max-w-none" src="/assets/media/app/default-logo-dark.svg" alt="Logo" />
           </a>
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
