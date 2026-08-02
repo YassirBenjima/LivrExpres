@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Colis;
 use App\Entity\PickupRequest;
 use App\Entity\User;
 use App\Repository\CityRepository;
@@ -26,12 +27,53 @@ final class RamassageApiController extends AbstractController
     ];
 
     #[Route('', name: 'api_ramassage_index', methods: ['GET'])]
-    public function index(Request $request, PickupRequestRepository $pickupRequestRepository): JsonResponse
+    public function index(Request $request, PickupRequestRepository $pickupRequestRepository, EntityManagerInterface $em): JsonResponse
     {
         $search = trim((string) $request->query->get('q', ''));
         $selectedStatut = trim((string) $request->query->get('statut', ''));
         $user = $this->getUser();
         $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
+
+        // Auto-sync all PickupRequest statuses with corresponding Colis status/etat
+        $allPickups = $pickupRequestRepository->findAll();
+        $allColis = $em->getRepository(Colis::class)->findAll();
+        $colisMap = [];
+        foreach ($allColis as $c) {
+            if ($c->getOrderNumber()) $colisMap[$c->getOrderNumber()] = $c;
+            if ($c->getTrackingCode()) $colisMap[$c->getTrackingCode()] = $c;
+        }
+
+        $needsFlush = false;
+        foreach ($allPickups as $pickup) {
+            $text = ($pickup->getNote() ?? '') . ' ' . ($pickup->getProductNameSnapshot() ?? '');
+            foreach ($colisMap as $code => $colis) {
+                if (str_contains($text, $code)) {
+                    // Parcel is Delivered / Finished => Pickup is picked_up (Ramassé)
+                    if ($colis->getEtat() === Colis::ETAT_LIVRE || $colis->getStatut() === Colis::STATUT_TERMINE) {
+                        if ($pickup->getStatus() !== 'picked_up') {
+                            $pickup->setStatus('picked_up');
+                            $needsFlush = true;
+                        }
+                    } 
+                    // Parcel is Shipped or Driver Assigned => Pickup is confirmed
+                    elseif ($colis->getEtat() === Colis::ETAT_EXPEDIE || $colis->getAssignedDriver()) {
+                        if ($pickup->getStatus() === 'pending') {
+                            $pickup->setStatus('confirmed');
+                            $needsFlush = true;
+                        }
+                        if ($colis->getAssignedDriver() && !$pickup->getAssignedDriver()) {
+                            $pickup->setAssignedDriver($colis->getAssignedDriver());
+                            $needsFlush = true;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        if ($needsFlush) {
+            $em->flush();
+        }
 
         $pickups = $pickupRequestRepository->findAllForList($search, $selectedStatut, $scopedUser);
 
