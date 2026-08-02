@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
 
 const mockDataFallback = {
   totalColis: 142,
@@ -1232,19 +1233,21 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                   <div className="kt-card-header">
                     <h3 className="kt-card-title">Évolution des Colis</h3>
                     <div className="flex gap-5">
-                      <select 
-                        className="kt-select w-36" 
-                        value={period} 
-                        onChange={(e) => {
-                          setPeriod(e.target.value);
-                          if (refetchData) refetchData(e.target.value);
+                      <KtSelect
+                        value={period}
+                        onChange={(val) => {
+                          setPeriod(val);
+                          if (refetchData) refetchData(val);
                         }}
-                      >
-                        <option value="today">Aujourd'hui</option>
-                        <option value="7">7 jours</option>
-                        <option value="month">Ce mois</option>
-                        <option value="year">Cette année</option>
-                      </select>
+                        options={[
+                          { value: 'today', label: "Aujourd'hui" },
+                          { value: '7', label: '7 jours' },
+                          { value: 'month', label: 'Ce mois' },
+                          { value: 'year', label: 'Cette année' },
+                        ]}
+                        enableSearch={false}
+                        className="w-36"
+                      />
                     </div>
                   </div>
                   <div className="kt-card-content flex flex-col justify-end items-stretch grow px-3 py-1">
