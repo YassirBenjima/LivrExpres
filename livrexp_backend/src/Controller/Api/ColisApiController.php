@@ -17,9 +17,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class ColisApiController extends AbstractController
 {
     #[Route('/api/colis', name: 'api_colis_list', methods: ['GET'])]
-    public function getColis(ColisRepository $colisRepository): JsonResponse
+    public function getColis(Request $request, ColisRepository $colisRepository): JsonResponse
     {
         $user = $this->getUser();
+        $etatFilter = trim((string) $request->query->get('etat', ''));
+        $statutFilter = trim((string) $request->query->get('statut', ''));
+        $page = (int) $request->query->get('page', 0);
+        $limit = (int) $request->query->get('limit', 0);
+
         $qb = $colisRepository->createQueryBuilder('c')
             ->select('c.id', 'c.orderNumber', 'c.trackingCode', 'c.productNature', 'c.createdAt', 'c.address', 'c.etat', 'c.statut', 'c.city', 'c.price', 'c.comment', 'c.assignedDriver')
             ->orderBy('c.id', 'DESC');
@@ -27,6 +32,22 @@ final class ColisApiController extends AbstractController
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
             $qb->andWhere('c.createdBy = :user')
                ->setParameter('user', $user);
+        }
+
+        if ($etatFilter !== '') {
+            $qb->andWhere('c.etat = :etatFilter')
+               ->setParameter('etatFilter', $etatFilter);
+        }
+
+        if ($statutFilter !== '') {
+            $qb->andWhere('c.statut = :statutFilter')
+               ->setParameter('statutFilter', $statutFilter);
+        }
+
+        if ($limit > 0) {
+            $page = max(1, $page);
+            $qb->setFirstResult(($page - 1) * $limit)
+               ->setMaxResults($limit);
         }
 
         $colisList = $qb->getQuery()->getArrayResult();

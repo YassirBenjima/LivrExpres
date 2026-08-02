@@ -315,7 +315,8 @@ Output MUST be a valid JSON object matching this schema ONLY:
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => json_encode($payload),
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_TIMEOUT => 8
+                CURLOPT_CONNECTTIMEOUT => 2,
+                CURLOPT_TIMEOUT => 3
             ]);
 
             $response = curl_exec($ch);

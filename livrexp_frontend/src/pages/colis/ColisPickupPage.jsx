@@ -19,7 +19,10 @@ export default function ColisPickupPage({ navigate, showNotification }) {
   const [successMsg, setSuccessMsg] = useState('');
   
   useEffect(() => {
-    const fetchColis = async () => {
+    const fetchColis = async (silent = false) => {
+      if (!silent && colisList.length === 0) {
+        setLoading(true);
+      }
       try {
         const response = await fetch('/api/colis/pickup', {
           headers: {

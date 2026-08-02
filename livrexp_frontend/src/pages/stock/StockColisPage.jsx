@@ -24,8 +24,10 @@ export default function StockColisPage({ navigate, showNotification }) {
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 
-  const fetchColis = async () => {
-    setLoading(true);
+  const fetchColis = async (silent = false) => {
+    if (!silent && colisList.length === 0) {
+      setLoading(true);
+    }
     try {
       const response = await fetch('/api/stock/colis', { headers });
       if (response.ok) {
