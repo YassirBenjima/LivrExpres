@@ -11,14 +11,18 @@
  *   - isSuperAdmin     : true if ROLE_SUPER_ADMIN or admin user
  *   - isAdmin          : true if admin/superadmin/superviseur
  */
-export function useAuth() {
-  let user = null;
+export function getStoredUser() {
   try {
-    const raw = localStorage.getItem('user') || sessionStorage.getItem('user_profile');
-    if (raw) user = JSON.parse(raw);
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user') || sessionStorage.getItem('user_profile');
+    if (raw) return JSON.parse(raw);
   } catch (_) {
     // corrupted storage – ignore
   }
+  return null;
+}
+
+export function useAuth() {
+  const user = getStoredUser();
 
   let roles = [];
   if (Array.isArray(user?.roles)) {
@@ -62,15 +66,10 @@ export function useAuth() {
  * Returns the roles array stored in localStorage/sessionStorage.
  */
 export function getUserRoles() {
-  try {
-    const raw = localStorage.getItem('user') || sessionStorage.getItem('user_profile');
-    if (!raw) return ['ROLE_SUPER_ADMIN']; // Fallback for admin staff view
-    const user = JSON.parse(raw);
-    if (Array.isArray(user?.roles)) return user.roles;
-    if (typeof user?.role === 'string') return [user.role];
-    if (typeof user?.roles === 'string') return [user.roles];
-    return ['ROLE_SUPER_ADMIN'];
-  } catch (_) {
-    return ['ROLE_SUPER_ADMIN'];
-  }
+  const user = getStoredUser();
+  if (!user) return ['ROLE_SUPER_ADMIN']; // Fallback for admin staff view
+  if (Array.isArray(user?.roles)) return user.roles;
+  if (typeof user?.role === 'string') return [user.role];
+  if (typeof user?.roles === 'string') return [user.roles];
+  return ['ROLE_SUPER_ADMIN'];
 }

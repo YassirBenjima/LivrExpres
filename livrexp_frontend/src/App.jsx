@@ -42,6 +42,7 @@ import LivreurFichePage from './pages/livreur/LivreurFichePage';
 import LivreurAutoAssignPage from './pages/livreur/LivreurAutoAssignPage';
 import LivrExpressAiSuitePage from './pages/ai/LivrExpressAiSuitePage';
 import OfflineBanner from './components/ui/OfflineBanner';
+import { getUserRoles, getStoredUser } from './hooks/useAuth';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -49,7 +50,7 @@ function App() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem('user')
+    !!getStoredUser()
   );
   const [notification, setNotification] = useState(null);
 
@@ -95,7 +96,7 @@ function App() {
 
   // Check auth status
   const checkAuth = () => {
-    const authed = !!localStorage.getItem('user');
+    const authed = !!getStoredUser();
     if (authed !== isAuthenticated) {
       setIsAuthenticated(authed);
       if (!authed) {
@@ -324,7 +325,7 @@ function App() {
 
   let normalizedRoute = currentRoute;
   if (normalizedRoute === '/') {
-    normalizedRoute = localStorage.getItem('user') ? '/dashboard' : '/login';
+    normalizedRoute = getStoredUser() ? '/dashboard' : '/login';
   }
 
   // Strip trailing slash for easier routing comparison
