@@ -271,7 +271,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
               {/* User Section Heading */}
               <div className="kt-menu-item pt-2.25 pb-px">
                 <span className="kt-menu-heading uppercase text-xs font-medium text-muted-foreground ps-[10px] pe-[10px]">
-                  {isLivreur ? 'Mes Livraisons' : 'Utilisateur'}
+                  {isLivreur ? 'Mes Livraisons' : 'Gestion Logistique'}
                 </span>
               </div>
 
