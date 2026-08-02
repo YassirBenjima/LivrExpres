@@ -44,6 +44,14 @@ export default function StockColisPage({ navigate, showNotification }) {
 
   useEffect(() => {
     fetchColis();
+
+    const handleAiUpdate = () => fetchColis();
+    window.addEventListener('ai:ramassage-updated', handleAiUpdate);
+    window.addEventListener('ai:colis-updated', handleAiUpdate);
+    return () => {
+      window.removeEventListener('ai:ramassage-updated', handleAiUpdate);
+      window.removeEventListener('ai:colis-updated', handleAiUpdate);
+    };
   }, []);
 
   useEffect(() => {

@@ -169,10 +169,9 @@ export default function SuperAdminAIChatbot() {
               price: data.colis.price || ''
             });
           }
-          // If the AI handled a ramassage request, notify other pages to refresh
-          if (data.message && data.message.includes('Ramassage')) {
-            window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
-          }
+          // Notify other pages to refresh data in real time
+          window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
+          window.dispatchEvent(new CustomEvent('ai:colis-updated'));
           setMessages(prev => [
             ...prev,
             {
@@ -318,6 +317,8 @@ export default function SuperAdminAIChatbot() {
     }
 
     setActiveColis(updated);
+    window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
+    window.dispatchEvent(new CustomEvent('ai:colis-updated'));
 
     let replyText = '';
     if (changes.length > 0) {
@@ -363,6 +364,8 @@ export default function SuperAdminAIChatbot() {
     };
 
     setActiveColis(updated);
+    window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
+    window.dispatchEvent(new CustomEvent('ai:colis-updated'));
     setLoading(false);
 
     setMessages(prev => [

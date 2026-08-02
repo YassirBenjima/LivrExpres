@@ -46,6 +46,14 @@ export default function RamassageListPage({ navigate, showNotification }) {
 
   useEffect(() => {
     fetchPickups();
+
+    const handleAiUpdate = () => fetchPickups();
+    window.addEventListener('ai:ramassage-updated', handleAiUpdate);
+    window.addEventListener('ai:colis-updated', handleAiUpdate);
+    return () => {
+      window.removeEventListener('ai:ramassage-updated', handleAiUpdate);
+      window.removeEventListener('ai:colis-updated', handleAiUpdate);
+    };
   }, [statusFilter]);
 
   // Close dropdown on click outside
