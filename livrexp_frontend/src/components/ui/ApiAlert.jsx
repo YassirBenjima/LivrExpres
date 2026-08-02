@@ -14,7 +14,7 @@ function ToastContainer() {
       setToasts(prev => [...prev, { id, type, message }]);
       setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id));
-      }, 5000);
+      }, 4000);
     };
     return () => { _addToast = null; };
   }, []);
@@ -24,67 +24,93 @@ function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return ReactDOM.createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        top: '24px',
-        right: '24px',
-        left: 'auto',
-        bottom: 'auto',
-        zIndex: 9999999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        maxWidth: '380px',
-        width: 'calc(100vw - 48px)',
-        pointerEvents: 'auto',
-      }}
-    >
-      {toasts.map(({ id, type, message }) => {
-        const isError = type === 'error';
-        const isSuccess = type === 'success';
-        const borderColor = isError ? '#f1416c' : isSuccess ? '#27d37f' : '#0094FF';
-        const iconBg = isError ? 'rgba(241,65,108,0.1)' : isSuccess ? 'rgba(39,211,127,0.1)' : 'rgba(0,148,255,0.1)';
-        const iconColor = isError ? '#f1416c' : isSuccess ? '#27d37f' : '#0094FF';
-        const iconClass = isError ? 'ki-cross-circle' : isSuccess ? 'ki-check-circle' : 'ki-information-2';
-        const title = isError ? 'Erreur' : isSuccess ? 'Succès' : 'Information';
-
-        return (
-          <div
-            key={id}
-            style={{
-              backgroundColor: '#ffffff',
-              borderLeft: `4px solid ${borderColor}`,
-              borderRadius: '12px',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px',
-              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.12), 0 8px 10px -6px rgba(0,0,0,0.08)',
-              border: '1px solid #e4e6ef',
-              animation: 'toastSlideInRight 0.3s ease-out forwards',
-            }}
-          >
-            <div style={{ borderRadius: '9999px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: iconBg, color: iconColor }}>
-              <i className={`ki-filled ${iconClass}`} style={{ fontSize: '18px' }}></i>
-            </div>
-            <div style={{ flex: 1, minWidth: 0, paddingTop: '2px' }}>
-              <h4 style={{ margin: '0 0 3px 0', fontSize: '14px', fontWeight: 600, color: '#181c32' }}>{title}</h4>
-              <p style={{ margin: 0, fontSize: '12px', color: '#7e8299', wordBreak: 'break-word', lineHeight: 1.5 }}>{message}</p>
-            </div>
-            <button onClick={() => dismiss(id)} type="button" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#a1a5b7', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '6px', flexShrink: 0 }}>
-              <i className="ki-filled ki-cross" style={{ fontSize: '14px' }}></i>
-            </button>
-          </div>
-        );
-      })}
+    <>
       <style>{`
-        @keyframes toastSlideInRight {
-          from { transform: translateX(30px); opacity: 0; }
-          to   { transform: translateX(0); opacity: 1; }
+        .auth-toast-container {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          left: auto;
+          bottom: auto;
+          z-index: 9999999;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-width: 380px;
+          width: 100%;
+          pointer-events: auto;
+        }
+        .auth-toast {
+          background-color: #ffffff;
+          border-left: 4px solid;
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          align-items: start;
+          gap: 12px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e4e6ef;
+          transition: all 0.3s ease-out;
+          animation: authToastSlideIn 0.3s ease-out forwards;
+        }
+        .auth-toast.success { border-left-color: #27d37f; }
+        .auth-toast.error   { border-left-color: #f1416c; }
+        .auth-toast.info    { border-left-color: #0094FF; }
+        .auth-toast-icon {
+          border-radius: 9999px;
+          padding: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .auth-toast-icon.success { background-color: rgba(39,211,127,0.1); color: #27d37f; }
+        .auth-toast-icon.error   { background-color: rgba(241,65,108,0.1); color: #f1416c; }
+        .auth-toast-icon.info    { background-color: rgba(0,148,255,0.1);  color: #0094FF; }
+        .auth-toast-content { flex: 1; min-width: 0; }
+        .auth-toast-title   { font-size: 14px; font-weight: 600; color: #181c32; margin: 0; }
+        .auth-toast-message { font-size: 12px; color: #7e8299; margin-top: 2px; word-break: break-word; }
+        .auth-toast-close {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #a1a5b7;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          flex-shrink: 0;
+          transition: all 0.2s;
+        }
+        .auth-toast-close:hover { background-color: #f5f8fa; color: #181c32; }
+        @keyframes authToastSlideIn {
+          from { transform: translateY(-16px); opacity: 0; }
+          to   { transform: translateY(0);     opacity: 1; }
         }
       `}</style>
-    </div>,
+
+      <div className="auth-toast-container">
+        {toasts.map(({ id, type, message }) => {
+          const iconClass = type === 'success' ? 'ki-check' : type === 'info' ? 'ki-information-2' : 'ki-cross-circle';
+          const title = type === 'success' ? 'Succès' : type === 'info' ? 'Information' : 'Erreur';
+          return (
+            <div key={id} className={`auth-toast ${type}`}>
+              <div className={`auth-toast-icon ${type}`}>
+                <i className={`ki-filled ${iconClass} text-base`}></i>
+              </div>
+              <div className="auth-toast-content">
+                <h4 className="auth-toast-title">{title}</h4>
+                <p className="auth-toast-message">{message}</p>
+              </div>
+              <button onClick={() => dismiss(id)} className="auth-toast-close">
+                <i className="ki-filled ki-cross text-sm"></i>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </>,
     document.body
   );
 }
