@@ -102,7 +102,7 @@ export default function CheckEmailPage({ navigate }) {
         </div>
         
         <h3 className="text-lg font-medium text-mono text-center leading-none">
-          Vérifiez vos e-mails 📩
+          Vérifiez vos e-mails
         </h3>
         
         <div className="text-sm text-center text-secondary-foreground">
