@@ -4,160 +4,316 @@
   <meta charset="utf-8">
   <title>Bon de retour {{ demande.bonReference }}</title>
   <style>
-    @page { margin: 18mm 16mm; }
-    * { box-sizing: border-box; }
+    @page {
+      margin: 12mm 14mm 14mm 14mm;
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: DejaVu Sans, Arial, sans-serif;
-      color: #111827;
-      font-size: 11pt;
-      line-height: 1.45;
+      color: #1e293b;
+      font-size: 9.5pt;
+      line-height: 1.4;
+      background-color: #ffffff;
     }
-    .header {
-      border-bottom: 2px solid #1b84ff;
-      padding-bottom: 12px;
-      margin-bottom: 22px;
-    }
-    .brand-row { width: 100%; margin-bottom: 10px; }
-    .brand-row td { vertical-align: middle; }
-    .logo { max-height: 28px; max-width: 160px; }
-    .brand-name {
-      font-size: 20pt;
-      font-weight: 700;
-      color: #1b84ff;
-      text-align: right;
-    }
-    .doc-title { font-size: 16pt; font-weight: 700; margin: 0 0 4px 0; }
-    .doc-ref { font-size: 12pt; color: #4b5563; margin: 0; }
-    .meta-table {
+
+    /* Header Bar */
+    .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 3px solid #ef4444;
     }
-    .meta-table th,
-    .meta-table td {
-      border: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      text-align: left;
+    .header-table td {
+      vertical-align: top;
     }
-    .meta-table th {
-      width: 34%;
-      background: #f9fafb;
-      color: #374151;
+    .brand-title {
+      font-size: 22pt;
+      font-weight: 800;
+      color: #ef4444;
+      letter-spacing: -0.5px;
+      margin: 0;
+      line-height: 1;
+    }
+    .brand-sub {
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 4px;
       font-weight: 600;
     }
-    .section-title {
-      font-size: 12pt;
-      font-weight: 700;
-      margin: 0 0 10px 0;
+    .logo-img {
+      max-height: 38px;
+      max-width: 180px;
     }
-    .colis-table { width: 100%; border-collapse: collapse; }
-    .colis-table th,
-    .colis-table td {
-      border: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      text-align: left;
+    .doc-badge-box {
+      text-align: right;
+    }
+    .doc-title {
+      font-size: 16pt;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    .doc-ref {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #ef4444;
+      margin-top: 4px;
+    }
+    .doc-date {
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* Two-Column Info Cards */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .info-card {
+      width: 48%;
+      vertical-align: top;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .info-card-title {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 3px;
+    }
+    .info-row {
+      font-size: 9pt;
+      margin-bottom: 3px;
+      color: #334155;
+    }
+    .info-label {
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    /* Section Title */
+    .section-header {
+      font-size: 11pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Colis Main Table */
+    .colis-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
     }
     .colis-table th {
-      background: #1b84ff;
+      background-color: #1e293b;
       color: #ffffff;
-      font-weight: 600;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      text-align: left;
+      border: 1px solid #1e293b;
     }
-    .colis-table tr:nth-child(even) td { background: #f9fafb; }
-    .badge {
+    .colis-table td {
+      font-size: 9pt;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: middle;
+    }
+    .colis-table tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Tracking & Badges */
+    .tracking-code {
+      font-family: DejaVu Sans Mono, monospace, sans-serif;
+      font-weight: 700;
+      color: #0f172a;
+      background: #fef2f2;
+      border: 1px solid #fecdd3;
+      padding: 2px 6px;
+      border-radius: 4px;
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 9pt;
-      font-weight: 600;
-      color: #047857;
-      background: #d1fae5;
-      border: 1px solid #6ee7b7;
+      font-size: 8.5pt;
     }
-    .footer {
-      margin-top: 28px;
-      padding-top: 10px;
-      border-top: 1px solid #e5e7eb;
-      font-size: 9pt;
-      color: #6b7280;
+
+    /* Summary Row */
+    .summary-row td {
+      background-color: #f1f5f9 !important;
+      font-weight: 800;
+      font-size: 9.5pt;
+      color: #0f172a;
+      border-top: 2px solid #94a3b8;
+    }
+
+    /* Signatures Section */
+    .signatures-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 22px;
+      margin-bottom: 14px;
+    }
+    .signature-card {
+      width: 48%;
+      vertical-align: top;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 12px;
+      height: 90px;
+      background: #fafafa;
+    }
+    .signature-title {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .signature-note {
+      font-size: 7.5pt;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* Footer Copyright Note */
+    .legal-footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      font-size: 7.5pt;
+      color: #94a3b8;
       text-align: center;
+      margin-top: 16px;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <table class="brand-row">
-      <tr>
-        <td>
-          {% if logo_data_uri %}
-            <img class="logo" alt="LivrExpress" src="{{ logo_data_uri }}"/>
-          {% else %}
-            <span class="brand-name" style="text-align:left;">LivrExpress</span>
-          {% endif %}
-        </td>
-        <td class="brand-name">Bon de Retour</td>
-      </tr>
-    </table>
-    <p class="doc-title">Bon de retour</p>
-    <p class="doc-ref">Référence : {{ demande.bonReference }}</p>
-  </div>
 
-  <table class="meta-table">
+  <!-- Top Header Table -->
+  <table class="header-table">
     <tr>
-      <th>Réf</th>
-      <td>{{ demande.bonReference }}</td>
+      <td style="width: 55%;">
+        {% if logo_data_uri %}
+          <img class="logo-img" alt="LivrExpress" src="{{ logo_data_uri }}"/>
+        {% else %}
+          <h1 class="brand-title">LivrExpress</h1>
+        {% endif %}
+        <div class="brand-sub">Service de Gestion des Retours — Maroc</div>
+      </td>
+      <td class="doc-badge-box" style="width: 45%;">
+        <div class="doc-title">Bon de Retour</div>
+        <div class="doc-ref">Réf: {{ demande.bonReference }}</div>
+        <div class="doc-date">Date de demande : {{ demande.createdAt ? demande.createdAt|date('d/m/Y à H:i') : 'N/A' }}</div>
+      </td>
     </tr>
-    <tr>
-      <th>Date de création</th>
-      <td>{{ demande.createdAt ? demande.createdAt|date('d/m/Y H:i') : '-' }}</td>
-    </tr>
-    <tr>
-      <th>Date de réception</th>
-      <td>{{ demande.receivedAt ? demande.receivedAt|date('d/m/Y H:i') : '-' }}</td>
-    </tr>
-    <tr>
-      <th>Réception colis</th>
-      <td>{{ demande.receptionType }}</td>
-    </tr>
-    <tr>
-      <th>Statut</th>
-      <td>{{ status_label }}</td>
-    </tr>
-    {% if demande.note %}
-      <tr>
-        <th>Note &amp; Remarque</th>
-        <td>{{ demande.note }}</td>
-      </tr>
-    {% endif %}
   </table>
 
-  <p class="section-title">Colis</p>
+  <!-- Meta Info Cards (2 Columns) -->
+  <table class="info-table">
+    <tr>
+      <!-- Left Card: Customer & Details -->
+      <td class="info-card">
+        <div class="info-card-title">Informations de la Demande</div>
+        <div class="info-row"><span class="info-label">Réf Bon :</span> <strong>{{ demande.bonReference }}</strong></div>
+        <div class="info-row"><span class="info-label">Mode de Réception :</span> {{ demande.receptionType }}</div>
+        <div class="info-row"><span class="info-label">Statut :</span> <strong>{{ status_label }}</strong></div>
+      </td>
+      
+      <!-- Right Card: Dates & Remarques -->
+      <td style="width: 4%;"></td>
+      <td class="info-card">
+        <div class="info-card-title">Suivi &amp; Validation</div>
+        <div class="info-row"><span class="info-label">Nombre total de colis :</span> <strong>{{ demande.colis|length }} colis</strong></div>
+        <div class="info-row"><span class="info-label">Date de Réception :</span> {{ demande.receivedAt ? demande.receivedAt|date('d/m/Y H:i') : 'En attente' }}</div>
+        <div class="info-row"><span class="info-label">Remarque :</span> {{ demande.note ? demande.note : 'Aucune note' }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Colis Section Title -->
+  <div class="section-header">Détails des colis à retourner</div>
+
+  <!-- Main Colis Table -->
   <table class="colis-table">
     <thead>
       <tr>
-        <th style="width: 48px;">#</th>
-        <th>Code de suivi</th>
-        <th>Nature du produit</th>
-        <th>Ville</th>
+        <th style="width: 36px; text-align: center;">#</th>
+        <th style="width: 140px;">Code de Suivi</th>
+        <th>Nature du Produit</th>
+        <th>Destinataire / Adresse</th>
+        <th style="width: 110px;">Ville</th>
+        <th style="width: 95px; text-align: right;">Prix (MAD)</th>
       </tr>
     </thead>
     <tbody>
+      {% set totalPrix = 0 %}
       {% for colis in demande.colis %}
+        {% set totalPrix = totalPrix + (colis.price ? colis.price : 0) %}
         <tr>
-          <td>{{ loop.index }}</td>
-          <td><span class="badge">{{ colis.trackingCode }}</span></td>
-          <td>{{ colis.productNature }}</td>
-          <td>{{ colis.city }}</td>
+          <td style="text-align: center; font-weight: bold; color: #64748b;">{{ loop.index }}</td>
+          <td><span class="tracking-code">{{ colis.trackingCode }}</span></td>
+          <td>{{ colis.productNature ? colis.productNature : 'Colis' }}</td>
+          <td>{{ colis.recipient ? colis.recipient : '-' }}</td>
+          <td>{{ colis.city ? colis.city : '-' }}</td>
+          <td style="text-align: right; font-weight: bold; font-family: DejaVu Sans Mono, monospace;">
+            {{ colis.price ? colis.price|number_format(2, ',', ' ') : '0,00' }} MAD
+          </td>
         </tr>
       {% else %}
         <tr>
-          <td colspan="4">Aucun colis associé.</td>
+          <td colspan="6" style="text-align: center; padding: 18px; color: #94a3b8;">
+            Aucun colis associé à ce bon de retour.
+          </td>
         </tr>
       {% endfor %}
+
+      <!-- Total Summary Row -->
+      {% if demande.colis|length > 0 %}
+        <tr class="summary-row">
+          <td colspan="4" style="text-align: right; text-transform: uppercase;">Total des colis retournés ({{ demande.colis|length }} colis) :</td>
+          <td colspan="2" style="text-align: right; font-family: DejaVu Sans Mono, monospace; color: #ef4444;">
+            {{ totalPrix|number_format(2, ',', ' ') }} MAD
+          </td>
+        </tr>
+      {% endif %}
     </tbody>
   </table>
 
-  <div class="footer">
-    Document généré par LivrExpress — {{ 'now'|date('d/m/Y H:i') }}
+  <!-- Signature Cards -->
+  <table class="signatures-table">
+    <tr>
+      <td class="signature-card">
+        <div class="signature-title">Signature &amp; Cachet Agence / Transporteur</div>
+        <div class="signature-note">Validé lors du contrôle qualité à la réception</div>
+      </td>
+      <td style="width: 4%;"></td>
+      <td class="signature-card">
+        <div class="signature-title">Signature &amp; Cachet Client Expéditeur</div>
+        <div class="signature-note">« Reçu conforme et retourné à l'expéditeur »</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Legal Notice Footer -->
+  <div class="legal-footer">
+    Ce bon de retour atteste de la remise des colis retournés au client. LivrExpress Maroc — Document confidentiel.
   </div>
+
 </body>
 </html>

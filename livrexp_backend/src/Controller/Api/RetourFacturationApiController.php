@@ -359,7 +359,12 @@ final class RetourFacturationApiController extends AbstractController
         $search = trim((string) $request->query->get('q', ''));
         $selectedStatut = trim((string) $request->query->get('statut', ''));
 
-        $bons = $returnRequestRepository->findAllForClientList((int) $user->getId(), $search, $selectedStatut);
+        $isStaff = $this->isGranted('ROLE_SUPERVISEUR') || $this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_SUPER_ADMIN');
+        if ($isStaff) {
+            $bons = $returnRequestRepository->findAllForList($search, $selectedStatut, null);
+        } else {
+            $bons = $returnRequestRepository->findAllForClientList((int) $user->getId(), $search, $selectedStatut);
+        }
         $statutLabels = ReturnRequest::getStatusLabels();
 
         $data = [];
@@ -410,8 +415,9 @@ final class RetourFacturationApiController extends AbstractController
             return $this->json(['message' => 'Non autorisé.'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
+        $isStaff = $this->isGranted('ROLE_SUPERVISEUR') || $this->isGranted('ROLE_ADMIN') || $this->isGranted('ROLE_SUPER_ADMIN');
         $ownerId = $demande->getCreatedBy()?->getId();
-        if ($ownerId === null || $ownerId !== $user->getId()) {
+        if (!$isStaff && ($ownerId === null || $ownerId !== $user->getId())) {
             return $this->json(['message' => 'Document non disponible.'], JsonResponse::HTTP_FORBIDDEN);
         }
 

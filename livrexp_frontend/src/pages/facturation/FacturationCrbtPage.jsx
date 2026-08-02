@@ -95,7 +95,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
   // PDF Client Invoice Generator
   const handlePrintInvoice = (crbt) => {
-    const printWin = window.open('', '_blank', 'width=900,height=1000');
+    const printWin = window.open('', '_blank', 'width=950,height=1000');
     if (!printWin) return;
 
     printWin.document.write(`
@@ -105,44 +105,86 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
         <meta charset="UTF-8">
         <title>Facture Client ${crbt.code}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-          body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; margin: 0; }
-          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
-          .logo { font-size: 26px; font-weight: 800; color: #2563eb; }
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+          * { box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; margin: 0; background: #ffffff; line-height: 1.5; }
+          
+          .invoice-header { display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 24px; margin-bottom: 28px; }
+          .logo { font-size: 28px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
           .logo span { color: #0f172a; }
-          .inv-title { text-align: right; }
-          .inv-title h1 { margin: 0; font-size: 18px; color: #0f172a; }
-          .client-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 30px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th { background: #f1f5f9; text-align: left; padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 12px; }
-          td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+          .sub-brand { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500; }
+          
+          .inv-title-box { text-align: right; }
+          .inv-title-box h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+          .inv-ref { font-size: 14px; font-weight: 700; color: #2563eb; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+          .inv-date { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+          .info-grid { display: flex; gap: 20px; margin-bottom: 30px; }
+          .info-card { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; }
+          .info-card-title { font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+          .info-line { font-size: 13px; color: #334155; margin-bottom: 4px; }
+          .info-label { font-weight: 600; color: #64748b; }
+
+          table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+          th { background: #1e293b; color: #ffffff; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 12px 14px; text-align: left; }
+          td { padding: 14px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #334155; }
+          tr:nth-child(even) td { background-color: #f8fafc; }
           .text-right { text-align: right; }
-          .total-box { margin-left: auto; width: 320px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; }
-          .footer { margin-top: 50px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+          .font-mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+          .summary-wrapper { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
+          .payment-info { width: 55%; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; font-size: 12px; color: #0369a1; }
+          .payment-info h4 { margin: 0 0 6px 0; font-size: 13px; color: #0284c7; text-transform: uppercase; }
+
+          .total-card { width: 340px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 18px; }
+          .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #334155; }
+          .total-row.grand-total { border-top: 2px solid #0f172a; padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800; color: #0f172a; }
+
+          .signatures { display: flex; justify-content: space-between; margin-top: 40px; margin-bottom: 20px; }
+          .sig-box { width: 48%; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 14px; height: 95px; background: #fafafa; font-size: 11px; color: #64748b; }
+          .sig-box strong { display: block; color: #0f172a; text-transform: uppercase; margin-bottom: 4px; font-size: 12px; }
+
+          .footer { margin-top: 40px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
+
+        <div class="invoice-header">
           <div>
             <div class="logo">Livr<span>Express</span></div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Service Facturation & Gestion Financière</div>
+            <div class="sub-brand">Service de Facturation & Transfert CRBT — Maroc</div>
           </div>
-          <div class="inv-title">
-            <h1>FACTURE N° FAC-${crbt.code}</h1>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Date: ${crbt.dateCreation || new Date().toLocaleDateString('fr-FR')}</div>
+          <div class="inv-title-box">
+            <h1>Facture de Règlement</h1>
+            <div class="inv-ref">N° FAC-${crbt.code}</div>
+            <div class="inv-date">Date d'émission : ${crbt.dateCreation || new Date().toLocaleDateString('fr-FR')}</div>
           </div>
         </div>
 
-        <div class="client-box">
-          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Facturé à :</div>
-          <div style="font-size: 16px; font-weight: 700; color: #0f172a;">${crbt.client || 'Client Privé'}</div>
-          <div style="font-size: 13px; color: #475569; margin-top: 4px;">ICE: 002948102000049 | Ville: Casablanca, Maroc</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-title">Facturé à (Client)</div>
+            <div class="info-line" style="font-size: 15px; font-weight: 800; color: #0f172a;">${crbt.client || 'Client Privé'}</div>
+            <div class="info-line"><span class="info-label">ICE :</span> 002948102000049</div>
+            <div class="info-line"><span class="info-label">Adresse :</span> Casablanca, Maroc</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Émetteur & Règlement</div>
+            <div class="info-line"><span class="info-label">Société :</span> LivrExpress S.A.R.L</div>
+            <div class="info-line"><span class="info-label">Mode de règlement :</span> Virement Bancaire (CRBT)</div>
+            <div class="info-line"><span class="info-label">Statut du dossier :</span> <strong>${crbt.statutLabel || crbt.statut}</strong></div>
+          </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Description des Prestations</th>
+              <th>Prestration / Relevé d'encaissement</th>
               <th class="text-right">Colis</th>
               <th class="text-right">Total Brut (MAD)</th>
               <th class="text-right">Frais Livr. (MAD)</th>
@@ -151,32 +193,55 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
           </thead>
           <tbody>
             <tr>
-              <td>Relevé d'expéditions et encaissement CRBT (${crbt.code})</td>
-              <td class="text-right">${crbt.nbrColis}</td>
-              <td class="text-right">${crbt.totalBrut.toFixed(2)} MAD</td>
-              <td class="text-right">${crbt.fraisLivraison.toFixed(2)} MAD</td>
-              <td class="text-right font-bold" style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</td>
+              <td>
+                <strong>Encaissement des fonds CRBT — Relevé ${crbt.code}</strong>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Comprend les encaissements à la livraison et déduction des frais d'expédition.</div>
+              </td>
+              <td class="text-right font-mono">${crbt.nbrColis}</td>
+              <td class="text-right font-mono">${crbt.totalBrut.toFixed(2)} MAD</td>
+              <td class="text-right font-mono" style="color:#dc2626;">-${crbt.fraisLivraison.toFixed(2)} MAD</td>
+              <td class="text-right font-mono" style="color:#16a34a; font-size: 14px;">${crbt.totalNet.toFixed(2)} MAD</td>
             </tr>
           </tbody>
         </table>
 
-        <div class="total-box">
-          <div style="display:flex; justify-content:space-between; margin-bottom: 6px; font-size: 13px;">
-            <span>Total Encaissement CRBT :</span>
-            <strong>${crbt.totalBrut.toFixed(2)} MAD</strong>
+        <div class="summary-wrapper">
+          <div class="payment-info">
+            <h4>Instructions de Virement</h4>
+            <div>Bénéficiaire : <strong>${crbt.client || 'Client Privé'}</strong></div>
+            <div>Banque partenaire : <strong>Attijariwafa Bank / BMCE</strong></div>
+            <div>Montant net transféré : <strong style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</strong></div>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom: 6px; font-size: 13px;">
-            <span>Frais de Livraison Réduits :</span>
-            <strong style="color:#dc2626;">-${crbt.fraisLivraison.toFixed(2)} MAD</strong>
+
+          <div class="total-card">
+            <div class="total-row">
+              <span>Total Encaissement Brut :</span>
+              <strong class="font-mono">${crbt.totalBrut.toFixed(2)} MAD</strong>
+            </div>
+            <div class="total-row">
+              <span>Frais de livraison appliqués :</span>
+              <strong class="font-mono" style="color:#dc2626;">-${crbt.fraisLivraison.toFixed(2)} MAD</strong>
+            </div>
+            <div class="total-row grand-total">
+              <span>NET À PAYER :</span>
+              <span class="font-mono" style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</span>
+            </div>
           </div>
-          <div style="display:flex; justify-content:space-between; font-size: 15px; color: #0f172a; font-weight: 800; border-top: 2px solid #0f172a; padding-top: 8px; margin-top: 8px;">
-            <span>NET À PAYER AU CLIENT :</span>
-            <span style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</span>
+        </div>
+
+        <div class="signatures">
+          <div class="sig-box">
+            <strong>Cachet &amp; Validation LivrExpress</strong>
+            <em>Direction Financière et Comptabilité</em>
+          </div>
+          <div class="sig-box">
+            <strong>Reçu &amp; Accusé de Réception Client</strong>
+            <em>Pour accord du virement et décharge</em>
           </div>
         </div>
 
         <div class="footer">
-          LivrExpress S.A.R.L - Capital: 100.000 MAD - RC 49201 Casablanca - IF 4920192
+          LivrExpress S.A.R.L - Capital: 100.000 MAD - RC 49201 Casablanca - IF 4920192 - ICE 002948102000049
         </div>
 
         <script>
