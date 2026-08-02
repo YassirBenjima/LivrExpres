@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';
+import KtSelect from '../../components/ui/KtSelect';
 import { authService } from '../../services/api';
 import '../../styles/auth.css';
 
@@ -214,23 +215,17 @@ export default function RegisterPage({ navigate }) {
         {/* City */}
         <div className="flex flex-col gap-1">
           <label className="kt-form-label font-normal text-mono">Ville *</label>
-          <select 
-            className="kt-select" 
+          <KtSelect
             value={city}
-            onChange={(e) => {
-              setCity(e.target.value);
+            onChange={(val) => {
+              setCity(val);
               if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
             }}
-            required 
-            disabled={isLoading}
-          >
-            <option value="" disabled>Choisir une ville</option>
-            {cities.map((c) => (
-              <option key={c.id || c.name} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            options={cities.map(c => ({ value: c.name, label: c.name }))}
+            placeholder="Choisir une ville"
+            enableSearch={true}
+            searchPlaceholder="Rechercher une ville..."
+          />
           {errors.city && <span className="text-red-500 text-xs mt-1">{errors.city}</span>}
         </div>
 
