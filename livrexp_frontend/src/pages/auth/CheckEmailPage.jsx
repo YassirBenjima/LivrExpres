@@ -89,7 +89,10 @@ export default function CheckEmailPage({ navigate }) {
       rightPaneDesc="Une passerelle d'authentification robuste assurant un accès sécurisé et efficace à l'interface de gestion de LivrExpress."
     >
       <div className="kt-card-content p-10 flex flex-col gap-5">
-        <div className="flex justify-center py-5">
+        <div className="flex justify-center mb-1">
+          <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+        </div>
+        <div className="flex justify-center py-2">
           <img 
             alt="check email illustration" 
             className="dark:hidden max-h-[130px]" 

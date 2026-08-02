@@ -117,7 +117,10 @@ export default function RegisterPage({ navigate }) {
       <form onSubmit={handleRegisterSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="registration_form">
         
         <div className="text-center mb-2.5">
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Devenir client 👋</h3>
+          <div className="flex justify-center mb-4">
+            <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+          </div>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Devenir client</h3>
           <div className="flex items-center justify-center font-medium">
             <span className="text-sm text-secondary-foreground me-1.5">Déjà inscrit ?</span>
             <a 

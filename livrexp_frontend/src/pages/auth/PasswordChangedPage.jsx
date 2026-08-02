@@ -6,6 +6,9 @@ export default function PasswordChangedPage({ navigate }) {
   return (
     <AuthLayout cardMaxWidthClass="max-w-[440px]">
       <div className="kt-card-content p-10">
+        <div className="flex justify-center mb-3">
+          <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+        </div>
         <div className="flex justify-center mb-5">
           <img 
             alt="password changed illustration" 

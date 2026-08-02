@@ -49,6 +49,9 @@ export default function LoginPage({ navigate }) {
       <form onSubmit={handleLoginSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="sign_in_form">
         
         <div className="text-center mb-2.5">
+          <div className="flex justify-center mb-4">
+            <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+          </div>
           <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Espace des clients</h3>
           <div className="flex items-center justify-center font-medium">
             <span className="text-sm text-secondary-foreground me-1.5">Pas encore de compte ?</span>

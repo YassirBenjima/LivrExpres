@@ -60,7 +60,10 @@ export default function ForgotPasswordPage({ navigate }) {
       <form onSubmit={handleSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="forgot_password_form">
         
         <div className="text-center mb-2.5">
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Mot de passe oublié 🔒</h3>
+          <div className="flex justify-center mb-4">
+            <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+          </div>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Mot de passe oublié</h3>
           <div className="flex items-center justify-center font-medium">
             <span className="text-sm text-secondary-foreground me-1.5">Entrez votre e-mail pour réinitialiser</span>
           </div>

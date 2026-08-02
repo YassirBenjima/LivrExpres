@@ -99,8 +99,11 @@ export default function ChangePasswordPage({ navigate }) {
     >
       <form onSubmit={handleSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="reset_password_change_password_form">
         <div className="text-center mb-1">
+          <div className="flex justify-center mb-4">
+            <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
+          </div>
           <h3 className="text-lg font-medium text-mono mb-1">
-            Changer le mot de passe 🔒
+            Changer le mot de passe
           </h3>
           <span className="text-xs text-secondary-foreground">
             Saisissez le code de vérification à 6 chiffres et définissez votre nouveau mot de passe.
