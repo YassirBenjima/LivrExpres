@@ -13,7 +13,7 @@ export default function RegisterPage({ navigate }) {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [cities, setCities] = useState([]);
   const [errors, setErrors] = useState({});
@@ -240,7 +240,6 @@ export default function RegisterPage({ navigate }) {
             }}
             autoComplete="new-password"
             disabled={isLoading}
-            showStrength={true}
           />
           {errors.password && <span className="text-red-500 text-xs mt-1">{errors.password}</span>}
         </div>
@@ -256,7 +255,6 @@ export default function RegisterPage({ navigate }) {
             }}
             autoComplete="new-password"
             disabled={isLoading}
-            matchValue={password}
           />
           {errors.confirmPassword && <span className="text-red-500 text-xs mt-1">{errors.confirmPassword}</span>}
         </div>
