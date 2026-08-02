@@ -3,17 +3,17 @@ import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 
 export default function LivreurAutoAssignPage({ navigate, showNotification }) {
-  const [activeTab, setActiveTab]       = useState('manual'); // 'manual' or 'auto'
-  const [livreurs, setLivreurs]         = useState([]);
-  const [colisDisp, setColisDisp]       = useState([]);
+  const [activeTab, setActiveTab]         = useState('manual'); // 'manual' or 'auto'
+  const [livreurs, setLivreurs]           = useState([]);
+  const [colisDisp, setColisDisp]         = useState([]);
   const [selectedColis, setSelectedColis] = useState([]);
   const [selectedLivreurId, setSelectedLivreurId] = useState('');
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [cityFilter, setCityFilter]     = useState('');
-  const [assignments, setAssignments]   = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [fetching, setFetching]         = useState(true);
-  const [doneAuto, setDoneAuto]         = useState(false);
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [cityFilter, setCityFilter]       = useState('');
+  const [assignments, setAssignments]     = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [fetching, setFetching]           = useState(true);
+  const [doneAuto, setDoneAuto]           = useState(false);
 
   const headers = () => {
     const t = localStorage.getItem('auth_token');
@@ -38,7 +38,6 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
       if (r2.ok) {
         const d = await r2.json();
         const raw = Array.isArray(d) ? d : (d.colis || []);
-        // Filter unassigned colis pending assignment/pickup
         const unassigned = raw.filter(c => 
           (!c.assignedDriver || c.assignedDriver === '-') && 
           (c.etatLabel === 'En préparation' || c.statutLabel === 'En cours' || c.statutLabel === 'En attente')
@@ -131,11 +130,9 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
     setSelectedColis(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  // Unique list of cities from available colis for filter
   const availableCities = Array.from(new Set(colisDisp.map(c => c.city).filter(Boolean)));
   const disponibles = livreurs.filter(l => l.disponible);
 
-  // Filtered colis list based on search and city
   const filteredColis = colisDisp.filter(c => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q || [
@@ -158,58 +155,93 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
     <DashboardLayout activeMenu="livreurs_list">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Page Header */}
-        <div className="kt-container-fixed">
-          <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-            <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">
-                Attribution & Dispatch des Colis
-              </h1>
-              <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Affectez vos colis en attente aux livreurs de manière manuelle ou automatisée par zone.
+        {/* Hero Header Section */}
+        <div className="kt-container-fixed mb-6">
+          <div className="relative overflow-hidden rounded-2xl p-6 lg:p-8 border border-primary/20 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-emerald-500/10 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-emerald-950/40 backdrop-blur-md shadow-sm">
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
+              <div className="flex flex-col gap-2 max-w-xl">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/20 text-primary border border-primary/30 uppercase tracking-wider">
+                    Logistique & Dispatch
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Module Actif
+                  </span>
+                </div>
+                <h1 className="text-2xl lg:text-3xl font-extrabold text-foreground tracking-tight">
+                  Attribution des Colis aux Livreurs
+                </h1>
+                <p className="text-sm text-secondary-foreground leading-relaxed">
+                  Gérez l'affectation manuelle ou automatisée de vos colis non assignés pour optimiser la tournée de livraison de vos équipes.
+                </p>
               </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <button 
-                type="button" 
-                className="kt-btn kt-btn-outline" 
-                onClick={() => navigate('/livreurs')}
-              >
-                <i className="ki-filled ki-arrow-left text-base me-1"></i>
-                Retour à la liste des livreurs
-              </button>
+
+              {/* Quick Action Badges / Stat Pills */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-background/80 dark:bg-zinc-900/80 border border-border/60 backdrop-blur-sm shadow-sm">
+                  <div className="size-10 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+                    <i className="ki-filled ki-box"></i>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground font-medium">Non assignés</div>
+                    <div className="text-base font-bold text-foreground">{colisDisp.length} colis</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-background/80 dark:bg-zinc-900/80 border border-border/60 backdrop-blur-sm shadow-sm">
+                  <div className="size-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">
+                    <i className="ki-filled ki-user-check"></i>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground font-medium">Livreurs actifs</div>
+                    <div className="text-base font-bold text-foreground">{disponibles.length} livreurs</div>
+                  </div>
+                </div>
+
+                <button 
+                  type="button" 
+                  className="kt-btn kt-btn-outline hover:bg-background border-border/80 shadow-sm" 
+                  onClick={() => navigate('/livreurs')}
+                >
+                  <i className="ki-filled ki-arrow-left text-base me-1"></i>
+                  Retour Liste
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Mode Switcher Tabs */}
+        {/* Styled Segmented Tab Switcher */}
         <div className="kt-container-fixed mb-6">
-          <div className="flex border-b border-border/70 gap-8">
+          <div className="inline-flex p-1.5 rounded-2xl bg-accent/40 dark:bg-zinc-900/60 border border-border/60 backdrop-blur-md shadow-sm">
             <button
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition-all duration-200 ${
                 activeTab === 'manual'
-                  ? 'border-primary text-primary font-bold'
-                  : 'border-transparent text-secondary-foreground hover:text-foreground'
+                  ? 'bg-background text-primary shadow-md shadow-black/5 dark:shadow-black/20 font-bold'
+                  : 'text-secondary-foreground hover:text-foreground hover:bg-background/40'
               }`}
               onClick={() => setActiveTab('manual')}
             >
-              <i className="ki-filled ki-hand-cart text-lg"></i>
+              <i className={`ki-filled ki-hand-cart text-lg ${activeTab === 'manual' ? 'text-primary' : ''}`}></i>
               Attribution Manuelle
-              <span className="kt-badge kt-badge-primary rounded-full px-2 py-0.5 text-xs ms-1">
-                {colisDisp.length} colis
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeTab === 'manual' ? 'bg-primary/10 text-primary' : 'bg-accent text-secondary-foreground'
+              }`}>
+                {colisDisp.length}
               </span>
             </button>
 
             <button
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition-all duration-200 ${
                 activeTab === 'auto'
-                  ? 'border-primary text-primary font-bold'
-                  : 'border-transparent text-secondary-foreground hover:text-foreground'
+                  ? 'bg-background text-primary shadow-md shadow-black/5 dark:shadow-black/20 font-bold'
+                  : 'text-secondary-foreground hover:text-foreground hover:bg-background/40'
               }`}
               onClick={() => setActiveTab('auto')}
             >
-              <i className="ki-filled ki-technology-2 text-lg"></i>
-              Attribution Automatique (IA / Zone)
+              <i className={`ki-filled ki-technology-2 text-lg ${activeTab === 'auto' ? 'text-primary' : ''}`}></i>
+              Attribution Automatique (IA)
             </button>
           </div>
         </div>
@@ -219,57 +251,62 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
           <div className="kt-container-fixed">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-              {/* Main Table Area (2/3 width on large screens) */}
+              {/* Left Column: Interactive Table (2/3 width) */}
               <div className="xl:col-span-2 flex flex-col gap-5">
-                <div className="kt-card kt-card-grid">
+                <div className="kt-card border border-border/60 shadow-sm overflow-hidden rounded-2xl">
                   
-                  {/* Card Header & Controls */}
-                  <div className="kt-card-header flex-wrap gap-4 py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <h3 className="kt-card-title text-base font-semibold">
-                        Sélection des colis à attribuer
-                      </h3>
-                      <span className="text-xs text-muted-foreground me-2">
-                        ({filteredColis.length} sur {colisDisp.length})
-                      </span>
+                  {/* Card Header */}
+                  <div className="p-5 border-b border-border/60 flex flex-wrap items-center justify-between gap-4 bg-background">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-base font-bold">
+                        <i className="ki-filled ki-element-plus"></i>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-foreground">
+                          Colis en attente d'attribution
+                        </h3>
+                        <p className="text-xs text-muted-foreground me-2">
+                          Sélectionnez les colis à affecter à un livreur
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Action Bar when parcels are selected */}
+                    {/* Floating Badge for Selected Items */}
                     {selectedColis.length > 0 && (
-                      <div className="flex items-center gap-2 bg-accent/60 px-3 py-1.5 rounded-lg border border-primary/20 animate-fade-in">
-                        <span className="text-xs font-semibold text-primary">
-                          {selectedColis.length} colis sélectionné{selectedColis.length > 1 ? 's' : ''}
-                        </span>
+                      <div className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse">
+                        <i className="ki-filled ki-check-circle text-sm me-2 me-sm-0"></i>
+                        <span>{selectedColis.length} colis sélectionné{selectedColis.length > 1 ? 's' : ''}</span>
                         <button
-                          className="text-xs text-muted-foreground hover:text-foreground underline ms-2"
+                          className="ms-2 underline hover:text-primary-focus font-normal"
                           onClick={() => setSelectedColis([])}
                         >
-                          Désélectionner tout
+                          Effacer
                         </button>
                       </div>
                     )}
                   </div>
 
-                  {/* Filters Bar */}
-                  <div className="px-6 py-3 bg-accent/20 border-b border-border/50 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 grow max-w-md">
-                      <label className="kt-input w-full">
-                        <i className="ki-filled ki-magnifier text-muted-foreground"></i>
+                  {/* Filter Toolbar */}
+                  <div className="p-4 bg-accent/30 dark:bg-zinc-900/40 border-b border-border/50 flex flex-wrap items-center justify-between gap-3">
+                    <div className="grow max-w-md">
+                      <label className="kt-input w-full bg-background">
+                        <i className="ki-filled ki-magnifier text-muted-foreground me-2 me-sm-0"></i>
                         <input
                           type="text"
-                          placeholder="Rechercher par n° commande, code suivi, destinataire, ville..."
+                          placeholder="Rechercher par N° commande, code suivi, destinataire, ville..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
+                          className="text-sm"
                         />
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <KtSelect
                         value={cityFilter}
                         onChange={(val) => setCityFilter(val)}
-                        placeholder="Filtrer par ville"
-                        className="w-44"
+                        placeholder="Ville"
+                        className="w-40"
                         options={[
                           { value: '', label: 'Toutes les villes' },
                           ...availableCities.map(c => ({ value: c, label: c }))
@@ -277,39 +314,39 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                       />
                       {cityFilter && (
                         <button
-                          className="kt-btn kt-btn-sm kt-btn-ghost text-xs"
+                          className="kt-btn kt-btn-xs kt-btn-outline text-xs me-2 me-sm-0"
                           onClick={() => setCityFilter('')}
                         >
-                          Réinitialiser
+                          Tout
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Table Content */}
+                  {/* Table View */}
                   <div className="kt-card-content p-0">
                     {fetching ? (
-                      <div className="p-8 text-center text-secondary-foreground">
-                        <div className="animate-pulse space-y-3">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="h-10 bg-accent/50 rounded-lg w-full"></div>
-                          ))}
-                        </div>
+                      <div className="p-8 text-center text-secondary-foreground space-y-3">
+                        <div className="h-10 bg-accent/50 rounded-xl animate-pulse"></div>
+                        <div className="h-10 bg-accent/50 rounded-xl animate-pulse"></div>
+                        <div className="h-10 bg-accent/50 rounded-xl animate-pulse"></div>
                       </div>
                     ) : filteredColis.length === 0 ? (
                       <div className="p-12 text-center text-secondary-foreground flex flex-col items-center gap-3">
-                        <i className="ki-filled ki-information-2 text-4xl text-muted-foreground/40"></i>
-                        <p className="font-medium">Aucun colis non assigné disponible.</p>
-                        <p className="text-xs text-muted-foreground">
-                          Tous les colis en préparation ont déjà été attribués aux livreurs !
+                        <div className="size-16 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl">
+                          <i className="ki-filled ki-shield-check"></i>
+                        </div>
+                        <h4 className="text-base font-bold text-foreground me-2 me-sm-0">Aucun colis à assigner</h4>
+                        <p className="text-xs text-muted-foreground max-w-sm">
+                          Tous vos colis en préparation ont été attribués à des livreurs ou aucune commande ne correspond aux filtres.
                         </p>
                       </div>
                     ) : (
                       <div className="kt-scrollable-x-auto">
-                        <table className="kt-table table-auto kt-table-border w-full text-sm">
+                        <table className="kt-table table-auto w-full text-sm">
                           <thead>
-                            <tr className="bg-accent/30 text-xs text-secondary-foreground">
-                              <th className="w-12 text-center py-3">
+                            <tr className="bg-accent/40 dark:bg-zinc-900/60 text-xs font-semibold text-secondary-foreground uppercase tracking-wider border-b border-border/60">
+                              <th className="w-12 text-center py-3.5 px-4">
                                 <input
                                   type="checkbox"
                                   className="kt-checkbox kt-checkbox-sm"
@@ -317,25 +354,27 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                                   onChange={toggleSelectAll}
                                 />
                               </th>
-                              <th className="min-w-[140px] text-start">N° Commande / Suivi</th>
-                              <th className="min-w-[160px] text-start">Destinataire</th>
-                              <th className="min-w-[120px] text-start">Ville</th>
-                              <th className="min-w-[180px] text-start">Adresse</th>
-                              <th className="min-w-[140px] text-start">Marchandise</th>
+                              <th className="py-3.5 px-4 text-start">N° Commande / Suivi</th>
+                              <th className="py-3.5 px-4 text-start">Destinataire</th>
+                              <th className="py-3.5 px-4 text-start">Ville</th>
+                              <th className="py-3.5 px-4 text-start">Adresse</th>
+                              <th className="py-3.5 px-4 text-start">Marchandise</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-border/40">
                             {filteredColis.map((colis) => {
                               const isChecked = selectedColis.includes(colis.id);
                               return (
                                 <tr
                                   key={colis.id}
-                                  className={`hover:bg-accent/40 cursor-pointer transition-colors ${
-                                    isChecked ? 'bg-primary/5 dark:bg-primary/10' : ''
+                                  className={`transition-all duration-150 cursor-pointer ${
+                                    isChecked 
+                                      ? 'bg-primary/5 dark:bg-primary/10 border-s-4 border-primary' 
+                                      : 'hover:bg-accent/30'
                                   }`}
                                   onClick={() => toggleColis(colis.id)}
                                 >
-                                  <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                                  <td className="text-center py-3 px-4" onClick={(e) => e.stopPropagation()}>
                                     <input
                                       type="checkbox"
                                       className="kt-checkbox kt-checkbox-sm"
@@ -343,22 +382,34 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                                       onChange={() => toggleColis(colis.id)}
                                     />
                                   </td>
-                                  <td className="font-medium text-mono text-foreground">
-                                    <div>{colis.orderNumber}</div>
-                                    <div className="text-[11px] text-muted-foreground">{colis.trackingCode}</div>
+                                  <td className="py-3 px-4">
+                                    <div className="font-mono font-bold text-foreground text-sm me-2 me-sm-0">
+                                      {colis.orderNumber}
+                                    </div>
+                                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-mono bg-accent/60 text-secondary-foreground me-2 me-sm-0">
+                                      {colis.trackingCode}
+                                    </span>
                                   </td>
-                                  <td className="text-foreground">
-                                    <div className="font-medium me-2 me-sm-0">{colis.recipient || '-'}</div>
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <div className="size-7 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                        {(colis.recipient || 'C')[0].toUpperCase()}
+                                      </div>
+                                      <span className="font-medium text-foreground text-sm truncate max-w-[140px] me-2 me-sm-0">
+                                        {colis.recipient || 'Client'}
+                                      </span>
+                                    </div>
                                   </td>
-                                  <td>
-                                    <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full px-2 py-0.5 text-xs font-normal me-2 me-sm-0">
+                                  <td className="py-3 px-4">
+                                    <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full px-2.5 py-0.5 text-xs font-medium me-2 me-sm-0">
                                       {colis.city}
                                     </span>
                                   </td>
-                                  <td className="text-secondary-foreground text-xs max-w-[200px] truncate">
+                                  <td className="py-3 px-4 text-xs text-secondary-foreground max-w-[180px] truncate me-2 me-sm-0">
+                                    <i className="ki-filled ki-geolocation text-muted-foreground me-1 me-2 me-sm-0"></i>
                                     {colis.address || '-'}
                                   </td>
-                                  <td className="text-foreground text-xs">
+                                  <td className="py-3 px-4 text-xs font-medium text-foreground me-2 me-sm-0">
                                     {colis.productNature || 'Marchandise'}
                                   </td>
                                 </tr>
@@ -373,109 +424,135 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                 </div>
               </div>
 
-              {/* Sidebar Livreur Selection Panel (1/3 width) */}
+              {/* Right Column: Livreur Selection Control (1/3 width) */}
               <div className="flex flex-col gap-5">
-                <div className="kt-card">
-                  <div className="kt-card-header py-4 px-6">
-                    <h3 className="kt-card-title text-base font-semibold">
-                      Assigner à un livreur
-                    </h3>
+
+                {/* Primary Assignment Hero Card */}
+                <div className="kt-card border border-primary/30 shadow-lg shadow-primary/5 rounded-2xl overflow-hidden bg-gradient-to-b from-background to-primary/5 dark:to-primary/10">
+                  <div className="p-5 border-b border-border/60 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <i className="ki-filled ki-user-tick text-primary text-xl"></i>
+                      <h3 className="text-base font-bold text-foreground me-2 me-sm-0">Affectation rapide</h3>
+                    </div>
+                    {selectedColis.length > 0 && (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary text-white shadow-sm me-2 me-sm-0">
+                        {selectedColis.length} sélectionné{selectedColis.length > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="kt-card-content p-6 flex flex-col gap-5">
-
-                    {/* Quick Dropdown Assignment */}
-                    <div className="flex flex-col gap-2 p-4 bg-accent/30 rounded-xl border border-border/60">
-                      <label className="text-xs font-semibold text-secondary-foreground">
-                        Choix rapide du livreur
+                  <div className="p-5 flex flex-col gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-secondary-foreground mb-1.5 block uppercase tracking-wider me-2 me-sm-0">
+                        1. Choisissez le livreur
                       </label>
                       <KtSelect
                         value={selectedLivreurId}
                         onChange={(val) => setSelectedLivreurId(val)}
-                        placeholder="Sélectionner un livreur..."
+                        placeholder="Sélectionner un livreur disponible..."
                         className="w-full"
                         options={[
-                          { value: '', label: 'Choisir un livreur...' },
+                          { value: '', label: 'Sélectionner un livreur...' },
                           ...disponibles.map(l => ({
                             value: String(l.id),
-                            label: `${l.fullName} (${l.city})`
+                            label: `${l.fullName} — ${l.city} (${l.stats?.total ?? 0} colis)`
                           }))
                         ]}
                       />
-
-                      <button
-                        type="button"
-                        className="kt-btn kt-btn-primary w-full mt-2"
-                        disabled={loading || selectedColis.length === 0 || !selectedLivreurId}
-                        onClick={() => handleManualAssign()}
-                      >
-                        {loading ? (
-                          'Attribution en cours...'
-                        ) : (
-                          <>
-                            <i className="ki-filled ki-user-check text-base me-1"></i>
-                            Assigner {selectedColis.length} colis {selectedLivreurObj ? `à ${selectedLivreurObj.fullName}` : ''}
-                          </>
-                        )}
-                      </button>
                     </div>
 
-                    {/* List of Active Livreurs Cards */}
-                    <div>
-                      <p className="text-xs font-semibold text-secondary-foreground mb-3 uppercase tracking-wider">
-                        Livreurs disponibles par zone ({disponibles.length})
+                    <button
+                      type="button"
+                      className="kt-btn kt-btn-primary w-full py-3 text-sm font-semibold shadow-md shadow-primary/20 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 me-2 me-sm-0"
+                      disabled={loading || selectedColis.length === 0 || !selectedLivreurId}
+                      onClick={() => handleManualAssign()}
+                    >
+                      {loading ? (
+                        'Attribution en cours...'
+                      ) : (
+                        <>
+                          <i className="ki-filled ki-check-circle me-1.5 text-base me-2 me-sm-0"></i>
+                          Assigner {selectedColis.length > 0 ? selectedColis.length : ''} colis {selectedLivreurObj ? `à ${selectedLivreurObj.fullName}` : ''}
+                        </>
+                      )}
+                    </button>
+
+                    {selectedColis.length === 0 && (
+                      <p className="text-[11px] text-muted-foreground text-center me-2 me-sm-0">
+                        💡 Cochez un ou plusieurs colis dans le tableau de gauche pour activer l'attribution.
                       </p>
-
-                      <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto pe-1">
-                        {disponibles.length === 0 ? (
-                          <div className="p-4 text-xs text-center text-muted-foreground border border-dashed rounded-lg">
-                            Aucun livreur disponible actuellement.
-                          </div>
-                        ) : (
-                          disponibles.map((l) => (
-                            <div
-                              key={l.id}
-                              className={`p-3.5 border rounded-xl flex items-center justify-between gap-3 transition-all hover:shadow-sm ${
-                                String(selectedLivreurId) === String(l.id)
-                                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                                  : 'border-border/60 hover:border-primary/40'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3 min-w-0 me-2 me-sm-0">
-                                <div
-                                  className="size-9 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0 shadow-sm"
-                                  style={{ background: `hsl(${(l.id * 53) % 360}, 65%, 48%)` }}
-                                >
-                                  {l.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-sm font-semibold text-foreground truncate me-2 me-sm-0">
-                                    {l.fullName}
-                                  </span>
-                                  <div className="flex items-center gap-2 text-xs text-secondary-foreground me-2 me-sm-0">
-                                    <span className="font-medium text-foreground me-2 me-sm-0">{l.city}</span>
-                                    <span>•</span>
-                                    <span>{l.stats?.total ?? 0} colis en cours</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <button
-                                type="button"
-                                className="kt-btn kt-btn-xs kt-btn-outline kt-btn-primary shrink-0"
-                                disabled={loading || selectedColis.length === 0}
-                                onClick={() => handleManualAssign(l.id)}
-                              >
-                                Assigner
-                              </button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
+                    )}
                   </div>
                 </div>
+
+                {/* Livreurs Cards Grid */}
+                <div className="kt-card border border-border/60 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4 me-2 me-sm-0">
+                    <h4 className="text-xs font-bold text-secondary-foreground uppercase tracking-wider me-2 me-sm-0">
+                      Livreurs actifs par zone ({disponibles.length})
+                    </h4>
+                  </div>
+
+                  <div className="flex flex-col gap-3 max-h-[440px] overflow-y-auto pe-1">
+                    {disponibles.length === 0 ? (
+                      <div className="p-6 text-xs text-center text-muted-foreground border border-dashed rounded-xl me-2 me-sm-0">
+                        Aucun livreur disponible.
+                      </div>
+                    ) : (
+                      disponibles.map((l) => {
+                        const isSelected = String(selectedLivreurId) === String(l.id);
+                        return (
+                          <div
+                            key={l.id}
+                            className={`p-3.5 border rounded-xl flex items-center justify-between gap-3 transition-all duration-200 ${
+                              isSelected
+                                ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary'
+                                : 'border-border/60 hover:border-primary/40 hover:bg-accent/20'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 me-2 me-sm-0">
+                              <div
+                                className="size-10 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm ring-2 ring-background me-2 me-sm-0"
+                                style={{ background: `hsl(${(l.id * 53) % 360}, 65%, 46%)` }}
+                              >
+                                {l.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                              </div>
+
+                              <div className="flex flex-col min-w-0 me-2 me-sm-0">
+                                <div className="flex items-center gap-1.5 me-2 me-sm-0">
+                                  <span className="text-sm font-bold text-foreground truncate me-2 me-sm-0">
+                                    {l.fullName}
+                                  </span>
+                                  <span className="size-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-secondary-foreground me-2 me-sm-0">
+                                  <span className="font-semibold text-foreground me-2 me-sm-0">{l.city}</span>
+                                  <span>•</span>
+                                  <span>{l.stats?.total ?? 0} colis en cours</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={`kt-btn kt-btn-xs shrink-0 font-medium ${
+                                isSelected ? 'kt-btn-primary' : 'kt-btn-outline'
+                              }`}
+                              disabled={loading || selectedColis.length === 0}
+                              onClick={() => {
+                                setSelectedLivreurId(String(l.id));
+                                handleManualAssign(l.id);
+                              }}
+                            >
+                              Assigner
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
               </div>
 
             </div>
@@ -485,63 +562,73 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         {/* Tab 2: Attribution Automatique */}
         {activeTab === 'auto' && (
           <div className="kt-container-fixed">
-            <div className="kt-card max-w-4xl mx-auto">
-              <div className="kt-card-header py-5 px-8">
-                <h3 className="kt-card-title text-base font-semibold flex items-center gap-2">
-                  <i className="ki-filled ki-technology-2 text-primary text-xl"></i>
-                  Attribution Automatique par Zone & Ville
-                </h3>
+            <div className="kt-card max-w-4xl mx-auto border border-border/60 shadow-lg rounded-2xl overflow-hidden">
+              <div className="p-6 border-b border-border/60 bg-gradient-to-r from-primary/10 via-purple-500/5 to-emerald-500/10">
+                <div className="flex items-center gap-3 me-2 me-sm-0">
+                  <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center text-xl shadow-md me-2 me-sm-0">
+                    <i className="ki-filled ki-technology-2"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground me-2 me-sm-0">
+                      Attribution Automatique Logistique (par Zone)
+                    </h3>
+                    <p className="text-xs text-secondary-foreground me-2 me-sm-0">
+                      Distribution intelligente basée sur la ville de destination des colis et la zone d'intervention des livreurs.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="kt-card-content p-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <div className="p-4 rounded-xl bg-accent/40 border border-border/60 flex flex-col gap-1">
-                    <span className="text-xs text-secondary-foreground font-medium">Colis à assigner</span>
-                    <span className="text-2xl font-bold text-foreground">{colisDisp.length}</span>
+              <div className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                  <div className="p-5 rounded-2xl bg-accent/30 border border-border/60 flex flex-col gap-1 shadow-sm me-2 me-sm-0">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider me-2 me-sm-0">Colis à attribuer</span>
+                    <span className="text-3xl font-extrabold text-foreground me-2 me-sm-0">{colisDisp.length}</span>
                   </div>
-                  <div className="p-4 rounded-xl bg-accent/40 border border-border/60 flex flex-col gap-1">
-                    <span className="text-xs text-secondary-foreground font-medium">Livreurs actifs</span>
-                    <span className="text-2xl font-bold text-foreground">{disponibles.length}</span>
+                  <div className="p-5 rounded-2xl bg-accent/30 border border-border/60 flex flex-col gap-1 shadow-sm me-2 me-sm-0">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider me-2 me-sm-0">Livreurs actifs</span>
+                    <span className="text-3xl font-extrabold text-foreground me-2 me-sm-0">{disponibles.length}</span>
                   </div>
-                  <div className="p-4 rounded-xl bg-accent/40 border border-border/60 flex flex-col gap-1">
-                    <span className="text-xs text-secondary-foreground font-medium">Villes couvertes</span>
-                    <span className="text-2xl font-bold text-foreground">{availableCities.length}</span>
+                  <div className="p-5 rounded-2xl bg-accent/30 border border-border/60 flex flex-col gap-1 shadow-sm me-2 me-sm-0">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider me-2 me-sm-0">Villes couvertes</span>
+                    <span className="text-3xl font-extrabold text-foreground me-2 me-sm-0">{availableCities.length}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4 p-5 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl mb-8">
-                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 me-2 me-sm-0">
-                    <i className="ki-filled ki-check-circle text-primary"></i>
-                    Comment fonctionne l'attribution automatique ?
+                <div className="p-6 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-2xl mb-8 space-y-3">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2 me-2 me-sm-0">
+                    <i className="ki-filled ki-check-circle text-primary text-base me-2 me-sm-0"></i>
+                    Workflow d'Attribution Automatique
                   </h4>
-                  <ul className="text-xs text-secondary-foreground space-y-2 ps-6 list-disc me-2 me-sm-0">
-                    <li>Regroupe les colis non assignés en préparation par leur ville de destination.</li>
-                    <li>Identifie les livreurs disponibles opérant dans chaque ville correspondante.</li>
-                    <li>Répartit équitablement les colis et passe leur état à <strong>Expédié</strong> et statut à <strong>En cours</strong>.</li>
-                    <li>Met à jour automatiquement la fiche dans la <strong>Liste des ramassages</strong>.</li>
+                  <ul className="text-xs text-secondary-foreground space-y-2.5 ps-5 list-disc me-2 me-sm-0">
+                    <li>Regroupe tous les colis non assignés par ville de destination.</li>
+                    <li>Recherche les livreurs actifs travaillant dans la même ville.</li>
+                    <li>Effectue l'attribution équitable, met à jour le statut du colis en <strong>Expédié / En cours</strong> et la fiche dans <strong>Liste des ramassages</strong>.</li>
                   </ul>
                 </div>
 
                 {doneAuto ? (
                   <div className="space-y-6">
-                    <div className="flex gap-3 border rounded-xl p-5 bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 me-2 me-sm-0">
-                      <i className="ki-filled ki-check-circle text-2xl shrink-0 mt-0.5"></i>
+                    <div className="flex gap-4 border rounded-2xl p-6 bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 me-2 me-sm-0">
+                      <i className="ki-filled ki-check-circle text-3xl shrink-0 mt-0.5 me-2 me-sm-0"></i>
                       <div>
-                        <h4 className="font-semibold text-sm me-2 me-sm-0">Attribution automatique effectuée avec succès !</h4>
+                        <h4 className="font-bold text-base me-2 me-sm-0">Attribution terminée avec succès !</h4>
                         <p className="text-xs mt-1 me-2 me-sm-0">
-                          {assignments.length} colis ont été distribués aux livreurs correspondants.
+                          {assignments.length} colis ont été attribués aux livreurs par ville.
                         </p>
                       </div>
                     </div>
 
                     {assignments.length > 0 && (
-                      <div className="grid gap-2 max-h-60 overflow-y-auto border border-border/60 rounded-xl p-3 bg-accent/20">
+                      <div className="grid gap-2.5 max-h-64 overflow-y-auto border border-border/60 rounded-2xl p-4 bg-accent/20">
                         {assignments.map((a, i) => (
-                          <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/40 text-sm">
-                            <span className="font-mono font-medium text-foreground">{a.colis}</span>
-                            <span className="text-xs text-secondary-foreground me-2 me-sm-0">
-                              ➔ <strong className="text-foreground">{a.livreur}</strong> ({a.city})
-                            </span>
+                          <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-background border border-border/40 text-sm shadow-sm">
+                            <div className="font-mono font-bold text-foreground me-2 me-sm-0">{a.colis}</div>
+                            <div className="flex items-center gap-2 text-xs me-2 me-sm-0">
+                              <span className="kt-badge kt-badge-outline kt-badge-primary rounded-full px-2 py-0.5 me-2 me-sm-0">{a.city}</span>
+                              <span className="text-secondary-foreground me-2 me-sm-0">➔</span>
+                              <span className="font-bold text-foreground me-2 me-sm-0">{a.livreur}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -549,16 +636,16 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
 
                     <button
                       type="button"
-                      className="kt-btn kt-btn-outline w-full py-3 me-2 me-sm-0"
+                      className="kt-btn kt-btn-outline w-full py-3.5 font-bold me-2 me-sm-0"
                       onClick={() => { setDoneAuto(false); setAssignments([]); }}
                     >
-                      Refaire une attribution automatique
+                      Lancer une nouvelle attribution
                     </button>
                   </div>
                 ) : (
                   <button
                     type="button"
-                    className="kt-btn kt-btn-primary w-full py-3 text-sm font-semibold me-2 me-sm-0"
+                    className="kt-btn kt-btn-primary w-full py-4 text-base font-bold shadow-lg shadow-primary/20 hover:shadow-xl transition-all duration-200 me-2 me-sm-0"
                     onClick={handleAutoAssign}
                     disabled={loading || colisDisp.length === 0}
                   >
@@ -566,8 +653,8 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                       'Attribution en cours...'
                     ) : (
                       <>
-                        <i className="ki-filled ki-technology-2 me-2 text-base me-2 me-sm-0"></i>
-                        Lancer l'attribution automatique par zone ({colisDisp.length} colis)
+                        <i className="ki-filled ki-technology-2 me-2 text-lg me-2 me-sm-0"></i>
+                        Lancer l'attribution automatique ({colisDisp.length} colis)
                       </>
                     )}
                   </button>
