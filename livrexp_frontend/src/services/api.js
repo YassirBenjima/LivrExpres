@@ -58,12 +58,14 @@ export const authService = {
   /**
    * Change user password with token verification
    */
-  async resetPasswordChange(password, confirmPassword) {
+  async resetPasswordChange(password, confirmPassword, code = '', email = '') {
     return request('/api/reset-password/change', {
       method: 'POST',
       body: JSON.stringify({
         password,
-        confirm_password: confirmPassword
+        confirm_password: confirmPassword,
+        code,
+        email: email || sessionStorage.getItem('reset_email') || ''
       })
     });
   },

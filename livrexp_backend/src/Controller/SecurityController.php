@@ -58,11 +58,16 @@ final class SecurityController extends AbstractController
             ], 400);
         }
 
+        $code = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+        if ($request->hasSession()) {
+            $request->getSession()->set('reset_code_' . strtolower($email), $code);
+        }
+
         try {
             $emailMessage = (new \Symfony\Component\Mime\Email())
                 ->from('no-reply@livrexpress.ma')
                 ->to($email)
-                ->subject('Réinitialisation de votre mot de passe - LivrExpress Pro')
+                ->subject('Code de vérification - Réinitialisation de votre mot de passe - LivrExpress')
                 ->html('
 <!DOCTYPE html>
 <html lang="fr">
@@ -96,7 +101,6 @@ final class SecurityController extends AbstractController
                                     </td>
                                     <td style="vertical-align: middle; padding-left: 8px;">
                                         <span style="font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">LivrExpress</span>
-                                        <span style="font-size: 10px; font-weight: 700; color: #0094FF; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase;">PRO</span>
                                     </td>
                                 </tr>
                             </table>
@@ -115,21 +119,29 @@ final class SecurityController extends AbstractController
                             </div>
 
                             <h1 style="margin: 0 0 16px 0; font-size: 22px; font-weight: 700; color: #0f172a; text-align: center; letter-spacing: -0.3px;">
-                                Réinitialisation de votre mot de passe
+                                Code de vérification
                             </h1>
 
                             <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 24px; color: #475569; text-align: center;">
                                 Bonjour,
                             </p>
 
-                            <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 24px; color: #475569; text-align: center;">
-                                Nous avons reçu une demande de réinitialisation du mot de passe pour le compte associé à l\'adresse <strong>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</strong>.
+                            <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 24px; color: #475569; text-align: center;">
+                                Nous avons reçu une demande de réinitialisation du mot de passe pour le compte <strong>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</strong>.
                             </p>
+
+                            <!-- 6-digit Code Box -->
+                            <div style="text-align: center; margin: 24px 0 28px 0;">
+                                <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Votre code à 6 chiffres</p>
+                                <div style="display: inline-block; background-color: #f0f9ff; border: 2px dashed #0094FF; border-radius: 12px; padding: 14px 28px; letter-spacing: 10px; font-size: 32px; font-weight: 800; color: #0094FF; font-family: monospace;">
+                                    ' . $code . '
+                                </div>
+                            </div>
 
                             <!-- CTA Button -->
                             <div style="text-align: center; margin-bottom: 32px;">
                                 <a href="http://localhost:5173/reset-password/change" style="background: linear-gradient(135deg, #0094FF 0%, #0072CE 100%); color: #ffffff; padding: 14px 36px; border-radius: 10px; font-size: 15px; font-weight: 700; text-decoration: none; display: inline-block; box-shadow: 0 4px 14px rgba(0, 148, 255, 0.35);">
-                                    Réinitialiser mon mot de passe
+                                    Saisir le code et réinitialiser
                                 </a>
                             </div>
 
@@ -138,7 +150,7 @@ final class SecurityController extends AbstractController
                                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                                     <tr>
                                         <td style="font-size: 13px; line-height: 20px; color: #64748b;">
-                                            🛡️ <strong>Sécurité :</strong> Ce lien de réinitialisation est à usage unique. Si vous n\'êtes pas à l\'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité. Votre mot de passe restera inchangé.
+                                            🛡️ <strong>Sécurité :</strong> Ne partagez ce code avec personne. Si vous n\'êtes pas à l\'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.
                                         </td>
                                     </tr>
                                 </table>
@@ -146,7 +158,7 @@ final class SecurityController extends AbstractController
 
                             <!-- Direct Link Fallback -->
                             <p style="margin: 0 0 8px 0; font-size: 12px; color: #94a3b8; text-align: center;">
-                                Si le bouton ne fonctionne pas, copiez et collez le lien ci-dessous dans votre navigateur :
+                                Ou utilisez ce lien direct :
                             </p>
                             <p style="margin: 0; font-size: 12px; color: #0094FF; word-break: break-all; text-align: center;">
                                 <a href="http://localhost:5173/reset-password/change" style="color: #0094FF; text-decoration: underline;">http://localhost:5173/reset-password/change</a>
@@ -159,7 +171,7 @@ final class SecurityController extends AbstractController
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
                             <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #64748b;">
-                                LivrExpress Pro — Solution Logistique & Transport
+                                LivrExpress — Solution Logistique & Transport
                             </p>
                             <p style="margin: 0 0 12px 0; font-size: 11px; color: #94a3b8;">
                                 Cet e-mail automatique vous a été envoyé pour des raisons de sécurité. Merci de ne pas y répondre directement.
@@ -185,16 +197,25 @@ final class SecurityController extends AbstractController
 
         return new \Symfony\Component\HttpFoundation\JsonResponse([
             'status' => 'success',
-            'message' => 'Un email de réinitialisation a été envoyé avec succès.'
+            'message' => 'Un e-mail de réinitialisation avec votre code à 6 chiffres a été envoyé avec succès.'
         ]);
     }
 
     #[Route(path: '/api/reset-password/change', name: 'app_api_reset_password_change', methods: ['POST'])]
-    public function apiResetPasswordChange(\Symfony\Component\HttpFoundation\Request $request): Response
+    public function apiResetPasswordChange(\Symfony\Component\HttpFoundation\Request $request, \App\Repository\UserRepository $userRepository, \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher, \Doctrine\ORM\EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true);
+        $code = $data['code'] ?? null;
         $password = $data['password'] ?? null;
         $confirmPassword = $data['confirm_password'] ?? null;
+        $email = $data['email'] ?? null;
+
+        if ($code !== null && strlen(trim($code)) !== 6) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'status' => 'error',
+                'message' => 'Le code de vérification doit comporter exactement 6 chiffres.'
+            ], 400);
+        }
 
         if (!$password || strlen($password) < 6) {
             return new \Symfony\Component\HttpFoundation\JsonResponse([
@@ -210,7 +231,15 @@ final class SecurityController extends AbstractController
             ], 400);
         }
 
-        // In a real application, you would update the user's password in the database.
+        // If email is provided, update actual user password
+        if ($email) {
+            $user = $userRepository->findOneBy(['email' => $email]);
+            if ($user) {
+                $user->setPassword($passwordHasher->hashPassword($user, $password));
+                $em->flush();
+            }
+        }
+
         return new \Symfony\Component\HttpFoundation\JsonResponse([
             'status' => 'success',
             'message' => 'Votre mot de passe a été réinitialisé avec succès.'

@@ -35,7 +35,7 @@ export default function ForgotPasswordPage({ navigate }) {
       sessionStorage.setItem('reset_email', email);
       sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       const data = await authService.forgotPassword(email);
-      setApiSuccess(data.message || 'Un email de réinitialisation a été envoyé.');
+      setApiSuccess(data.message || 'Un e-mail de réinitialisation avec votre code à 6 chiffres a été envoyé avec succès.');
       setTimeout(() => {
         navigate('/reset-password/check-email');
       }, 1000);
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage({ navigate }) {
       sessionStorage.setItem('reset_email', email);
       sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       setTimeout(() => {
-        setApiSuccess('Un email de réinitialisation a été envoyé.');
+        setApiSuccess('Un e-mail de réinitialisation avec votre code à 6 chiffres a été envoyé avec succès.');
         setTimeout(() => {
           navigate('/reset-password/check-email');
         }, 1000);
