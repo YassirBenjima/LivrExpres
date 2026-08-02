@@ -12,6 +12,7 @@ livrexp_backend/public/uploads/
 livrexp_backend/.php_cs.cache
 livrexp_backend/.phpunit.result.cache
 livrexp_backend/symfony.lock
+livrexp_backend/config/reference.php
 
 # ---- React / Node (livrexp_frontend) ----
 livrexp_frontend/node_modules/
