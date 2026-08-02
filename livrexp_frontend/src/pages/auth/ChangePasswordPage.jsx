@@ -147,6 +147,7 @@ export default function ChangePasswordPage({ navigate }) {
               if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
             }}
             disabled={isLoading}
+            showStrength={true}
           />
           {errors.password && <span className="text-red-500 text-xs mt-1">{errors.password}</span>}
         </div>
@@ -162,6 +163,7 @@ export default function ChangePasswordPage({ navigate }) {
               if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
             }}
             disabled={isLoading}
+            matchValue={password}
           />
           {errors.confirmPassword && <span className="text-red-500 text-xs mt-1">{errors.confirmPassword}</span>}
         </div>
