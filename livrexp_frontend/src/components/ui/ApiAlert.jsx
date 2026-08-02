@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 
 export default function ApiAlert({ type, message, onClose }) {
   const [visible, setVisible] = useState(true);
@@ -17,8 +18,8 @@ export default function ApiAlert({ type, message, onClose }) {
     if (onClose) onClose();
   };
 
-  return (
-    <div className="fixed top-5 right-5 z-[999999] max-w-[380px] w-full pointer-events-auto transition-all duration-300">
+  return ReactDOM.createPortal(
+    <div className="fixed top-6 right-6 z-[9999999] max-w-[380px] w-full pointer-events-auto transition-all duration-300">
       <div
         className={`bg-white dark:bg-slate-900 border-l-4 ${
           isError
@@ -28,7 +29,7 @@ export default function ApiAlert({ type, message, onClose }) {
             : 'border-l-primary border-primary/20'
         } rounded-xl p-4 flex items-start gap-3 shadow-2xl border animate-in fade-in slide-in-from-top-4 duration-300`}
         style={{
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)'
+          boxShadow: '0 12px 30px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
         }}
       >
         <div
@@ -68,6 +69,7 @@ export default function ApiAlert({ type, message, onClose }) {
           <i className="ki-filled ki-cross text-sm"></i>
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
