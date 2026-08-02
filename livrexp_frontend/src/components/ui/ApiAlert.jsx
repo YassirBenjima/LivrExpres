@@ -1,25 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
-let _toastAddFn = null;
-export function showAuthToast(type, message) {
-  if (_toastAddFn) _toastAddFn(type, message);
-}
-
-let _idCounter = 0;
+let _addToast = null;
+let _containerEl = null;
 
 function ToastContainer() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
-    _toastAddFn = (type, message) => {
-      const id = ++_idCounter;
+    _addToast = (type, message) => {
+      const id = Date.now() + Math.random();
       setToasts(prev => [...prev, { id, type, message }]);
       setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id));
       }, 5000);
     };
-    return () => { _toastAddFn = null; };
+    return () => { _addToast = null; };
   }, []);
 
   const dismiss = (id) => setToasts(prev => prev.filter(t => t.id !== id));
@@ -68,52 +65,19 @@ function ToastContainer() {
               animation: 'toastSlideInRight 0.3s ease-out forwards',
             }}
           >
-            <div
-              style={{
-                borderRadius: '9999px',
-                padding: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                backgroundColor: iconBg,
-                color: iconColor,
-              }}
-            >
+            <div style={{ borderRadius: '9999px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, backgroundColor: iconBg, color: iconColor }}>
               <i className={`ki-filled ${iconClass}`} style={{ fontSize: '18px' }}></i>
             </div>
-
             <div style={{ flex: 1, minWidth: 0, paddingTop: '2px' }}>
-              <h4 style={{ margin: '0 0 3px 0', fontSize: '14px', fontWeight: 600, color: '#181c32' }}>
-                {title}
-              </h4>
-              <p style={{ margin: 0, fontSize: '12px', color: '#7e8299', wordBreak: 'break-word', lineHeight: 1.5 }}>
-                {message}
-              </p>
+              <h4 style={{ margin: '0 0 3px 0', fontSize: '14px', fontWeight: 600, color: '#181c32' }}>{title}</h4>
+              <p style={{ margin: 0, fontSize: '12px', color: '#7e8299', wordBreak: 'break-word', lineHeight: 1.5 }}>{message}</p>
             </div>
-
-            <button
-              onClick={() => dismiss(id)}
-              type="button"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#a1a5b7',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '6px',
-                flexShrink: 0,
-              }}
-            >
+            <button onClick={() => dismiss(id)} type="button" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#a1a5b7', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '6px', flexShrink: 0 }}>
               <i className="ki-filled ki-cross" style={{ fontSize: '14px' }}></i>
             </button>
           </div>
         );
       })}
-
       <style>{`
         @keyframes toastSlideInRight {
           from { transform: translateX(30px); opacity: 0; }
@@ -125,27 +89,23 @@ function ToastContainer() {
   );
 }
 
-// The mounted singleton — rendered once in App.jsx would be ideal,
-// but since auth pages don't have access, we mount inline lazily.
-let _containerMounted = false;
 function ensureContainer() {
-  if (_containerMounted) return;
-  _containerMounted = true;
-  const el = document.createElement('div');
-  el.id = 'auth-toast-root';
-  document.body.appendChild(el);
-  const { createRoot } = require('react-dom/client');
-  createRoot(el).render(<ToastContainer />);
+  if (_containerEl) return;
+  _containerEl = document.createElement('div');
+  _containerEl.id = 'auth-toast-root';
+  document.body.appendChild(_containerEl);
+  createRoot(_containerEl).render(<ToastContainer />);
 }
 
 export default function ApiAlert({ type, message }) {
   useEffect(() => {
     if (!message) return;
     ensureContainer();
-    // small delay so container initializes
-    const t = setTimeout(() => showAuthToast(type, message), 10);
+    const t = setTimeout(() => {
+      if (_addToast) _addToast(type, message);
+    }, 20);
     return () => clearTimeout(t);
   }, [message, type]);
 
-  return null; // renders nothing inline
+  return null;
 }
