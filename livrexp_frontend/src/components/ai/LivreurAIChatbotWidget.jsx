@@ -55,6 +55,24 @@ export default function LivreurAIChatbotWidget() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Close AI chatbot panel when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e) => {
+      const container = document.getElementById('livreur-ai-container');
+      if (container && !container.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 10);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isOpen]);
+
   /* ── fetch tour from backend ── */
   const loadTour = async () => {
     setLoading(true);

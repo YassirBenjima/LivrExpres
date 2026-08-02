@@ -772,6 +772,74 @@ final class StockApiController extends AbstractController
         ]);
     }
 
+    #[Route('/api/stock/entry/{id}', name: 'api_stock_entry_show', methods: ['GET'])]
+    public function entryShow(int $id, StockMovementRepository $repo): JsonResponse
+    {
+        $m = $repo->find($id);
+        if (!$m instanceof StockMovement) {
+            return $this->json(['message' => 'Mouvement introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $items = [];
+        foreach ($m->getItems() as $item) {
+            $variant = $item->getVariant();
+            $barcode = $variant?->getBarcode() ?? $variant?->getProduct()?->getBarcode() ?? '-';
+            $items[] = [
+                'id' => $item->getId(),
+                'variant_id' => $variant?->getId(),
+                'variant_name' => $variant?->getName() ?? '-',
+                'product_name' => $variant?->getProduct()?->getName() ?? '-',
+                'ref' => $barcode,
+                'barcode' => $barcode,
+                'quantity' => $item->getQuantity(),
+            ];
+        }
+
+        return $this->json([
+            'movement' => [
+                'id' => $m->getId(),
+                'reference' => $m->getReference(),
+                'status' => $m->getStatus(),
+                'created_at' => $m->getCreatedAt() ? $m->getCreatedAt()->format('d/m/Y H:i') : null,
+                'updated_at' => $m->getUpdatedAt() ? $m->getUpdatedAt()->format('d/m/Y H:i') : null,
+                'items' => $items,
+            ]
+        ]);
+    }
+
+    #[Route('/api/stock/entry/{id}', name: 'api_stock_entry_update', methods: ['PUT', 'POST'])]
+    public function entryUpdate(int $id, Request $request, StockMovementRepository $repo, StockProductVariantRepository $variantRepo, EntityManagerInterface $em): JsonResponse
+    {
+        $m = $repo->find($id);
+        if (!$m instanceof StockMovement) {
+            return $this->json(['message' => 'Mouvement introuvable.'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $body = json_decode($request->getContent(), true) ?? $request->request->all();
+        $status = $body['status'] ?? null;
+        $items = $body['items'] ?? [];
+
+        if (is_string($status) && $status !== '') {
+            $m->setStatus($status);
+        }
+
+        if (is_array($items) && !empty($items)) {
+            foreach ($m->getItems() as $existingItem) {
+                $varId = $existingItem->getVariant()?->getId();
+                if ($varId && isset($items[$varId])) {
+                    $newQty = (int) $items[$varId];
+                    if ($newQty > 0) {
+                        $existingItem->setQuantity($newQty);
+                    }
+                }
+            }
+        }
+
+        $em->flush();
+
+        return $this->json(['message' => 'Mouvement mis à jour avec succès.']);
+    }
+
     // ─────────────────────────────────────────────
     // STOCK COLIS (pickup)
     // ─────────────────────────────────────────────

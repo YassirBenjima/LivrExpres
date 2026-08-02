@@ -90,6 +90,24 @@ export default function SuperAdminAIChatbot() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading, activeColis]);
 
+  // Close AI chatbot panel when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e) => {
+      const container = document.getElementById('super-admin-ai-container');
+      if (container && !container.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 10);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const fetchRecentParcels = async () => {
     try {
       const response = await fetch('/api/admin/ai-assistant/recent-parcels', {
@@ -703,12 +721,15 @@ export default function SuperAdminAIChatbot() {
               />
             </label>
             <button
-              className="kt-btn kt-btn-primary kt-btn-icon"
+              className="kt-btn kt-btn-primary kt-btn-icon flex items-center justify-center cursor-pointer"
               onClick={() => handleSendMessage()}
               disabled={!inputMessage.trim() || loading}
-              style={{ borderRadius: '50%', width: '36px', height: '36px', flexShrink: 0 }}
+              style={{ borderRadius: '50%', width: '36px', height: '36px', flexShrink: 0, padding: 0 }}
+              title="Envoyer"
             >
-              <i className="ki-filled ki-send" style={{ fontSize: '14px' }}></i>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              </svg>
             </button>
           </div>
         </div>

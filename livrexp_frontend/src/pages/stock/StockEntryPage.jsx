@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { getUserRoles } from '../../hooks/useAuth';
 
 const STATUS_MAP = { 
   draft: 'Brouillon', 
@@ -19,6 +20,9 @@ const STATUS_BADGE = {
 };
 
 export default function StockEntryPage({ showNotification }) {
+  const userRoles = getUserRoles();
+  const isSuperAdmin = userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_SUPERVISEUR');
+
   const [movements, setMovements]       = useState([]);
   const [products, setProducts]         = useState([]);
   const [cities, setCities]             = useState([]);
@@ -51,9 +55,96 @@ export default function StockEntryPage({ showNotification }) {
   const [saving, setSaving]                   = useState(false);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
 
+  // Details & Edit Modals State
+  const [detailsModalOpen, setDetailsModalOpen]                 = useState(false);
+  const [editModalOpen, setEditModalOpen]                       = useState(false);
+  const [selectedMovementForModal, setSelectedMovementForModal] = useState(null);
+  const [modalLoading, setModalLoading]                         = useState(false);
+  const [editItems, setEditItems]                               = useState({});
+  const [editStatus, setEditStatus]                             = useState('');
+  const [updating, setUpdating]                                 = useState(false);
+
   const headers = { 'Accept': 'application/json' };
   const token = localStorage.getItem('auth_token');
   if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const handleOpenDetails = async (movement) => {
+    setSelectedMovementForModal(movement);
+    setDetailsModalOpen(true);
+    setModalLoading(true);
+    try {
+      const res = await fetch(`/api/stock/entry/${movement.id}`, { headers });
+      if (res.ok) {
+        const j = await res.json();
+        if (j.movement) {
+          setSelectedMovementForModal(j.movement);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleOpenEdit = async (movement) => {
+    setSelectedMovementForModal(movement);
+    setEditStatus(movement.status || 'pending');
+    setEditModalOpen(true);
+    setModalLoading(true);
+    try {
+      const res = await fetch(`/api/stock/entry/${movement.id}`, { headers });
+      if (res.ok) {
+        const j = await res.json();
+        if (j.movement) {
+          setSelectedMovementForModal(j.movement);
+          const initialQtys = {};
+          (j.movement.items || []).forEach(item => {
+            if (item.variant_id) {
+              initialQtys[item.variant_id] = item.quantity;
+            }
+          });
+          setEditItems(initialQtys);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedMovementForModal) return;
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/stock/entry/${selectedMovementForModal.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers
+        },
+        body: JSON.stringify({
+          status: editStatus,
+          items: editItems
+        })
+      });
+
+      if (res.ok) {
+        if (showNotification) showNotification('success', 'Mouvement mis à jour avec succès.');
+        setEditModalOpen(false);
+        fetchData();
+      } else {
+        const j = await res.json().catch(() => ({}));
+        if (showNotification) showNotification('error', j.message || 'Erreur lors de la mise à jour.');
+      }
+    } catch (e) {
+      console.error(e);
+      if (showNotification) showNotification('error', 'Erreur serveur.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -678,25 +769,33 @@ export default function StockEntryPage({ showNotification }) {
                                       <div className="kt-menu-item">
                                         <button
                                           type="button"
-                                          className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
-                                          disabled
+                                          className="kt-menu-link text-start w-full cursor-pointer hover:bg-accent/50"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveDropdownId(null);
+                                            handleOpenDetails(m);
+                                          }}
                                         >
                                           <span className="kt-menu-icon">
-                                            <i className="ki-filled ki-eye"></i>
+                                            <i className="ki-filled ki-eye text-primary"></i>
                                           </span>
-                                          <span className="kt-menu-title">Détails</span>
+                                          <span className="kt-menu-title font-medium">Détails</span>
                                         </button>
                                       </div>
                                       <div className="kt-menu-item">
                                         <button
                                           type="button"
-                                          className="kt-menu-link text-start w-full opacity-60 cursor-not-allowed"
-                                          disabled
+                                          className="kt-menu-link text-start w-full cursor-pointer hover:bg-accent/50"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveDropdownId(null);
+                                            handleOpenEdit(m);
+                                          }}
                                         >
                                           <span className="kt-menu-icon">
-                                            <i className="ki-filled ki-pencil"></i>
+                                            <i className="ki-filled ki-pencil text-info"></i>
                                           </span>
-                                          <span className="kt-menu-title">Modifier</span>
+                                          <span className="kt-menu-title font-medium">Modifier</span>
                                         </button>
                                       </div>
                                     </div>
@@ -747,7 +846,8 @@ export default function StockEntryPage({ showNotification }) {
       {/* Bulk Pickup Request Modal */}
       {pickupModalOpen && createPortal(
         <div 
-          className="fixed flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+          onClick={() => setPickupModalOpen(false)}
           style={{ 
             position: 'fixed',
             top: 0,
@@ -763,7 +863,11 @@ export default function StockEntryPage({ showNotification }) {
             zIndex: 99999 
           }}
         >
-          <div className="kt-modal-content w-full max-w-2xl" id="stock_entry_pickup_request_modal">
+          <div 
+            className="kt-modal-content w-full max-w-2xl cursor-default" 
+            id="stock_entry_pickup_request_modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="kt-modal-header">
               <h3 className="kt-modal-title">Nouvelle demande de ramassage</h3>
               <button 
@@ -889,6 +993,263 @@ export default function StockEntryPage({ showNotification }) {
 
               </form>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* View Details Modal */}
+      {detailsModalOpen && selectedMovementForModal && createPortal(
+        <div 
+          className="fixed flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+          onClick={() => setDetailsModalOpen(false)}
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            className="kt-card max-w-2xl w-full bg-background border border-border shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            
+            {/* Header */}
+            <div className="kt-card-header flex items-center justify-between border-b border-border p-5">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <i className="ki-filled ki-eye text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="kt-card-title text-base font-bold text-mono">
+                    Mouvement {selectedMovementForModal.reference}
+                  </h3>
+                  <p className="text-xs text-secondary-foreground">
+                    Créé le {selectedMovementForModal.created_at || '-'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost cursor-pointer"
+                onClick={() => setDetailsModalOpen(false)}
+              >
+                <i className="ki-filled ki-cross text-lg"></i>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="kt-card-content p-6 overflow-y-auto flex flex-col gap-5">
+              {/* Status Badge */}
+              {isSuperAdmin && (
+                <div className="flex items-center justify-between p-4 rounded-xl bg-accent/30 border border-border">
+                  <span className="text-xs font-semibold text-mono uppercase text-secondary-foreground">Statut du mouvement</span>
+                  <span className={`kt-badge ${STATUS_BADGE[selectedMovementForModal.status] || 'kt-badge-warning'} kt-badge-outline rounded-[30px] px-3 py-1 text-xs font-bold`}>
+                    <span className="kt-badge-dot size-2 me-1.5"></span>
+                    {STATUS_MAP[selectedMovementForModal.status] || selectedMovementForModal.status}
+                  </span>
+                </div>
+              )}
+
+              {/* Items Table */}
+              <div className="flex flex-col gap-2">
+                <h4 className="text-xs font-bold text-mono uppercase text-secondary-foreground">Variantes &amp; Quantités</h4>
+                {modalLoading ? (
+                  <div className="py-8 text-center text-sm text-secondary-foreground flex items-center justify-center gap-2">
+                    <i className="ki-filled ki-loading animate-spin text-primary text-base" />
+                    Chargement des détails...
+                  </div>
+                ) : (selectedMovementForModal.items || []).length === 0 ? (
+                  <div className="py-8 text-center text-sm text-secondary-foreground">Aucun article dans ce mouvement.</div>
+                ) : (
+                  <div className="kt-scrollable-x-auto border border-border rounded-xl">
+                    <table className="kt-table table-auto kt-table-border w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/20">
+                          <th className="py-2.5 px-3">PRODUIT</th>
+                          <th className="py-2.5 px-3">VARIANTE</th>
+                          <th className="py-2.5 px-3">RÉF / CODE-BARRES</th>
+                          <th className="py-2.5 px-3 text-right">QUANTITÉ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedMovementForModal.items.map((item, idx) => (
+                          <tr key={item.id || idx}>
+                            <td className="font-semibold text-foreground py-2.5 px-3">{item.product_name}</td>
+                            <td className="text-foreground py-2.5 px-3">{item.variant_name}</td>
+                            <td className="text-mono text-xs text-secondary-foreground py-2.5 px-3">{item.ref || item.barcode || '-'}</td>
+                            <td className="text-right font-bold text-mono text-primary py-2.5 px-3">{item.quantity} unit.</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="kt-card-footer border-t border-border p-4 flex justify-end">
+              <button 
+                type="button"
+                className="kt-btn kt-btn-outline cursor-pointer"
+                onClick={() => setDetailsModalOpen(false)}
+              >
+                Fermer
+              </button>
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Movement Modal */}
+      {editModalOpen && selectedMovementForModal && createPortal(
+        <div 
+          className="fixed flex items-center justify-center p-4 overflow-y-auto cursor-pointer"
+          onClick={() => setEditModalOpen(false)}
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div 
+            className="kt-card max-w-2xl w-full bg-background border border-border shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            
+            {/* Header */}
+            <div className="kt-card-header flex items-center justify-between border-b border-border p-5">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-lg bg-info/10 text-info flex items-center justify-center">
+                  <i className="ki-filled ki-pencil text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="kt-card-title text-base font-bold text-mono">
+                    Modifier le mouvement {selectedMovementForModal.reference}
+                  </h3>
+                  <p className="text-xs text-secondary-foreground">
+                    Mettez à jour le statut et les quantités associées
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost cursor-pointer"
+                onClick={() => setEditModalOpen(false)}
+              >
+                <i className="ki-filled ki-cross text-lg"></i>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="kt-card-content p-6 overflow-y-auto flex flex-col gap-5">
+              {/* Status Selection (Super Admin only) */}
+              {isSuperAdmin && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="kt-form-label text-mono text-xs font-semibold">Statut du mouvement</label>
+                  <KtSelect
+                    value={editStatus}
+                    onChange={(val) => setEditStatus(val)}
+                    options={Object.entries(STATUS_MAP).map(([key, val]) => ({
+                      value: key,
+                      label: val
+                    }))}
+                    enableSearch={false}
+                  />
+                </div>
+              )}
+
+              {/* Editable Items Table */}
+              <div className="flex flex-col gap-2">
+                <label className="kt-form-label text-mono text-xs font-semibold">Quantités par variante</label>
+                {modalLoading ? (
+                  <div className="py-8 text-center text-sm text-secondary-foreground flex items-center justify-center gap-2">
+                    <i className="ki-filled ki-loading animate-spin text-primary text-base" />
+                    Chargement des données...
+                  </div>
+                ) : (selectedMovementForModal.items || []).length === 0 ? (
+                  <div className="py-8 text-center text-sm text-secondary-foreground">Aucun article à modifier.</div>
+                ) : (
+                  <div className="kt-scrollable-x-auto border border-border rounded-xl">
+                    <table className="kt-table table-auto kt-table-border w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/20">
+                          <th className="py-2.5 px-3">PRODUIT / VARIANTE</th>
+                          <th className="py-2.5 px-3">RÉF</th>
+                          <th className="py-2.5 px-3 w-[140px] text-right">QUANTITÉ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedMovementForModal.items.map((item, idx) => (
+                          <tr key={item.id || idx}>
+                            <td className="py-2.5 px-3">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-foreground">{item.product_name}</span>
+                                <span className="text-xs text-secondary-foreground">{item.variant_name}</span>
+                              </div>
+                            </td>
+                            <td className="text-mono text-xs text-secondary-foreground py-2.5 px-3">{item.ref || item.barcode || '-'}</td>
+                            <td className="py-2.5 px-3">
+                              <input 
+                                type="number"
+                                min="1"
+                                className="kt-input w-full h-9 px-3 text-right font-bold"
+                                value={editItems[item.variant_id] !== undefined ? editItems[item.variant_id] : item.quantity}
+                                onChange={(e) => {
+                                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                                  setEditItems(prev => ({ ...prev, [item.variant_id]: val }));
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="kt-card-footer border-t border-border p-4 flex justify-end gap-3">
+              <button 
+                type="button"
+                className="kt-btn kt-btn-outline cursor-pointer"
+                onClick={() => setEditModalOpen(false)}
+                disabled={updating}
+              >
+                Annuler
+              </button>
+              <button 
+                type="button"
+                className="kt-btn kt-btn-primary flex items-center gap-2 cursor-pointer"
+                onClick={handleSaveEdit}
+                disabled={updating || modalLoading}
+              >
+                {updating && <i className="ki-filled ki-loading animate-spin text-sm" />}
+                Enregistrer les modifications
+              </button>
+            </div>
+
           </div>
         </div>,
         document.body

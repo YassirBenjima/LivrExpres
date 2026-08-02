@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { getUserRoles } from '../../hooks/useAuth';
 
 const STATUS_MAP = {
   pending: 'En attente',
@@ -17,6 +19,9 @@ const STATUS_BADGE = {
 };
 
 export default function RamassageListPage({ navigate, showNotification }) {
+  const userRoles = getUserRoles();
+  const isSuperAdmin = userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_SUPERVISEUR');
+
   const [pickups, setPickups]           = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -24,6 +29,22 @@ export default function RamassageListPage({ navigate, showNotification }) {
   const [currentPage, setCurrentPage]   = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [dropdownPos, setDropdownPos]   = useState(null);
+
+  const toggleDropdown = (e, pickupId) => {
+    e.stopPropagation();
+    if (activeDropdownId === pickupId) {
+      setActiveDropdownId(null);
+      setDropdownPos(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.right + window.scrollX - 175
+      });
+      setActiveDropdownId(pickupId);
+    }
+  };
 
   const headers = { 'Accept': 'application/json' };
   const token = localStorage.getItem('auth_token');
@@ -219,7 +240,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
 
               {/* Table Body */}
               <div className="kt-card-content">
-                <div className="kt-scrollable-x-auto" style={activeDropdownId !== null ? { overflow: 'visible' } : {}}>
+                <div className="kt-scrollable-x-auto">
                   <table className="kt-table table-auto kt-table-border">
                     <thead>
                       <tr>
@@ -233,7 +254,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                         <th className="min-w-[130px]">Statut</th>
                         <th className="min-w-[120px]">Suivi</th>
                         <th className="min-w-[140px]">Livreur</th>
-                        <th className="w-[80px] text-center">Actions</th>
+                        {isSuperAdmin && <th className="w-[80px] text-center">Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -241,7 +262,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                         [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
                       ) : paginated.length === 0 ? (
                         <tr>
-                          <td colSpan={11} className="text-secondary-foreground text-center py-8">
+                          <td colSpan={isSuperAdmin ? 11 : 10} className="text-secondary-foreground text-center py-8">
                             Aucun ramassage trouvé.
                           </td>
                         </tr>
@@ -276,63 +297,78 @@ export default function RamassageListPage({ navigate, showNotification }) {
                               )}
                             </td>
                             <td className="text-foreground font-normal">{pickup.assignedDriver || '-'}</td>
-                            <td className="text-center relative" style={activeDropdownId === pickup.id ? { zIndex: 9999 } : {}}>
-                              <div className="relative inline-block text-left">
-                                <button
-                                  onClick={() => setActiveDropdownId(activeDropdownId === pickup.id ? null : pickup.id)}
-                                  className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                                  type="button"
-                                >
-                                  <i className="ki-filled ki-dots-vertical text-lg"></i>
-                                </button>
-                                {activeDropdownId === pickup.id && (
-                                  <div className="kt-menu-dropdown kt-menu-default absolute right-0 mt-2 w-[175px]" style={{ zIndex: 9999, display: 'block' }}>
-                                    {pickup.status === 'pending' && (
-                                      <>
+                            {isSuperAdmin && (
+                              <td className="text-center relative">
+                                <div className="relative inline-block text-left">
+                                  <button
+                                    onClick={(e) => toggleDropdown(e, pickup.id)}
+                                    className="kt-menu-toggle kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost cursor-pointer"
+                                    type="button"
+                                  >
+                                    <i className="ki-filled ki-dots-vertical text-lg"></i>
+                                  </button>
+                                  {activeDropdownId === pickup.id && dropdownPos && createPortal(
+                                    <div 
+                                      className="kt-menu-dropdown kt-menu-default fixed w-[175px]" 
+                                      style={{ 
+                                        position: 'fixed',
+                                        top: `${dropdownPos.top - window.scrollY}px`, 
+                                        left: `${dropdownPos.left - window.scrollX}px`, 
+                                        zIndex: 99999, 
+                                        display: 'block' 
+                                      }}
+                                    >
+                                      {pickup.status === 'pending' && (
+                                        <>
+                                          <div className="kt-menu-item">
+                                            <button
+                                              type="button"
+                                              className="kt-menu-link text-start w-full cursor-pointer"
+                                              onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'confirmed'); }}
+                                            >
+                                              <span className="kt-menu-icon">
+                                                <i className="ki-filled ki-check-circle text-primary"></i>
+                                              </span>
+                                              <span className="kt-menu-title">Confirmer</span>
+                                            </button>
+                                          </div>
+                                          <div className="kt-menu-item">
+                                            <button
+                                              type="button"
+                                              className="kt-menu-link text-start w-full text-destructive cursor-pointer hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
+                                              onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'cancelled'); }}
+                                            >
+                                              <span className="kt-menu-icon text-destructive">
+                                                <i className="ki-filled ki-cross-circle text-destructive"></i>
+                                              </span>
+                                              <span className="kt-menu-title text-destructive">Annuler</span>
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
+                                      {pickup.status === 'confirmed' && (
                                         <div className="kt-menu-item">
                                           <button
                                             type="button"
-                                            className="kt-menu-link text-start w-full"
-                                            onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'confirmed'); }}
+                                            className="kt-menu-link text-start w-full cursor-pointer"
+                                            onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'picked_up'); }}
                                           >
                                             <span className="kt-menu-icon">
-                                              <i className="ki-filled ki-check-circle text-primary"></i>
+                                              <i className="ki-filled ki-delivery text-success"></i>
                                             </span>
-                                            <span className="kt-menu-title">Confirmer</span>
+                                            <span className="kt-menu-title">Marquer ramassé</span>
                                           </button>
                                         </div>
-                                        <div className="kt-menu-item">
-                                          <button
-                                            type="button"
-                                            className="kt-menu-link text-start w-full text-destructive hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!text-red-600 dark:hover:!text-red-400"
-                                            onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'cancelled'); }}
-                                          >
-                                            <span className="kt-menu-icon text-destructive">
-                                              <i className="ki-filled ki-cross-circle text-destructive"></i>
-                                            </span>
-                                            <span className="kt-menu-title text-destructive">Annuler</span>
-                                          </button>
-                                        </div>
-                                      </>
-                                    )}
-                                    {pickup.status === 'confirmed' && (
-                                      <div className="kt-menu-item">
-                                        <button
-                                          type="button"
-                                          className="kt-menu-link text-start w-full"
-                                          onClick={() => { setActiveDropdownId(null); handleUpdateStatus(pickup.id, 'picked_up'); }}
-                                        >
-                                          <span className="kt-menu-icon">
-                                            <i className="ki-filled ki-delivery text-success"></i>
-                                          </span>
-                                          <span className="kt-menu-title">Marquer ramassé</span>
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
+                                      )}
+                                      {pickup.status !== 'pending' && pickup.status !== 'confirmed' && (
+                                        <div className="p-3 text-xs text-secondary-foreground text-center">Aucune action disponible</div>
+                                      )}
+                                    </div>,
+                                    document.body
+                                  )}
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}
