@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUserRoles } from './hooks/useAuth';
+import { getUserRoles, getStoredUser } from './hooks/useAuth';
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LoginStaffPage from './pages/auth/LoginStaffPage';
@@ -42,7 +42,6 @@ import LivreurFichePage from './pages/livreur/LivreurFichePage';
 import LivreurAutoAssignPage from './pages/livreur/LivreurAutoAssignPage';
 import LivrExpressAiSuitePage from './pages/ai/LivrExpressAiSuitePage';
 import OfflineBanner from './components/ui/OfflineBanner';
-import { getUserRoles, getStoredUser } from './hooks/useAuth';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
