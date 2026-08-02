@@ -212,12 +212,12 @@ final class ColisApiController extends AbstractController
 
             // Automatically create PickupRequest so it appears in /ramassage list
             $pickupRequest = new PickupRequest();
-            $pickupRequest->setProductNameSnapshot($colis->getProductNature() ? sprintf('%s (%s)', $colis->getProductNature(), $colis->getOrderNumber()) : $colis->getOrderNumber());
+            $pickupRequest->setProductNameSnapshot($colis->getProductNature() ?: $colis->getOrderNumber());
             $pickupRequest->setCity($colis->getCity() ?: 'Casablanca');
             $pickupRequest->setNeighborhood('Centre');
             $pickupRequest->setAddress($colis->getAddress() ?: 'Adresse client/fournisseur');
             $pickupRequest->setPhone($colis->getPhoneNumber() ?: '0600000000');
-            $pickupRequest->setNote(sprintf('Demande de ramassage pour colis %s (%s)', $colis->getOrderNumber(), $colis->getTrackingCode()));
+            $pickupRequest->setNote(sprintf('Ramassage colis %s', $colis->getOrderNumber()));
             $pickupRequest->setHasLabels(true);
             $pickupRequest->setStatus('pending');
             $pickupRequest->setType($colis->getType() === Colis::TYPE_STOCK ? 'stock' : 'simple');

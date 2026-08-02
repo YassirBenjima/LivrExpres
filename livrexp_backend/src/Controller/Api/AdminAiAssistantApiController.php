@@ -97,12 +97,12 @@ final class AdminAiAssistantApiController extends AbstractController
                         // Automatically create PickupRequest so it appears in /ramassage list
                         $user = $this->getUser();
                         $pickupRequest = new PickupRequest();
-                        $pickupRequest->setProductNameSnapshot($c->getProductNature() ? sprintf('%s (%s)', $c->getProductNature(), $c->getOrderNumber()) : $c->getOrderNumber());
+                        $pickupRequest->setProductNameSnapshot($c->getProductNature() ?: $c->getOrderNumber());
                         $pickupRequest->setCity($c->getCity() ?: 'Casablanca');
                         $pickupRequest->setNeighborhood('Centre');
                         $pickupRequest->setAddress($c->getAddress() ?: 'Adresse client/fournisseur');
                         $pickupRequest->setPhone($c->getPhoneNumber() ?: '0600000000');
-                        $pickupRequest->setNote(sprintf('Demande de ramassage via IA pour colis %s (%s)', $c->getOrderNumber(), $c->getTrackingCode()));
+                        $pickupRequest->setNote(sprintf('Ramassage colis %s', $c->getOrderNumber()));
                         $pickupRequest->setHasLabels(true);
                         $pickupRequest->setStatus('pending');
                         $pickupRequest->setType($c->getType() === Colis::TYPE_STOCK ? 'stock' : 'simple');
@@ -111,7 +111,7 @@ final class AdminAiAssistantApiController extends AbstractController
                         }
 
                         $entityManager->persist($pickupRequest);
-                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En cours' & Fiche Ramassage créée).", $c->getOrderNumber());
+                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès !", $c->getOrderNumber());
                     }
                 }
 
