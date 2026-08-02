@@ -1,75 +1,151 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 
-export default function ApiAlert({ type, message, onClose }) {
-  const [visible, setVisible] = useState(true);
+let _toastAddFn = null;
+export function showAuthToast(type, message) {
+  if (_toastAddFn) _toastAddFn(type, message);
+}
+
+let _idCounter = 0;
+
+function ToastContainer() {
+  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
-    setVisible(true);
-  }, [message, type]);
+    _toastAddFn = (type, message) => {
+      const id = ++_idCounter;
+      setToasts(prev => [...prev, { id, type, message }]);
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 5000);
+    };
+    return () => { _toastAddFn = null; };
+  }, []);
 
-  if (!message || !visible) return null;
+  const dismiss = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
-  const isError = type === 'error';
-  const isSuccess = type === 'success';
-
-  const handleClose = () => {
-    setVisible(false);
-    if (onClose) onClose();
-  };
+  if (toasts.length === 0) return null;
 
   return ReactDOM.createPortal(
-    <div className="fixed top-6 right-6 z-[9999999] max-w-[380px] w-full pointer-events-auto transition-all duration-300">
-      <div
-        className={`bg-white dark:bg-slate-900 border-l-4 ${
-          isError
-            ? 'border-l-red-500 border-red-500/20'
-            : isSuccess
-            ? 'border-l-emerald-500 border-emerald-500/20'
-            : 'border-l-primary border-primary/20'
-        } rounded-xl p-4 flex items-start gap-3 shadow-2xl border animate-in fade-in slide-in-from-top-4 duration-300`}
-        style={{
-          boxShadow: '0 12px 30px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <div
-          className={`p-2 rounded-full flex items-center justify-center shrink-0 ${
-            isError
-              ? 'bg-red-500/10 text-red-500'
-              : isSuccess
-              ? 'bg-emerald-500/10 text-emerald-500'
-              : 'bg-primary/10 text-primary'
-          }`}
-        >
-          <i
-            className={`ki-filled ${
-              isError
-                ? 'ki-cross-circle'
-                : isSuccess
-                ? 'ki-check-circle'
-                : 'ki-information-2'
-            } text-lg`}
-          ></i>
-        </div>
+    <div
+      style={{
+        position: 'fixed',
+        top: '24px',
+        right: '24px',
+        left: 'auto',
+        bottom: 'auto',
+        zIndex: 9999999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        maxWidth: '380px',
+        width: 'calc(100vw - 48px)',
+        pointerEvents: 'auto',
+      }}
+    >
+      {toasts.map(({ id, type, message }) => {
+        const isError = type === 'error';
+        const isSuccess = type === 'success';
+        const borderColor = isError ? '#f1416c' : isSuccess ? '#27d37f' : '#0094FF';
+        const iconBg = isError ? 'rgba(241,65,108,0.1)' : isSuccess ? 'rgba(39,211,127,0.1)' : 'rgba(0,148,255,0.1)';
+        const iconColor = isError ? '#f1416c' : isSuccess ? '#27d37f' : '#0094FF';
+        const iconClass = isError ? 'ki-cross-circle' : isSuccess ? 'ki-check-circle' : 'ki-information-2';
+        const title = isError ? 'Erreur' : isSuccess ? 'Succès' : 'Information';
 
-        <div className="flex-1 min-w-0 pt-0.5">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
-            {isError ? 'Erreur' : isSuccess ? 'Succès' : 'Information'}
-          </h4>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed break-words">
-            {message}
-          </p>
-        </div>
+        return (
+          <div
+            key={id}
+            style={{
+              backgroundColor: '#ffffff',
+              borderLeft: `4px solid ${borderColor}`,
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.12), 0 8px 10px -6px rgba(0,0,0,0.08)',
+              border: '1px solid #e4e6ef',
+              animation: 'toastSlideInRight 0.3s ease-out forwards',
+            }}
+          >
+            <div
+              style={{
+                borderRadius: '9999px',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                backgroundColor: iconBg,
+                color: iconColor,
+              }}
+            >
+              <i className={`ki-filled ${iconClass}`} style={{ fontSize: '18px' }}></i>
+            </div>
 
-        <button
-          onClick={handleClose}
-          type="button"
-          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer border-0 bg-transparent"
-        >
-          <i className="ki-filled ki-cross text-sm"></i>
-        </button>
-      </div>
+            <div style={{ flex: 1, minWidth: 0, paddingTop: '2px' }}>
+              <h4 style={{ margin: '0 0 3px 0', fontSize: '14px', fontWeight: 600, color: '#181c32' }}>
+                {title}
+              </h4>
+              <p style={{ margin: 0, fontSize: '12px', color: '#7e8299', wordBreak: 'break-word', lineHeight: 1.5 }}>
+                {message}
+              </p>
+            </div>
+
+            <button
+              onClick={() => dismiss(id)}
+              type="button"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#a1a5b7',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '6px',
+                flexShrink: 0,
+              }}
+            >
+              <i className="ki-filled ki-cross" style={{ fontSize: '14px' }}></i>
+            </button>
+          </div>
+        );
+      })}
+
+      <style>{`
+        @keyframes toastSlideInRight {
+          from { transform: translateX(30px); opacity: 0; }
+          to   { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </div>,
     document.body
   );
+}
+
+// The mounted singleton — rendered once in App.jsx would be ideal,
+// but since auth pages don't have access, we mount inline lazily.
+let _containerMounted = false;
+function ensureContainer() {
+  if (_containerMounted) return;
+  _containerMounted = true;
+  const el = document.createElement('div');
+  el.id = 'auth-toast-root';
+  document.body.appendChild(el);
+  const { createRoot } = require('react-dom/client');
+  createRoot(el).render(<ToastContainer />);
+}
+
+export default function ApiAlert({ type, message }) {
+  useEffect(() => {
+    if (!message) return;
+    ensureContainer();
+    // small delay so container initializes
+    const t = setTimeout(() => showAuthToast(type, message), 10);
+    return () => clearTimeout(t);
+  }, [message, type]);
+
+  return null; // renders nothing inline
 }
