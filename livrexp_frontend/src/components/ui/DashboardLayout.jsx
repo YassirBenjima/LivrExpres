@@ -197,6 +197,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
     }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
     sessionStorage.removeItem('user_profile');
     window.history.pushState({}, '', '/login');
     window.dispatchEvent(new PopStateEvent('popstate'));

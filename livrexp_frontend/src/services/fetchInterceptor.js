@@ -21,6 +21,7 @@ window.fetch = async function (...args) {
       if (!isAuthEndpoint && !isAuthPage) {
         console.warn('[AuthInterceptor] Session expirée ou non autorisée (401). Redirection vers /login...');
         localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         localStorage.removeItem('auth_token');
         sessionStorage.removeItem('user_profile');
         window.location.href = '/login';
