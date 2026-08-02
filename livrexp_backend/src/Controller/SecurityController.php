@@ -90,10 +90,13 @@ final class SecurityController extends AbstractController
             'redirect' => '/dashboard'
         ]);
 
+        $rememberMe = !empty($data['_remember_me']) || !empty($data['remember_me']) || !empty($data['remember']);
+        $cookieLifetime = $rememberMe ? (time() + (86400 * 30)) : 0;
+
         $authCookie = \Symfony\Component\HttpFoundation\Cookie::create(
             'AUTH_SESSION',
             base64_encode($user->getUserIdentifier() . ':' . time()),
-            time() + (86400 * 7),
+            $cookieLifetime,
             '/',
             null,
             false,

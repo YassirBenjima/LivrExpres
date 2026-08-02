@@ -6,9 +6,9 @@ import { authService } from '../../services/api';
 import '../../styles/auth.css';
 
 export default function LoginStaffPage({ navigate }) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(localStorage.getItem('remembered_email') || '');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remembered_email'));
   
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -43,9 +43,17 @@ export default function LoginStaffPage({ navigate }) {
       
       if (data.success || data.user) {
         const userPayload = data.user || {};
-        localStorage.setItem('user', JSON.stringify(userPayload));
+        if (rememberMe) {
+          localStorage.setItem('remembered_email', email);
+          localStorage.setItem('user', JSON.stringify(userPayload));
+          sessionStorage.removeItem('user');
+        } else {
+          localStorage.removeItem('remembered_email');
+          sessionStorage.setItem('user', JSON.stringify(userPayload));
+          localStorage.removeItem('user');
+        }
         sessionStorage.removeItem('user_profile');
-        localStorage.removeItem('auth_token'); // Sensitive tokens are handled via HttpOnly cookie for XSS protection
+        localStorage.removeItem('auth_token');
         setApiSuccess('Authentification Staff réussie ! Redirection...');
         setTimeout(() => {
           if (userPayload.roles?.includes('ROLE_LIVREUR')) {
