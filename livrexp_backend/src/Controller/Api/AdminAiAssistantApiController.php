@@ -86,12 +86,12 @@ final class AdminAiAssistantApiController extends AbstractController
                             $c->getEtat() ?? '-',
                             $c->getStatut() ?? '-'
                         );
-                    } elseif ($c->getEtat() === Colis::ETAT_EN_PREPARATION) {
-                        $results[] = sprintf("⚠️ **%s** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: %s).", $c->getOrderNumber(), $c->getStatut() ?? 'En attente');
+                    } elseif ($c->getEtat() === Colis::ETAT_EN_PREPARATION || $c->getStatut() === Colis::STATUT_EN_COURS) {
+                        $results[] = sprintf("⚠️ **%s** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: %s).", $c->getOrderNumber(), $c->getStatut() ?? 'En cours');
                     } else {
                         $c->setEtat(Colis::ETAT_EN_PREPARATION);
-                        $c->setStatut(Colis::STATUT_EN_ATTENTE);
-                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En attente').", $c->getOrderNumber());
+                        $c->setStatut(Colis::STATUT_EN_COURS);
+                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En cours').", $c->getOrderNumber());
                     }
                 }
 

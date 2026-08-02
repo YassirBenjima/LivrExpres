@@ -271,8 +271,9 @@ export default function SuperAdminAIChatbot() {
         return;
       } else {
         changes.push(`État: \`${updated.etat}\` ➔ **En préparation**`);
+        changes.push(`Statut: \`${updated.statut}\` ➔ **En cours**`);
         updated.etat = 'En préparation';
-        updated.statut = 'En attente';
+        updated.statut = 'En cours';
       }
     } else if (textLower.includes('livre') || textLower.includes('livré')) {
       changes.push(`État: \`${updated.etat}\` ➔ **Livré**`);
