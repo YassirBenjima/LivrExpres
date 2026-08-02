@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\Colis;
+use App\Entity\PickupRequest;
 use App\Entity\User;
 use App\Repository\ColisRepository;
 use App\Repository\UserRepository;
@@ -179,10 +180,22 @@ final class LivreurApiController extends AbstractController
         foreach ($colisIds as $colisId) {
             $colis = $colisRepository->find((int) $colisId);
             if ($colis) {
-                // Set the livreur as assignee using the createdBy relationship (repurposed for assignment)
-                // We use the city match as secondary validation
+                $colis->setAssignedDriver($livreur->getFullName());
                 $colis->setEtat(Colis::ETAT_EXPEDIE);
                 $colis->setStatut(Colis::STATUT_EN_COURS);
+
+                // Update matching PickupRequest entities as well
+                $pickupReqs = $em->getRepository(PickupRequest::class)->createQueryBuilder('pr')
+                    ->where('pr.productNameSnapshot LIKE :orderNum OR pr.note LIKE :orderNum OR pr.note LIKE :tracking')
+                    ->setParameter('orderNum', '%' . $colis->getOrderNumber() . '%')
+                    ->setParameter('tracking', '%' . $colis->getTrackingCode() . '%')
+                    ->getQuery()->getResult();
+
+                foreach ($pickupReqs as $pr) {
+                    $pr->setAssignedDriver($livreur->getFullName());
+                    $pr->setStatus('confirmed');
+                }
+
                 $assigned++;
             }
         }
@@ -216,8 +229,13 @@ final class LivreurApiController extends AbstractController
             if ($city) $livreursByCity[$city][] = $l;
         }
 
-        // Get unassigned colis in "En préparation"
-        $unassigned = $colisRepository->findBy(['etat' => Colis::ETAT_EN_PREPARATION]);
+        // Get unassigned colis in "En préparation" or pending pickup (unassigned)
+        $unassigned = $colisRepository->createQueryBuilder('c')
+            ->where('c.etat = :etatPrep OR c.statut = :statutEnc')
+            ->andWhere('c.assignedDriver IS NULL OR c.assignedDriver = \'\'')
+            ->setParameter('etatPrep', Colis::ETAT_EN_PREPARATION)
+            ->setParameter('statutEnc', Colis::STATUT_EN_COURS)
+            ->getQuery()->getResult();
 
         $assignments = [];
         foreach ($unassigned as $colis) {
@@ -225,8 +243,22 @@ final class LivreurApiController extends AbstractController
             if (isset($livreursByCity[$city]) && count($livreursByCity[$city]) > 0) {
                 // Round-robin assignment
                 $livreur = $livreursByCity[$city][array_rand($livreursByCity[$city])];
+                $colis->setAssignedDriver($livreur->getFullName());
                 $colis->setEtat(Colis::ETAT_EXPEDIE);
                 $colis->setStatut(Colis::STATUT_EN_COURS);
+
+                // Update matching PickupRequest entities as well
+                $pickupReqs = $em->getRepository(PickupRequest::class)->createQueryBuilder('pr')
+                    ->where('pr.productNameSnapshot LIKE :orderNum OR pr.note LIKE :orderNum OR pr.note LIKE :tracking')
+                    ->setParameter('orderNum', '%' . $colis->getOrderNumber() . '%')
+                    ->setParameter('tracking', '%' . $colis->getTrackingCode() . '%')
+                    ->getQuery()->getResult();
+
+                foreach ($pickupReqs as $pr) {
+                    $pr->setAssignedDriver($livreur->getFullName());
+                    $pr->setStatus('confirmed');
+                }
+
                 $assignments[] = [
                     'colis'   => $colis->getOrderNumber(),
                     'livreur' => $livreur->getFullName(),

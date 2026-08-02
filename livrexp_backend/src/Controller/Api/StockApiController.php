@@ -814,6 +814,7 @@ final class StockApiController extends AbstractController
                     default               => 'kt-badge-primary',
                 },
                 'comment'      => $colis->getComment() ?: '-',
+                'assignedDriver' => $colis->getAssignedDriver() ?: '-',
             ];
         }
 

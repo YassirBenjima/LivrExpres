@@ -15,29 +15,35 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
     return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) };
   };
 
+  const load = async () => {
+    setFetching(true);
+    try {
+      const [r1, r2] = await Promise.all([
+        fetch('/api/livreurs', { headers: headers(), credentials: 'include' }),
+        fetch('/api/colis', { headers: headers(), credentials: 'include' }),
+      ]);
+      if (r1.ok) { const d = await r1.json(); if (d.success) setLivreurs(d.livreurs); }
+      if (r2.ok) {
+        const d = await r2.json();
+        const raw = Array.isArray(d) ? d : (d.colis || []);
+        const unassigned = raw.filter(c => (!c.assignedDriver || c.assignedDriver === '-') && (c.etatLabel === 'En préparation' || c.statutLabel === 'En cours' || c.statutLabel === 'En attente'));
+        setColisDisp(unassigned.slice(0, 30));
+      }
+    } catch {
+      setLivreurs([
+        { id: 1, fullName: 'Karim Alami', city: 'Casablanca', disponible: true, stats: { total: 24, livres: 18 } },
+        { id: 2, fullName: 'Youssef Benali', city: 'Rabat', disponible: true, stats: { total: 15, livres: 12 } },
+        { id: 3, fullName: 'Omar Tazi', city: 'Marrakech', disponible: false, stats: { total: 8, livres: 5 } },
+      ]);
+      setColisDisp([
+        { id: 1, orderNumber: 'CMD-001', trackingCode: 'F-20260731-001', recipient: 'Sara Idrissi', city: 'Casablanca', etat: 'En préparation' },
+        { id: 2, orderNumber: 'CMD-002', trackingCode: 'F-20260731-002', recipient: 'Amine Rachidi', city: 'Rabat', etat: 'En préparation' },
+        { id: 3, orderNumber: 'CMD-003', trackingCode: 'F-20260731-003', recipient: 'Leila Fassi', city: 'Casablanca', etat: 'En préparation' },
+      ]);
+    } finally { setFetching(false); }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      setFetching(true);
-      try {
-        const [r1, r2] = await Promise.all([
-          fetch('/api/livreurs', { headers: headers(), credentials: 'include' }),
-          fetch('/api/colis?etat=En+pr%C3%A9paration', { headers: headers(), credentials: 'include' }),
-        ]);
-        if (r1.ok) { const d = await r1.json(); if (d.success) setLivreurs(d.livreurs); }
-        if (r2.ok) { const d = await r2.json(); if (d.colis) setColisDisp(d.colis.slice(0, 30)); }
-      } catch {
-        setLivreurs([
-          { id: 1, fullName: 'Karim Alami', city: 'Casablanca', disponible: true, stats: { total: 24, livres: 18 } },
-          { id: 2, fullName: 'Youssef Benali', city: 'Rabat', disponible: true, stats: { total: 15, livres: 12 } },
-          { id: 3, fullName: 'Omar Tazi', city: 'Marrakech', disponible: false, stats: { total: 8, livres: 5 } },
-        ]);
-        setColisDisp([
-          { id: 1, orderNumber: 'CMD-001', trackingCode: 'F-20260731-001', recipient: 'Sara Idrissi', city: 'Casablanca', etat: 'En préparation' },
-          { id: 2, orderNumber: 'CMD-002', trackingCode: 'F-20260731-002', recipient: 'Amine Rachidi', city: 'Rabat', etat: 'En préparation' },
-          { id: 3, orderNumber: 'CMD-003', trackingCode: 'F-20260731-003', recipient: 'Leila Fassi', city: 'Casablanca', etat: 'En préparation' },
-        ]);
-      } finally { setFetching(false); }
-    };
     load();
   }, []);
 
@@ -50,6 +56,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         setAssignments(d.assignments || []);
         setDone(true);
         showNotification?.('success', d.message);
+        load();
       } else {
         showNotification?.('error', d.message || "Erreur lors de l'attribution.");
       }
@@ -66,7 +73,11 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         body: JSON.stringify({ colisIds: selectedColis }),
       });
       const d = await r.json();
-      if (d.success) { showNotification?.('success', d.message); setSelectedColis([]); }
+      if (d.success) {
+        showNotification?.('success', d.message);
+        setSelectedColis([]);
+        load();
+      }
       else showNotification?.('error', d.message);
     } catch { showNotification?.('error', 'Erreur de connexion.'); }
     finally { setLoading(false); }

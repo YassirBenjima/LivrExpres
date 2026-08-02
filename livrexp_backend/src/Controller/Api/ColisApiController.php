@@ -21,7 +21,7 @@ final class ColisApiController extends AbstractController
     {
         $user = $this->getUser();
         $qb = $colisRepository->createQueryBuilder('c')
-            ->select('c.id', 'c.orderNumber', 'c.trackingCode', 'c.productNature', 'c.createdAt', 'c.address', 'c.etat', 'c.statut', 'c.city', 'c.price', 'c.comment')
+            ->select('c.id', 'c.orderNumber', 'c.trackingCode', 'c.productNature', 'c.createdAt', 'c.address', 'c.etat', 'c.statut', 'c.city', 'c.price', 'c.comment', 'c.assignedDriver')
             ->orderBy('c.id', 'DESC');
 
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
@@ -44,6 +44,7 @@ final class ColisApiController extends AbstractController
                 'productNature' => $colis['productNature'] ?: 'Marchandise',
                 'createdAt' => $colis['createdAt'] ? $colis['createdAt']->format('d/m/Y H:i') : '',
                 'address' => $colis['address'] ?: '-',
+                'assignedDriver' => $colis['assignedDriver'] ?: '-',
                 'etatLabel' => $etat,
                 'etatBadgeClass' => match ($etat) {
                     Colis::ETAT_LIVRE => 'kt-badge-success',
@@ -177,6 +178,7 @@ final class ColisApiController extends AbstractController
                     default => 'kt-badge-primary',
                 },
                 'city' => $colis->getCity() ?: '-',
+                'assignedDriver' => $colis->getAssignedDriver() ?: '-',
                 'price' => (float) ($colis->getPrice() ?? 0.0),
                 'comment' => $colis->getComment() ?: '-',
             ];

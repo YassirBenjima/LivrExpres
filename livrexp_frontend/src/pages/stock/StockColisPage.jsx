@@ -406,7 +406,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                                   {colis.statutLabel}
                                 </span>
                               </td>
-                              <td className="text-foreground font-normal">-</td>
+                              <td className="text-foreground font-normal">{colis.assignedDriver || '-'}</td>
                               <td className="text-foreground font-normal">-</td>
                               <td className="text-foreground font-normal">{colis.city}</td>
                               <td className="text-foreground font-medium">

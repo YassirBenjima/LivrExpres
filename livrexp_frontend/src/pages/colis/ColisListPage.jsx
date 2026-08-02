@@ -395,8 +395,8 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                     {colis.statutLabel}
                                   </span>
                                 </td>
-                                <td className="text-foreground font-normal">-</td>
-                                <td className="text-foreground font-normal">-</td>
+                                 <td className="text-foreground font-normal me-2 me-sm-0">{colis.assignedDriver || '-'}</td>
+                                 <td className="text-foreground font-normal">-</td>
                                 <td className="text-foreground font-normal">{colis.city}</td>
                                 <td className="text-foreground font-medium">
                                   {colis.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD

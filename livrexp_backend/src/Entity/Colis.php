@@ -104,6 +104,9 @@ class Colis
     #[ORM\Column(length: 10, nullable: true)]
     private ?string $otpCode = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $assignedDriver = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -548,6 +551,18 @@ class Colis
             $this->otpCode = (string) random_int(1000, 9999);
         }
         return $this->otpCode;
+    }
+
+    public function getAssignedDriver(): ?string
+    {
+        return $this->assignedDriver;
+    }
+
+    public function setAssignedDriver(?string $assignedDriver): static
+    {
+        $this->assignedDriver = $assignedDriver;
+
+        return $this;
     }
 
     /**
