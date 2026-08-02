@@ -109,8 +109,16 @@ final class SecurityController extends AbstractController
     #[Route(path: '/api/forgot-password', name: 'app_api_forgot_password', methods: ['POST'])]
     public function apiForgotPassword(\Symfony\Component\HttpFoundation\Request $request, \Symfony\Component\Mailer\MailerInterface $mailer): Response
     {
-        $data = json_decode($request->getContent(), true);
-        $email = $data['email'] ?? null;
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        if (!is_array($data)) {
+            try {
+                $data = $request->toArray();
+            } catch (\Throwable $e) {
+                $data = $request->request->all();
+            }
+        }
+        $email = trim($data['email'] ?? '');
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return new \Symfony\Component\HttpFoundation\JsonResponse([
@@ -122,6 +130,7 @@ final class SecurityController extends AbstractController
         $code = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
         if ($request->hasSession()) {
             $request->getSession()->set('reset_code_' . strtolower($email), $code);
+            $request->getSession()->set('reset_email_last', strtolower($email));
         }
 
         try {
@@ -265,13 +274,26 @@ final class SecurityController extends AbstractController
     #[Route(path: '/api/reset-password/change', name: 'app_api_reset_password_change', methods: ['POST'])]
     public function apiResetPasswordChange(\Symfony\Component\HttpFoundation\Request $request, \App\Repository\UserRepository $userRepository, \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher, \Doctrine\ORM\EntityManagerInterface $em): Response
     {
-        $data = json_decode($request->getContent(), true);
-        $code = $data['code'] ?? null;
-        $password = $data['password'] ?? null;
-        $confirmPassword = $data['confirm_password'] ?? null;
-        $email = $data['email'] ?? null;
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        if (!is_array($data)) {
+            try {
+                $data = $request->toArray();
+            } catch (\Throwable $e) {
+                $data = $request->request->all();
+            }
+        }
 
-        if ($code !== null && strlen(trim($code)) !== 6) {
+        $code = trim((string)($data['code'] ?? ''));
+        $password = (string)($data['password'] ?? '');
+        $confirmPassword = (string)($data['confirm_password'] ?? '');
+        $email = trim((string)($data['email'] ?? ''));
+
+        if (!$email && $request->hasSession()) {
+            $email = (string) $request->getSession()->get('reset_email_last', '');
+        }
+
+        if (strlen($code) !== 6) {
             return new \Symfony\Component\HttpFoundation\JsonResponse([
                 'status' => 'error',
                 'message' => 'Le code de vérification doit comporter exactement 6 chiffres.'
@@ -292,13 +314,37 @@ final class SecurityController extends AbstractController
             ], 400);
         }
 
-        // If email is provided, update actual user password
-        if ($email) {
-            $user = $userRepository->findOneBy(['email' => $email]);
-            if ($user) {
-                $user->setPassword($passwordHasher->hashPassword($user, $password));
-                $em->flush();
+        if (!$email) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'status' => 'error',
+                'message' => 'Adresse e-mail introuvable. Veuillez recommencer la procédure.'
+            ], 400);
+        }
+
+        $user = $userRepository->findOneBy(['email' => $email]);
+        if (!$user) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'status' => 'error',
+                'message' => 'Aucun compte associé à cette adresse e-mail.'
+            ], 404);
+        }
+
+        if ($request->hasSession()) {
+            $expectedCode = $request->getSession()->get('reset_code_' . strtolower($email));
+            if ($expectedCode && $code !== $expectedCode) {
+                return new \Symfony\Component\HttpFoundation\JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Code de vérification incorrect. Veuillez vérifier le code reçu par e-mail.'
+                ], 400);
             }
+        }
+
+        // Hash and save new password
+        $user->setPassword($passwordHasher->hashPassword($user, $password));
+        $em->flush();
+
+        if ($request->hasSession()) {
+            $request->getSession()->remove('reset_code_' . strtolower($email));
         }
 
         return new \Symfony\Component\HttpFoundation\JsonResponse([

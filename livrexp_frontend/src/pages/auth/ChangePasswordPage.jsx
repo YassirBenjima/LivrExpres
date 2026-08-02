@@ -81,18 +81,12 @@ export default function ChangePasswordPage({ navigate }) {
     try {
       const otpCode = otp.join('');
       const data = await authService.resetPasswordChange(password, confirmPassword, otpCode);
-      setApiSuccess(data.message || 'Votre mot de passe a été modifié avec succès.');
+      setApiSuccess(data.message || 'Votre mot de passe a été réinitialisé avec succès.');
       setTimeout(() => {
         navigate('/reset-password/changed');
       }, 1500);
     } catch (error) {
-      console.warn('API connection failed, simulating success...', error);
-      setTimeout(() => {
-        setApiSuccess('Votre mot de passe a été réinitialisé avec succès.');
-        setTimeout(() => {
-          navigate('/reset-password/changed');
-        }, 1200);
-      }, 1500);
+      setApiError(error.message || 'Erreur lors de la réinitialisation du mot de passe.');
     } finally {
       setIsLoading(false);
     }
