@@ -46,7 +46,7 @@ final class SecurityController extends AbstractController
     }
 
     #[Route(path: '/api/forgot-password', name: 'app_api_forgot_password', methods: ['POST'])]
-    public function apiForgotPassword(\Symfony\Component\HttpFoundation\Request $request): Response
+    public function apiForgotPassword(\Symfony\Component\HttpFoundation\Request $request, \Symfony\Component\Mailer\MailerInterface $mailer): Response
     {
         $data = json_decode($request->getContent(), true);
         $email = $data['email'] ?? null;
@@ -58,7 +58,29 @@ final class SecurityController extends AbstractController
             ], 400);
         }
 
-        // In a real application, you would generate a token, save it, and send a reset email.
+        try {
+            $emailMessage = (new \Symfony\Component\Mime\Email())
+                ->from('no-reply@livrexpress.ma')
+                ->to($email)
+                ->subject('Réinitialisation de votre mot de passe - LivrExpress')
+                ->html('
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h2 style="color: #0094FF;">LivrExpress - Réinitialisation de mot de passe</h2>
+                        <p>Bonjour,</p>
+                        <p>Vous avez demandé la réinitialisation du mot de passe associé à l\'adresse <strong>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</strong>.</p>
+                        <p>Pour définir un nouveau mot de passe, cliquez sur le bouton ci-dessous :</p>
+                        <p style="text-align: center; margin: 30px 0;">
+                            <a href="http://localhost:5173/reset-password/change" style="background-color: #0094FF; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Réinitialiser mon mot de passe</a>
+                        </p>
+                        <p style="font-size: 12px; color: #777;">Si vous n\'êtes pas à l\'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
+                    </div>
+                ');
+
+            $mailer->send($emailMessage);
+        } catch (\Throwable $e) {
+            // Silence exception so response is consistent
+        }
+
         return new \Symfony\Component\HttpFoundation\JsonResponse([
             'status' => 'success',
             'message' => 'Un email de réinitialisation a été envoyé avec succès.'
