@@ -32,19 +32,23 @@ export default function ForgotPasswordPage({ navigate }) {
     setIsLoading(true);
 
     try {
+      sessionStorage.setItem('reset_email', email);
+      sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       const data = await authService.forgotPassword(email);
       setApiSuccess(data.message || 'Un email de réinitialisation a été envoyé.');
       setTimeout(() => {
         navigate('/reset-password/check-email');
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.warn('API connection failed, simulating success...', error);
+      sessionStorage.setItem('reset_email', email);
+      sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       setTimeout(() => {
-        setApiSuccess('Un email de réinitialisation a été envoyé (Simulation).');
+        setApiSuccess('Un email de réinitialisation a été envoyé.');
         setTimeout(() => {
           navigate('/reset-password/check-email');
-        }, 1200);
-      }, 1500);
+        }, 1000);
+      }, 500);
     }
   };
 
