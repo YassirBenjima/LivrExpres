@@ -96,6 +96,8 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
   const [fetchedData, setFetchedData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [livreursList, setLivreursList] = useState([]);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleDownloadMonthlyReport = () => {
     const dataToUse = fetchedData || dashboardData || DEFAULT_DATA;
@@ -885,12 +887,19 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     );
   }
 
-  // Filter recent colis based on search query
-  const filteredColis = data.recentColis.filter(colis => 
+  // Filter recent colis based on search query and paginate
+  const allMatchingColis = (data.recentColis || []).filter(colis => 
     colis.trackingCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
     colis.productNature.toLowerCase().includes(searchQuery.toLowerCase()) ||
     colis.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const totalEntries = allMatchingColis.length;
+  const totalPages = Math.ceil(totalEntries / itemsPerPage) || 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalEntries);
+  const displayedColis = allMatchingColis.slice(startIndex, endIndex);
 
   const percentLivre = data.totalColis > 0 ? (data.colisLivres / data.totalColis * 100) : 0;
   const percentRetour = data.totalColis > 0 ? (data.colisRetournes / data.totalColis * 100) : 0;
@@ -1354,8 +1363,8 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             </tr>
                           </thead>
                           <tbody>
-                            {filteredColis.length > 0 ? (
-                              filteredColis.map((colis) => (
+                            {displayedColis.length > 0 ? (
+                              displayedColis.map((colis) => (
                                 <tr key={colis.id}>
                                   <td>
                                     <input className="kt-checkbox kt-checkbox-sm" type="checkbox" />
@@ -1402,17 +1411,53 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       {/* Datatable Footer */}
                       <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                         <div className="flex items-center gap-2 order-2 md:order-1">
-                          Afficher 
-                          <select className="kt-select w-16" defaultValue="5">
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                          </select> 
-                          par page
+                          <span>Afficher</span>
+                          <KtSelect
+                            value={String(itemsPerPage)}
+                            onChange={(val) => {
+                              setItemsPerPage(Number(val));
+                              setCurrentPage(1);
+                            }}
+                            options={[
+                              { value: '5', label: '5' },
+                              { value: '10', label: '10' },
+                              { value: '25', label: '25' },
+                              { value: '50', label: '50' },
+                            ]}
+                            enableSearch={false}
+                            className="w-20"
+                          />
+                          <span>par page</span>
                         </div>
                         <div className="flex items-center gap-4 order-1 md:order-2">
                           <span>
-                            Affichage de {filteredColis.length} sur {data.recentColis.length} entrées
+                            {totalEntries > 0
+                              ? `Affichage de ${startIndex + 1} à ${endIndex} sur ${totalEntries} entrées`
+                              : `Affichage de 0 sur 0 entrées`}
                           </span>
+                          {totalPages > 1 && (
+                            <div className="flex items-center gap-1 ms-2">
+                              <button
+                                type="button"
+                                className="kt-btn kt-btn-sm kt-btn-outline size-8 p-0 flex items-center justify-center cursor-pointer"
+                                disabled={validPage <= 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              >
+                                <i className="ki-filled ki-left text-xs" />
+                              </button>
+                              <span className="text-xs font-semibold px-2">
+                                {validPage} / {totalPages}
+                              </span>
+                              <button
+                                type="button"
+                                className="kt-btn kt-btn-sm kt-btn-outline size-8 p-0 flex items-center justify-center cursor-pointer"
+                                disabled={validPage >= totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              >
+                                <i className="ki-filled ki-right text-xs" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
