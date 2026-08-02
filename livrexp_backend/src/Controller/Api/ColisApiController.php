@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\Colis;
+use App\Entity\PickupRequest;
 use App\Entity\User;
 use App\Repository\ColisRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -195,6 +196,7 @@ final class ColisApiController extends AbstractController
         }
 
         $updated = 0;
+        $user = $this->getUser();
         foreach ($ids as $id) {
             $colis = $colisRepository->find((int) $id);
             if (!$colis) {
@@ -207,6 +209,23 @@ final class ColisApiController extends AbstractController
 
             $colis->setStatut(Colis::STATUT_EN_COURS);
             $colis->setEtat(Colis::ETAT_EN_PREPARATION);
+
+            // Automatically create PickupRequest so it appears in /ramassage list
+            $pickupRequest = new PickupRequest();
+            $pickupRequest->setProductNameSnapshot($colis->getProductNature() ? sprintf('%s (%s)', $colis->getProductNature(), $colis->getOrderNumber()) : $colis->getOrderNumber());
+            $pickupRequest->setCity($colis->getCity() ?: 'Casablanca');
+            $pickupRequest->setNeighborhood('Centre');
+            $pickupRequest->setAddress($colis->getAddress() ?: 'Adresse client/fournisseur');
+            $pickupRequest->setPhone($colis->getPhoneNumber() ?: '0600000000');
+            $pickupRequest->setNote(sprintf('Demande de ramassage pour colis %s (%s)', $colis->getOrderNumber(), $colis->getTrackingCode()));
+            $pickupRequest->setHasLabels(true);
+            $pickupRequest->setStatus('pending');
+            $pickupRequest->setType($colis->getType() === Colis::TYPE_STOCK ? 'stock' : 'simple');
+            if ($user instanceof User) {
+                $pickupRequest->setCreatedBy($user);
+            }
+
+            $entityManager->persist($pickupRequest);
             ++$updated;
         }
 

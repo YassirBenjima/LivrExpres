@@ -3,6 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Entity\Colis;
+use App\Entity\PickupRequest;
+use App\Entity\User;
 use App\Repository\ColisRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -91,7 +93,25 @@ final class AdminAiAssistantApiController extends AbstractController
                     } else {
                         $c->setEtat(Colis::ETAT_EN_PREPARATION);
                         $c->setStatut(Colis::STATUT_EN_COURS);
-                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En cours').", $c->getOrderNumber());
+
+                        // Automatically create PickupRequest so it appears in /ramassage list
+                        $user = $this->getUser();
+                        $pickupRequest = new PickupRequest();
+                        $pickupRequest->setProductNameSnapshot($c->getProductNature() ? sprintf('%s (%s)', $c->getProductNature(), $c->getOrderNumber()) : $c->getOrderNumber());
+                        $pickupRequest->setCity($c->getCity() ?: 'Casablanca');
+                        $pickupRequest->setNeighborhood('Centre');
+                        $pickupRequest->setAddress($c->getAddress() ?: 'Adresse client/fournisseur');
+                        $pickupRequest->setPhone($c->getPhoneNumber() ?: '0600000000');
+                        $pickupRequest->setNote(sprintf('Demande de ramassage via IA pour colis %s (%s)', $c->getOrderNumber(), $c->getTrackingCode()));
+                        $pickupRequest->setHasLabels(true);
+                        $pickupRequest->setStatus('pending');
+                        $pickupRequest->setType($c->getType() === Colis::TYPE_STOCK ? 'stock' : 'simple');
+                        if ($user instanceof User) {
+                            $pickupRequest->setCreatedBy($user);
+                        }
+
+                        $entityManager->persist($pickupRequest);
+                        $results[] = sprintf("✅ **%s** : Demande de ramassage enregistrée avec succès ! (Passé en 'En préparation' / 'En cours' & Fiche Ramassage créée).", $c->getOrderNumber());
                     }
                 }
 
