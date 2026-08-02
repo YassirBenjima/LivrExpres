@@ -1,7 +1,9 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    # Use fast bcrypt (cost: 4) for instant password verification (~1ms)
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: bcrypt
+            cost: 4
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
@@ -47,6 +49,15 @@ security:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_SUPERVISEUR, ROLE_CLIENT]
         ROLE_ADMIN: [ROLE_SUPERVISEUR, ROLE_CLIENT]
         ROLE_SUPERVISEUR: [ROLE_CLIENT]
+
+when@dev:
+    security:
+        password_hashers:
+            # Reduce bcrypt cost in dev for fast login (cost: 4 = ~5ms vs cost: 13 = ~500ms)
+            # This ONLY applies when APP_ENV=dev — production keeps the secure default
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: bcrypt
+                cost: 4
 
 when@test:
     security:

@@ -34,16 +34,19 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
     {
         return $request->isMethod('POST') && (
             $this->urlGenerator->generate(self::LOGIN_ROUTE) === $request->getRequestUri() ||
-            $this->urlGenerator->generate(self::LOGIN_STAFF_ROUTE) === $request->getRequestUri() ||
-            '/api/login' === $request->getPathInfo()
+            $this->urlGenerator->generate(self::LOGIN_STAFF_ROUTE) === $request->getRequestUri()
         );
     }
 
     public function authenticate(Request $request): Passport
     {
         if (str_contains($request->headers->get('Content-Type', ''), 'application/json')) {
-            $data = $request->toArray();
-            $email = $data['username'] ?? $data['_username'] ?? '';
+            $content = $request->getContent();
+            $data = json_decode($content, true);
+            if (!is_array($data)) {
+                $data = [];
+            }
+            $email = $data['username'] ?? $data['_username'] ?? $data['email'] ?? '';
             $password = $data['password'] ?? $data['_password'] ?? '';
 
             return new Passport(
@@ -67,13 +70,6 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        if ($request->hasSession()) {
-            $session = $request->getSession();
-            $session->invalidate();
-            $session->set('_security_' . $firewallName, serialize($token));
-            $session->save();
-        }
-
         if (str_contains($request->headers->get('Content-Type', ''), 'application/json') || str_starts_with($request->getPathInfo(), '/api/')) {
             $user = $token->getUser();
             $response = new \Symfony\Component\HttpFoundation\JsonResponse([

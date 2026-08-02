@@ -55,6 +55,7 @@ class CreateUserCommand extends Command
         $user->setPassword($this->passwordHasher->hashPassword($user, $password));
         $user->setFullName('Super Admin');
         $user->setBusinessName('LivrExpress Admin');
+        $user->setBusinessPhone('+212600000000');
         $user->setCity('Casablanca');
 
         $this->entityManager->persist($user);

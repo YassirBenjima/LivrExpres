@@ -40,9 +40,70 @@ final class SecurityController extends AbstractController
     }
 
     #[Route(path: '/api/login', name: 'app_api_login', methods: ['POST'])]
-    public function apiLogin(): void
-    {
-        // Intercepted by AppCustomAuthenticator
+    public function apiLogin(
+        \Symfony\Component\HttpFoundation\Request $request,
+        \App\Repository\UserRepository $userRepository,
+        \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        if (!is_array($data)) {
+            try {
+                $data = $request->toArray();
+            } catch (\Throwable $e) {
+                $data = $request->request->all();
+            }
+        }
+        $email = trim($data['username'] ?? $data['email'] ?? $data['_username'] ?? '');
+        $password = $data['password'] ?? $data['_password'] ?? '';
+
+        if (!$email || !$password) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'error' => 'Veuillez saisir un email et un mot de passe.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $userRepository->findOneBy(['email' => $email]);
+
+        if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'error' => 'Identifiants invalides.'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if ($request->hasSession()) {
+            $session = $request->getSession();
+            $token = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
+                $user,
+                'main',
+                $user->getRoles()
+            );
+            $session->set('_security_main', serialize($token));
+        }
+
+        $response = new \Symfony\Component\HttpFoundation\JsonResponse([
+            'success' => true,
+            'user' => [
+                'email' => $user->getUserIdentifier(),
+                'roles' => $user->getRoles(),
+            ],
+            'redirect' => '/dashboard'
+        ]);
+
+        $authCookie = \Symfony\Component\HttpFoundation\Cookie::create(
+            'AUTH_SESSION',
+            base64_encode($user->getUserIdentifier() . ':' . time()),
+            time() + (86400 * 7),
+            '/',
+            null,
+            false,
+            true,
+            false,
+            \Symfony\Component\HttpFoundation\Cookie::SAMESITE_LAX
+        );
+        $response->headers->setCookie($authCookie);
+
+        return $response;
     }
 
     #[Route(path: '/api/forgot-password', name: 'app_api_forgot_password', methods: ['POST'])]
