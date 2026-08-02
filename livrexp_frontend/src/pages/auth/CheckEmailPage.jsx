@@ -17,18 +17,18 @@ export default function CheckEmailPage({ navigate }) {
     const savedEmail = sessionStorage.getItem('reset_email') || 'yassirbenjima18@gmail.com';
     setUserEmail(savedEmail);
 
-    const sentTimeStr = sessionStorage.getItem('reset_email_sent_time');
-    if (sentTimeStr) {
-      const sentTime = parseInt(sentTimeStr, 10);
-      const elapsedSeconds = Math.floor((Date.now() - sentTime) / 1000);
+    // Check if a resend timer was explicitly triggered previously
+    const resendTimerTimeStr = sessionStorage.getItem('resend_timer_time');
+    if (resendTimerTimeStr) {
+      const resendTimerTime = parseInt(resendTimerTimeStr, 10);
+      const elapsedSeconds = Math.floor((Date.now() - resendTimerTime) / 1000);
       if (elapsedSeconds < FIVE_MINUTES_IN_SECONDS) {
         setTimeLeft(FIVE_MINUTES_IN_SECONDS - elapsedSeconds);
       } else {
         setTimeLeft(0);
       }
     } else {
-      setTimeLeft(FIVE_MINUTES_IN_SECONDS);
-      sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
+      setTimeLeft(0);
     }
   }, []);
 
@@ -39,6 +39,7 @@ export default function CheckEmailPage({ navigate }) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
+          sessionStorage.removeItem('resend_timer_time');
           return 0;
         }
         return prev - 1;
@@ -67,14 +68,14 @@ export default function CheckEmailPage({ navigate }) {
       const data = await authService.forgotPassword(emailToSend);
       
       const now = Date.now();
-      sessionStorage.setItem('reset_email_sent_time', now.toString());
+      sessionStorage.setItem('resend_timer_time', now.toString());
       setTimeLeft(FIVE_MINUTES_IN_SECONDS);
 
       setResendStatus(data.message || `Un nouvel e-mail de réinitialisation a été envoyé à ${emailToSend} !`);
     } catch (err) {
       console.warn('API connection issue during resend, simulating success...', err);
       const now = Date.now();
-      sessionStorage.setItem('reset_email_sent_time', now.toString());
+      sessionStorage.setItem('resend_timer_time', now.toString());
       setTimeLeft(FIVE_MINUTES_IN_SECONDS);
       setResendStatus(`Un nouvel e-mail de réinitialisation a été envoyé à ${userEmail} !`);
     } finally {
