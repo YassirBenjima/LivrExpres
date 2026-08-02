@@ -20,7 +20,7 @@ export default function AuthLayout({
       <div className={`lg:rounded-xl lg:border lg:border-border lg:m-5 order-1 lg:order-2 bg-top xxl:bg-center xl:bg-cover bg-no-repeat ${useAltBg ? 'register-branded-bg' : 'branded-bg'} min-h-[400px]`}>
         <div className="flex flex-col p-8 lg:p-16 gap-4">
           <a href="/" onClick={e => e.preventDefault()}>
-            <img className="h-[28px] max-w-none" src="https://keenthemes.com/metronic/tailwind/dist/assets/media/app/mini-logo.svg" alt="Logo"/>
+            <img className="h-[28px] max-w-none" src="/assets/media/app/default-logo.svg" alt="LivrExpress Logo"/>
           </a>
           <div className="flex flex-col gap-3">
             <h3 className="text-2xl font-semibold text-mono">{rightPaneTitle}</h3>
