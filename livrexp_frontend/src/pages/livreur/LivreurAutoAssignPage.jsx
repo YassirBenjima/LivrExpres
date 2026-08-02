@@ -6,6 +6,9 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
   const [colisDisp, setColisDisp]     = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [selectedColis, setSelectedColis] = useState([]);
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [loading, setLoading]         = useState(false);
   const [fetching, setFetching]       = useState(true);
   const [done, setDone]               = useState(false);
@@ -22,12 +25,12 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         fetch('/api/livreurs', { headers: headers(), credentials: 'include' }),
         fetch('/api/colis', { headers: headers(), credentials: 'include' }),
       ]);
-      if (r1.ok) { const d = await r1.json(); if (d.success) setLivreurs(d.livreurs); }
+      if (r1.ok) { const d = await r1.json(); if (d.success) setLivreurs(d.livreurs || []); }
       if (r2.ok) {
         const d = await r2.json();
         const raw = Array.isArray(d) ? d : (d.colis || []);
         const unassigned = raw.filter(c => (!c.assignedDriver || c.assignedDriver === '-') && (c.etatLabel === 'En préparation' || c.statutLabel === 'En cours' || c.statutLabel === 'En attente'));
-        setColisDisp(unassigned.slice(0, 30));
+        setColisDisp(unassigned);
       }
     } catch {
       setLivreurs([
@@ -86,6 +89,34 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
   const toggleColis = (id) => {
     setSelectedColis(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
+
+  const toggleSelectAllPage = (e) => {
+    if (e.target.checked) {
+      const idsOnPage = paginatedColis.map(c => c.id);
+      setSelectedColis(prev => Array.from(new Set([...prev, ...idsOnPage])));
+    } else {
+      const idsOnPageSet = new Set(paginatedColis.map(c => c.id));
+      setSelectedColis(prev => prev.filter(id => !idsOnPageSet.has(id)));
+    }
+  };
+
+  // Search & Filter
+  const filteredColis = colisDisp.filter(c => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (c.orderNumber && c.orderNumber.toLowerCase().includes(q)) ||
+      (c.trackingCode && c.trackingCode.toLowerCase().includes(q)) ||
+      (c.recipient && c.recipient.toLowerCase().includes(q)) ||
+      (c.city && c.city.toLowerCase().includes(q))
+    );
+  });
+
+  const totalColis = filteredColis.length;
+  const totalPages = Math.max(1, Math.ceil(totalColis / itemsPerPage));
+  const paginatedColis = filteredColis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const allPageSelected = paginatedColis.length > 0 && paginatedColis.every(c => selectedColis.includes(c.id));
 
   const disponibles = livreurs.filter(l => l.disponible);
 
@@ -181,9 +212,9 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
               </div>
             </div>
 
-            {/* Manual Attribution Card */}
+            {/* Manual Attribution Card with Search & Pagination */}
             <div className="kt-card">
-              <div className="kt-card-header">
+              <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title">Attribution Manuelle</h3>
                 {selectedColis.length > 0 && (
                   <span className="kt-badge kt-badge-primary kt-badge-outline rounded-[30px]">
@@ -198,78 +229,133 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                 </div>
               ) : (
                 <div className="kt-card-table pb-3">
-                  {/* Colis selection */}
+                  
+                  {/* Search and Select Header Bar */}
                   <div className="px-5 lg:px-7.5 pt-4 pb-2">
-                    <p className="text-sm font-medium text-secondary-foreground mb-2">
-                      Colis disponibles (En préparation) — {colisDisp.length} colis
-                    </p>
-                    <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto border border-border rounded-lg">
-                      {colisDisp.length === 0 ? (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3">
+                      <label className="kt-input grow">
+                        <i className="ki-filled ki-magnifier"></i>
+                        <input
+                          type="text"
+                          placeholder="Rechercher (N° commande, ville...)"
+                          value={searchQuery}
+                          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        />
+                      </label>
+                      
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs font-medium text-secondary-foreground cursor-pointer px-2.5 py-1.5 border border-border rounded-lg bg-accent/30 hover:bg-accent">
+                          <input
+                            type="checkbox"
+                            className="kt-checkbox kt-checkbox-sm"
+                            checked={allPageSelected}
+                            onChange={toggleSelectAllPage}
+                          />
+                          Tout sur la page
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-secondary-foreground mb-2">
+                      <span>Colis disponibles : <strong>{totalColis}</strong></span>
+                      <span>Page {currentPage} / {totalPages}</span>
+                    </div>
+
+                    {/* Paginated Colis List */}
+                    <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto border border-border rounded-lg">
+                      {paginatedColis.length === 0 ? (
                         <div className="p-4 text-sm text-secondary-foreground text-center">
-                          Aucun colis en attente d'attribution
+                          Aucun colis correspondant trouvé
                         </div>
-                      ) : colisDisp.map(c => (
-                        <label key={c.id} className="flex items-center gap-3 px-3.5 py-2 hover:bg-accent cursor-pointer border-b border-border/40 last:border-b-0">
+                      ) : paginatedColis.map(c => (
+                        <label key={c.id} className={`flex items-center gap-3 px-3.5 py-2 hover:bg-accent cursor-pointer border-b border-border/40 last:border-b-0 ${selectedColis.includes(c.id) ? 'bg-primary/5' : ''}`}>
                           <input
                             type="checkbox"
                             className="kt-checkbox kt-checkbox-sm"
                             checked={selectedColis.includes(c.id)}
                             onChange={() => toggleColis(c.id)}
                           />
-                          <div className="flex-1 flex items-center justify-between gap-2">
+                          <div className="flex-1 flex items-center justify-between gap-2 me-2 me-sm-0">
                             <div>
-                              <span className="text-sm font-medium text-foreground">{c.orderNumber}</span>
-                              <span className="text-xs text-secondary-foreground ms-2">{c.recipient}</span>
+                              <span className="text-sm font-medium text-foreground me-2 me-sm-0">{c.orderNumber}</span>
+                              <span className="text-xs text-secondary-foreground me-2 me-sm-0">{c.recipient}</span>
                             </div>
-                            <span className="text-xs text-muted-foreground shrink-0">{c.city}</span>
+                            <span className="text-xs text-muted-foreground shrink-0 me-2 me-sm-0">{c.city}</span>
                           </div>
                         </label>
                       ))}
                     </div>
+
+                    {/* Pagination Bar */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between gap-2 pt-2.5 text-xs text-secondary-foreground me-2 me-sm-0">
+                        <span>Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalColis)} sur {totalColis}</span>
+                        <div className="flex items-center gap-1 me-2 me-sm-0">
+                          <button
+                            type="button"
+                            className="kt-btn kt-btn-xs kt-btn-outline px-2 me-2 me-sm-0"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          >
+                            Précédent
+                          </button>
+                          <span className="px-2 py-0.5 bg-accent rounded text-foreground font-semibold me-2 me-sm-0">{currentPage}</span>
+                          <button
+                            type="button"
+                            className="kt-btn kt-btn-xs kt-btn-outline px-2 me-2 me-sm-0"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          >
+                            Suivant
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Separator */}
-                  <div className="border-t border-border mx-5 my-3" />
+                  <div className="border-t border-border mx-5 my-3 me-2 me-sm-0" />
 
                   {/* Livreurs list */}
                   <div className="px-5 lg:px-7.5 pb-4">
-                    <p className="text-sm font-medium text-secondary-foreground mb-2">
+                    <p className="text-sm font-medium text-secondary-foreground mb-2 me-2 me-sm-0">
                       Assigner au livreur disponible :
                     </p>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 max-h-48 overflow-y-auto me-2 me-sm-0">
                       {disponibles.length === 0 ? (
-                        <div className="p-4 text-sm text-secondary-foreground text-center border border-border rounded-lg">
+                        <div className="p-4 text-sm text-secondary-foreground text-center border border-border rounded-lg me-2 me-sm-0">
                           Aucun livreur disponible
                         </div>
                       ) : disponibles.map(l => (
                         <div
                           key={l.id}
-                          className="flex items-center justify-between gap-3 px-3.5 py-2.5 border border-border rounded-xl hover:border-primary/30 transition-colors"
+                          className="flex items-center justify-between gap-3 px-3.5 py-2.5 border border-border rounded-xl hover:border-primary/30 transition-colors me-2 me-sm-0"
                         >
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2.5 me-2 me-sm-0">
                             <div
-                              className="size-8 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0"
+                              className="size-8 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0 me-2 me-sm-0"
                               style={{ background: `hsl(${(l.id * 47) % 360}, 60%, 50%)` }}
                             >
                               {l.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                             </div>
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-sm font-medium text-foreground">{l.fullName}</span>
-                              <span className="text-xs text-secondary-foreground">{l.city} • {l.stats?.total ?? 0} colis assignés</span>
+                            <div className="flex flex-col gap-0.5 me-2 me-sm-0">
+                              <span className="text-sm font-medium text-foreground me-2 me-sm-0">{l.fullName}</span>
+                              <span className="text-xs text-secondary-foreground me-2 me-sm-0">{l.city} • {l.stats?.total ?? 0} colis assignés</span>
                             </div>
                           </div>
                           <button
                             type="button"
-                            className="kt-btn kt-btn-sm kt-btn-primary shrink-0"
+                            className="kt-btn kt-btn-sm kt-btn-primary shrink-0 me-2 me-sm-0"
                             onClick={() => handleManualAssign(l.id, l.fullName)}
                             disabled={loading || selectedColis.length === 0}
                           >
-                            Assigner
+                            Assigner ({selectedColis.length})
                           </button>
                         </div>
                       ))}
                     </div>
                   </div>
+
                 </div>
               )}
             </div>
