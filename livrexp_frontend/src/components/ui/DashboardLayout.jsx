@@ -628,9 +628,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-primary w-[20px]">
                     <i className="ki-filled ki-technology-4 text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <span className="kt-menu-title text-sm font-semibold text-foreground">
                     LivrExpress PRO
-                    <span className="kt-badge kt-badge-primary kt-badge-outline text-[10px] px-1 py-0.2 rounded font-bold">PRO</span>
+                    <span className="kt-badge kt-badge-primary kt-badge-outline text-[10px] px-1 py-0.2 rounded font-bold ms-1.5">PRO</span>
                   </span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isAiMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
