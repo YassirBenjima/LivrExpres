@@ -2,23 +2,25 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
+const backendTarget = process.env.VITE_BACKEND_URL || 'http://localhost:8080'
+
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
       '/api': {
-        target: 'http://nginx',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
         cookieDomainRewrite: 'localhost',
       },
       '/assets': {
-        target: 'http://nginx',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'http://nginx',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       }
