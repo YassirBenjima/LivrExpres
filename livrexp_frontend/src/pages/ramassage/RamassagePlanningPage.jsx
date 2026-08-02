@@ -340,14 +340,18 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                 <div className="inline-flex rounded-lg border border-border p-1 bg-muted/30">
                   <button 
                     type="button"
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${viewMode === 'month' ? 'bg-card text-foreground shadow-xs' : 'text-secondary-foreground'}`}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      viewMode === 'month' ? 'bg-primary text-primary-foreground shadow-xs font-bold' : 'text-secondary-foreground hover:text-foreground'
+                    }`}
                     onClick={() => setViewMode('month')}
                   >
                     Grille Mois
                   </button>
                   <button 
                     type="button"
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${viewMode === 'list' ? 'bg-card text-foreground shadow-xs' : 'text-secondary-foreground'}`}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-xs font-bold' : 'text-secondary-foreground hover:text-foreground'
+                    }`}
                     onClick={() => setViewMode('list')}
                   >
                     Liste ({filteredEvents.length})
