@@ -22,7 +22,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-final class TestDataSeeder
+class TestDataSeeder
 {
     public const CLIENT_EMAIL = 'test.client@livrexp.test';
     public const STAFF_EMAIL = 'test.superviseur@livrexp.test';
