@@ -3,10 +3,9 @@
 namespace App\Tests\Entity;
 
 use App\Entity\Colis;
-use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
-class EntityUnitTest extends TestCase
+class ColisTest extends TestCase
 {
     public function testColisDefaultValuesAndGetters(): void
     {
@@ -48,19 +47,5 @@ class EntityUnitTest extends TestCase
 
         $this->assertEquals(Colis::STATUT_TERMINE, Colis::normalizeStatutLabel('Termine'));
         $this->assertEquals('kt-badge-success', Colis::resolveStatutBadgeClass(Colis::STATUT_TERMINE));
-    }
-
-    public function testUserRolesAndProperties(): void
-    {
-        $user = new User();
-        $user->setEmail('john@example.com');
-        $user->setFullName('John Doe');
-        $user->setRoles(['ROLE_ADMIN']);
-
-        $this->assertEquals('john@example.com', $user->getEmail());
-        $this->assertEquals('John Doe', $user->getFullName());
-        $this->assertContains('ROLE_ADMIN', $user->getRoles());
-        $this->assertContains('ROLE_USER', $user->getRoles());
-        $this->assertEquals('john@example.com', $user->getUserIdentifier());
     }
 }
