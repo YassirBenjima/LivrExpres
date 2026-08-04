@@ -19,7 +19,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, gd, zip
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, sqlite3, gd, zip
           coverage: none
 
       - name: Cache des dépendances Composer
@@ -30,17 +30,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      - name: Préparation de l'environnement de test
+        run: |
+          cd livrexp_backend
+          cp .env.test .env.local
+
       - name: Installation des dépendances Composer
+        env:
+          APP_ENV: test
+          DATABASE_URL: "sqlite:///%kernel.project_dir%/var/test.db"
         run: |
           cd livrexp_backend
           composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Préparation de l'environnement de test
-        run: |
-          cd livrexp_backend
-          cp .env.test .env.local || true
-
       - name: Exécution des tests PHPUnit
+        env:
+          APP_ENV: test
+          DATABASE_URL: "sqlite:///%kernel.project_dir%/var/test.db"
         run: |
           cd livrexp_backend
           vendor/bin/phpunit
@@ -63,7 +69,7 @@ jobs:
       - name: Installation des dépendances Frontend
         run: |
           cd livrexp_frontend
-          npm install
+          npm ci
 
       - name: Verification de la syntaxe et Linter (ESLint)
         run: |
