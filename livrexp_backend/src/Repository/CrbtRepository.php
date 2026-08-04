@@ -10,7 +10,7 @@ use Doctrine\Persistence\ManagerRegistry;
 /**
  * @extends ServiceEntityRepository<Crbt>
  */
-final class CrbtRepository extends ServiceEntityRepository
+class CrbtRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

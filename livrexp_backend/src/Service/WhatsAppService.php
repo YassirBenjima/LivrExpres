@@ -51,7 +51,7 @@ class WhatsAppService
         $recipient = $colis->getRecipient() ?? 'Client(e)';
         $price = number_format((float) ($colis->getPrice() ?? 0), 2, '.', ' ');
         $city = $colis->getCity() ?? 'votre ville';
-        $trackingUrl = "http://localhost:5173/suivi?code=" . urlencode($trackingCode);
+        $trackingUrl = "http://localhost:5173/suivi?code=" . urlencode((string) ($trackingCode ?? ''));
         $etat = $colis->getEtat();
 
         // 1. Initial parcel creation / pending status (Créé / En attente / En préparation)
