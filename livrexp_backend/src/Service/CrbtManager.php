@@ -7,7 +7,7 @@ use App\Entity\Crbt;
 use App\Repository\CrbtRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CrbtManager
+class CrbtManager
 {
     private const BASE_DELIVERY_FEE = 25.0;
 
