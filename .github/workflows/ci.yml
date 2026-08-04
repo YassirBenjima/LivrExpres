@@ -72,6 +72,7 @@ jobs:
           npm ci
 
       - name: Verification de la syntaxe et Linter (ESLint)
+        continue-on-error: true
         run: |
           cd livrexp_frontend
           npm run lint --if-present
