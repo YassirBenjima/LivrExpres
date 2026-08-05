@@ -471,8 +471,8 @@ final class RetourFacturationApiController extends AbstractController
             $statut = $crbt->getStatus();
             $colis = $crbt->getColis();
             $creator = $colis?->getCreatedBy();
-            $clientName = $creator 
-                ? (method_exists($creator, 'getNomStore') && $creator->getNomStore() ? $creator->getNomStore() : ($creator->getNomComplet() ?: 'Client Privé'))
+            $clientName = $creator instanceof User
+                ? ($creator->getBusinessName() ?: $creator->getFullName() ?: 'Client Privé')
                 : 'Client Privé';
 
             $data[] = [

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function FacturationCrbtPage({ navigate, showNotification }) {
+export default function FacturationCrbtPage({ showNotification }) {
   const { t, language } = useLanguage();
   const [entries, setEntries] = useState([]);
-  const [summary, setSummary] = useState({ totalNet: 14484, totalBrut: 16722, fraisLivraison: 2193, fraisRefus: 45, nbrColis: 59 });
+  const [summary, setSummary] = useState({ totalNet: 0, totalBrut: 0, fraisLivraison: 0, fraisRefus: 0, nbrColis: 0 });
   const [loading, setLoading] = useState(true);
 
   // Virement Modal State
@@ -31,73 +31,71 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const formatStatusLabel = (statut, rawLabel) => {
+  const formatStatusLabel = useCallback((statut, rawLabel) => {
     const clean = String(statut || '').trim().toUpperCase();
     if (clean === 'DISPONIBLE' || clean.includes('DISPONIBLE')) return t('finances.statusAvailable', 'Disponible à virer');
     if (clean === 'PAYE' || clean.includes('PAYÉ') || clean.includes('PAYE')) return t('finances.statusPaid', 'Payé (Viré)');
     if (clean === 'EN_ATTENTE' || clean.includes('COLLECTE')) return t('finances.statusInCollection', 'En cours de collecte');
     return rawLabel || statut;
-  };
+  }, [t]);
 
-  const DEFAULT_ENTRIES = [
-    { id: 1, code: 'CRBT-20260731-01', client: 'Boutique Casa Chic', dateCreation: '31/07/2026 10:15', nbrColis: 12, totalBrut: 4850.00, fraisLivraison: 420.00, fraisRefus: 0.00, totalNet: 4430.00, statut: 'DISPONIBLE', statutLabel: 'Disponible à virer', statutBadgeClass: 'kt-badge-info' },
-    { id: 2, code: 'CRBT-20260730-08', client: 'Maroc Tech Express', dateCreation: '30/07/2026 14:30', nbrColis: 8, totalBrut: 3200.50, fraisLivraison: 280.00, fraisRefus: 15.00, totalNet: 2905.50, statut: 'PAYE', statutLabel: 'Payé (Viré)', statutBadgeClass: 'kt-badge-success' },
-    { id: 3, code: 'CRBT-20260729-14', client: 'Atlas Mode & Beauty', dateCreation: '29/07/2026 09:45', nbrColis: 15, totalBrut: 5920.00, fraisLivraison: 525.00, fraisRefus: 30.00, totalNet: 5365.00, statut: 'EN_ATTENTE', statutLabel: 'En cours de collecte', statutBadgeClass: 'kt-badge-warning' },
-    { id: 4, code: 'CRBT-20260728-03', client: 'Electro Rabat', dateCreation: '28/07/2026 16:20', nbrColis: 6, totalBrut: 2751.50, fraisLivraison: 210.00, fraisRefus: 0.00, totalNet: 2541.50, statut: 'PAYE', statutLabel: 'Payé (Viré)', statutBadgeClass: 'kt-badge-success' },
-    { id: 5, code: 'CRBT-20260727-22', client: 'Boutique Casa Chic', dateCreation: '27/07/2026 11:00', nbrColis: 18, totalBrut: 7800.00, fraisLivraison: 630.00, fraisRefus: 0.00, totalNet: 7170.00, statut: 'PAYE', statutLabel: 'Payé (Viré)', statutBadgeClass: 'kt-badge-success' }
-  ];
-
-  const fetchCrbt = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('q', searchQuery);
-      if (selectedStatut) params.append('statut', selectedStatut);
-      if (dateFrom) params.append('date_from', dateFrom);
-      if (dateTo) params.append('date_to', dateTo);
-
-      const res = await fetch(`/api/facturation/crbt?${params.toString()}`, {
-        headers: {
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.entries && data.entries.length > 0) {
-          setEntries(data.entries);
-        } else {
-          setEntries(DEFAULT_ENTRIES);
-        }
-        if (data.summary) {
-          setSummary(data.summary);
-        }
-        if (data.statuts_possibles && data.statut_labels) {
-          const opts = [
-            { value: '', label: t('finances.allStatuses', 'Tous les statuts') },
-            ...data.statuts_possibles.map(s => ({
-              value: s,
-              label: formatStatusLabel(s, data.statut_labels[s])
-            }))
-          ];
-          setStatutOptions(opts);
-        }
-      } else {
-        setEntries(DEFAULT_ENTRIES);
-      }
-    } catch (err) {
-      console.error('Erreur chargement CRBT:', err);
-      setEntries(DEFAULT_ENTRIES);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchCrbt();
-  }, [searchQuery, selectedStatut, dateFrom, dateTo]);
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('auth_token');
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('q', searchQuery);
+        if (selectedStatut) params.append('statut', selectedStatut);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+
+        const res = await fetch(`/api/facturation/crbt?${params.toString()}`, {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+
+        if (cancelled) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (cancelled) return;
+          setEntries(data.entries ?? []);
+          if (data.summary) {
+            setSummary(data.summary);
+          }
+          if (data.statuts_possibles && data.statut_labels) {
+            const opts = [
+              { value: '', label: t('finances.allStatuses', 'Tous les statuts') },
+              ...data.statuts_possibles.map(s => ({
+                value: s,
+                label: formatStatusLabel(s, data.statut_labels[s])
+              }))
+            ];
+            setStatutOptions(opts);
+          }
+        } else {
+          setEntries([]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Erreur chargement CRBT:', err);
+          setEntries([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [searchQuery, selectedStatut, dateFrom, dateTo, t, formatStatusLabel]);
+
 
   const totalEntries = entries.length;
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
@@ -248,7 +246,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
   // Accounting Export (CSV / Sage)
   const handleExportComptable = (format = 'CSV') => {
-    let content = '';
+    let content;
     let fileName = `Export_Comptable_LivrExpress_${new Date().toISOString().slice(0, 10)}`;
 
     if (format === 'SAGE') {
