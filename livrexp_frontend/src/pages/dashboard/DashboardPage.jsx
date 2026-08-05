@@ -1,49 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
 
-const mockDataFallback = {
-  totalColis: 142,
-  colisLivres: 95,
-  colisEnPreparation: 15,
-  colisExpedies: 22,
-  colisRetournes: 10,
-  colisCrees: 12,
-  totalCrbt: 54300.00,
-  crbtLivres: 38200.00,
-  crbtEnCours: 16100.00,
-  recentColis: [
-    { id: 1, trackingCode: 'F-20260623-0005', productNature: 'Téléphone portable', etatLabel: 'Livré', etatBadgeClass: 'kt-badge-success', createdAt: '23 Jun, 2026 10:30', city: 'Casablanca', price: 1200.00 },
-    { id: 2, trackingCode: 'F-20260623-0004', productNature: 'Veste Cuir', etatLabel: 'En préparation', etatBadgeClass: 'kt-badge-warning', createdAt: '23 Jun, 2026 09:15', city: 'Rabat', price: 450.00 },
-    { id: 3, trackingCode: 'F-20260622-0003', productNature: 'Crème Visage', etatLabel: 'Expédié', etatBadgeClass: 'kt-badge-info', createdAt: '22 Jun, 2026 17:45', city: 'Marrakech', price: 290.00 },
-    { id: 4, trackingCode: 'F-20260622-0002', productNature: 'Chaussures Sport', etatLabel: 'Retourné', etatBadgeClass: 'kt-badge-destructive', createdAt: '22 Jun, 2026 14:20', city: 'Tanger', price: 650.00 },
-    { id: 5, trackingCode: 'F-20260622-0001', productNature: 'Sac à Main', etatLabel: 'Créé', etatBadgeClass: 'kt-badge-primary', createdAt: '22 Jun, 2026 11:05', city: 'Fès', price: 380.00 }
-  ]
-};
-
-const mockPeriodData = {
-  today: {
-    labels: ['08h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'],
-    data: [2, 4, 8, 12, 18, 14, 9, 3],
-    dataLivres: [1, 3, 6, 9, 14, 11, 7, 2]
-  },
-  '7': {
-    labels: ['25 Jul', '26 Jul', '27 Jul', '28 Jul', '29 Jul', '30 Jul', '31 Jul'],
-    data: [8, 14, 12, 19, 24, 21, 28],
-    dataLivres: [6, 11, 9, 15, 20, 17, 23]
-  },
-  month: {
-    labels: ['01 Jul', '06 Jul', '11 Jul', '16 Jul', '21 Jul', '26 Jul', '31 Jul'],
-    data: [35, 48, 52, 60, 55, 72, 85],
-    dataLivres: [28, 38, 42, 49, 45, 58, 69]
-  },
-  year: {
-    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-    data: [320, 410, 480, 520, 610, 590, 680, 720, 790, 850, 910, 980],
-    dataLivres: [260, 330, 390, 420, 500, 480, 550, 590, 640, 700, 750, 810]
-  }
+const emptyData = {
+  totalColis: 0,
+  colisLivres: 0,
+  colisEnPreparation: 0,
+  colisExpedies: 0,
+  colisRetournes: 0,
+  colisCrees: 0,
+  totalCrbt: 0,
+  crbtLivres: 0,
+  crbtEnCours: 0,
+  recentColis: [],
+  chartLabels: [],
+  chartData: [],
+  chartDataLivres: []
 };
 
 const GMAIL_GRADIENTS = [
@@ -104,7 +78,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
   const [currentPage, setCurrentPage] = useState(1);
 
   const handleDownloadMonthlyReport = () => {
-    const dataToUse = fetchedData || dashboardData || DEFAULT_DATA;
+    const dataToUse = fetchedData || dashboardData || emptyData;
     const now = new Date();
     const locale = language === 'en' ? 'en-US' : 'fr-FR';
     const monthName = now.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
@@ -606,18 +580,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
       .catch(() => {});
   }, []);
 
-  const activeMock = mockPeriodData[period] || mockPeriodData['7'];
-
-  const data = fetchedData || dashboardData || {
-    ...mockDataFallback,
-    chartLabels: activeMock.labels,
-    chartData: activeMock.data,
-    chartDataLivres: activeMock.dataLivres
-  };
-
-  const chartLabels = fetchedData?.chartLabels || activeMock.labels;
-  const chartData = fetchedData?.chartData || activeMock.data;
-  const chartDataLivres = fetchedData?.chartDataLivres || activeMock.dataLivres;
+  const data = fetchedData || dashboardData || emptyData;
 
   // ApexCharts initialization
   useEffect(() => {
@@ -625,6 +588,10 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
 
     const container = document.querySelector("#real_earnings_chart");
     if (!container) return;
+
+    const chartLabels = data.chartLabels || [];
+    const chartData = data.chartData || [];
+    const chartDataLivres = data.chartDataLivres || [];
 
     container.innerHTML = "";
 
@@ -703,7 +670,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     return () => {
       chart.destroy();
     };
-  }, [period, fetchedData, dashboardData, language, t]);
+  }, [period, fetchedData, dashboardData, language, t, data]);
 
   if (loading) {
     return (
