@@ -212,7 +212,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                       <input 
                         value={searchQuery}
                         onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder={t('colisPage.searchPlaceholder', 'Rechercher un ramassage')} 
+                        placeholder={t('colisPage.pickupSearchPlaceholder', 'Rechercher un ramassage')} 
                         type="text" 
                       />
                     </label>

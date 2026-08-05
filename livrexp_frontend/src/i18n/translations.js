@@ -1,15 +1,5 @@
 export const translations = {
   fr: {
-    status: {
-      pending: "En attente",
-      in_progress: "En cours",
-      done: "Terminé",
-      postponed: "Reporté",
-      failed: "Échec",
-      delivered: "Livré",
-      cancelled: "Annulé",
-      registered: "Enregistré"
-    },
     // Navigation / Sidebar
     nav: {
       home: "Accueil",
@@ -55,7 +45,6 @@ export const translations = {
       language: "Langue",
       logisticsManagement: "Gestion Logistique",
       myDeliveries: "Mes Livraisons",
-      home: "Accueil",
     },
     // Common terms
     common: {
@@ -114,6 +103,9 @@ export const translations = {
       done: "Terminé",
       confirmed: "Confirmé",
       enregistre: "Enregistré",
+      postponed: "Reporté",
+      failed: "Échec",
+      registered: "Enregistré",
     },
 
     // User Roles
@@ -279,7 +271,7 @@ export const translations = {
       newPickupBtn: "Demander un ramassage",
       showingPickups: "Affichage de",
       pickupsCount: "ramassage(s)",
-      searchPlaceholder: "Rechercher un ramassage",
+      pickupSearchPlaceholder: "Rechercher un ramassage",
       noPickupFound: "Aucun ramassage trouvé.",
       withLabels: "Avec étiquettes",
       withoutLabels: "Sans étiquettes",
@@ -1573,16 +1565,6 @@ export const translations = {
     },
   },
   en: {
-    status: {
-      pending: "Pending",
-      in_progress: "In progress",
-      done: "Done",
-      postponed: "Postponed",
-      failed: "Failed",
-      delivered: "Delivered",
-      cancelled: "Cancelled",
-      registered: "Registered"
-    },
     // Navigation / Sidebar
     nav: {
       home: "Home",
@@ -1628,7 +1610,6 @@ export const translations = {
       language: "Language",
       logisticsManagement: "Logistics Management",
       myDeliveries: "My Deliveries",
-      home: "Home",
     },
     // Common terms
     common: {
@@ -1687,6 +1668,9 @@ export const translations = {
       done: "Completed",
       confirmed: "Confirmed",
       enregistre: "Registered",
+      postponed: "Postponed",
+      failed: "Failed",
+      registered: "Registered",
     },
 
     roles: {
@@ -1851,7 +1835,7 @@ export const translations = {
       newPickupBtn: "Request a Pickup",
       showingPickups: "Showing",
       pickupsCount: "pickup(s)",
-      searchPlaceholder: "Search a pickup",
+      pickupSearchPlaceholder: "Search a pickup",
       noPickupFound: "No pickups found.",
       withLabels: "With labels",
       withoutLabels: "Without labels",
@@ -1904,7 +1888,6 @@ export const translations = {
       cannotReschedulePast: "Cannot reschedule to a past date",
       rescheduledSuccess: "Pickup rescheduled successfully",
       rescheduleError: "Error rescheduling pickup",
-      requestDetailsTitle: "Request Details",
       requestDetailsTitle: "Request Details",
       titleClientLabel: "Title / Client",
       viewInList: "View in list",
