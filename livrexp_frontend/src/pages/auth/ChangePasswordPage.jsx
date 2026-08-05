@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';

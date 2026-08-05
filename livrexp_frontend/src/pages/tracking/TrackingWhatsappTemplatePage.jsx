@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function TrackingWhatsappTemplatePage({ navigate, showNotification }) {
+export default function TrackingWhatsappTemplatePage({ showNotification }) {
   const { t } = useLanguage();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,8 +24,7 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
   const messageHardLimit = 2000;
   const messageSoftLimit = 400;
 
-  const fetchTemplates = async () => {
-    setLoading(true);
+  const fetchTemplates = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth_token');
       const params = new URLSearchParams();
@@ -47,11 +46,14 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, statusFilter]);
 
   useEffect(() => {
-    fetchTemplates();
-  }, [searchQuery, statusFilter]);
+    const timer = setTimeout(() => {
+      fetchTemplates();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchTemplates]);
 
   useEffect(() => {
     const handleDocumentClick = () => setActiveDropdownId(null);
@@ -93,6 +95,7 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
         showNotification?.('error', data.message || t('whatsappTracking.saveError', 'Erreur lors de l\'enregistrement.'));
       }
     } catch (err) {
+      console.error('Erreur enregistrement:', err);
       showNotification?.('error', t('whatsappTracking.connectionError', 'Erreur de connexion.'));
     } finally {
       setSubmitting(false);
@@ -131,6 +134,7 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
         showNotification?.('error', data.message || t('whatsappTracking.statusUpdateError', 'Erreur lors du changement de statut.'));
       }
     } catch (err) {
+      console.error('Erreur changement statut:', err);
       showNotification?.('error', t('whatsappTracking.connectionError', 'Erreur de connexion.'));
     }
   };
@@ -155,6 +159,7 @@ export default function TrackingWhatsappTemplatePage({ navigate, showNotificatio
         showNotification?.('error', data.message || t('whatsappTracking.deleteError', 'Erreur lors de la suppression.'));
       }
     } catch (err) {
+      console.error('Erreur suppression:', err);
       showNotification?.('error', t('whatsappTracking.connectionError', 'Erreur de connexion.'));
     }
   };

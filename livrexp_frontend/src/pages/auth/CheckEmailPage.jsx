@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import { authService } from '../../services/api';
@@ -9,29 +9,23 @@ const FIVE_MINUTES_IN_SECONDS = 300; // 5 minutes
 
 export default function CheckEmailPage({ navigate }) {
   const { t } = useLanguage();
-  const [userEmail, setUserEmail] = useState('');
+  const [userEmail] = useState(
+    () => sessionStorage.getItem('reset_email') || 'yassirbenjima18@gmail.com'
+  );
   const [isResending, setIsResending] = useState(false);
   const [resendStatus, setResendStatus] = useState('');
   const [apiError, setApiError] = useState('');
-  const [timeLeft, setTimeLeft] = useState(0);
-
-  useEffect(() => {
-    const savedEmail = sessionStorage.getItem('reset_email') || 'yassirbenjima18@gmail.com';
-    setUserEmail(savedEmail);
-
+  const [timeLeft, setTimeLeft] = useState(() => {
     const resendTimerTimeStr = sessionStorage.getItem('resend_timer_time');
     if (resendTimerTimeStr) {
       const resendTimerTime = parseInt(resendTimerTimeStr, 10);
       const elapsedSeconds = Math.floor((Date.now() - resendTimerTime) / 1000);
       if (elapsedSeconds < FIVE_MINUTES_IN_SECONDS) {
-        setTimeLeft(FIVE_MINUTES_IN_SECONDS - elapsedSeconds);
-      } else {
-        setTimeLeft(0);
+        return FIVE_MINUTES_IN_SECONDS - elapsedSeconds;
       }
-    } else {
-      setTimeLeft(0);
     }
-  }, []);
+    return 0;
+  });
 
   useEffect(() => {
     if (timeLeft <= 0) return;
