@@ -1,11 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { createRoot } from 'react-dom/client';
+import { useLanguage } from '../../context/LanguageContext';
 
 let _addToast = null;
 let _containerEl = null;
 
+const translateApiMessage = (msg, t) => {
+  if (!msg) return '';
+  if (typeof msg !== 'string') return msg;
+
+  if (msg.includes('Identifiants invalides') || msg.includes('Invalid credentials')) {
+    return t('auth.invalidCredentials', 'Identifiants invalides.');
+  }
+  if (msg.includes('Connexion réussie') || msg.includes('Login successful') || msg.includes('Authentification Staff réussie')) {
+    return t('auth.loginSuccess', 'Connexion réussie ! Redirection...');
+  }
+  if (msg.includes('compte a été créé') || msg.includes('account has been created')) {
+    return t('auth.regSuccessMsg', 'Votre compte a été créé avec succès.');
+  }
+  if (msg.includes('réinitialisation') || msg.includes('reset email')) {
+    return t('auth.resetEmailSent', 'Un e-mail de réinitialisation vous a été envoyé.');
+  }
+  if (msg.includes('réinitialisé avec succès') || msg.includes('reset successfully')) {
+    return t('auth.resetSuccessMsg', 'Votre mot de passe a été réinitialisé avec succès.');
+  }
+  return msg;
+};
+
 function ToastContainer() {
+  const { t, language } = useLanguage();
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
@@ -13,15 +37,20 @@ function ToastContainer() {
       const id = Date.now() + Math.random();
       setToasts(prev => [...prev, { id, type, message }]);
       setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
+        setToasts(prev => prev.filter(toast => toast.id !== id));
       }, 4000);
     };
     return () => { _addToast = null; };
   }, []);
 
-  const dismiss = (id) => setToasts(prev => prev.filter(t => t.id !== id));
+  const dismiss = (id) => setToasts(prev => prev.filter(toast => toast.id !== id));
 
   if (toasts.length === 0) return null;
+
+  const titles = {
+    fr: { success: 'Succès', info: 'Information', error: 'Erreur', danger: 'Erreur' },
+    en: { success: 'Success', info: 'Information', error: 'Error', danger: 'Error' },
+  };
 
   return ReactDOM.createPortal(
     <>
@@ -93,12 +122,8 @@ function ToastContainer() {
       <div className="auth-toast-container">
         {toasts.map(({ id, type, message }) => {
           const iconClass = type === 'success' ? 'ki-check' : type === 'info' ? 'ki-information-2' : 'ki-cross-circle';
-          const lang = localStorage.getItem('language') || 'fr';
-          const titles = {
-            fr: { success: 'Succès', info: 'Information', error: 'Erreur', danger: 'Erreur' },
-            en: { success: 'Success', info: 'Information', error: 'Error', danger: 'Error' },
-          };
-          const title = (titles[lang] || titles.fr)[type] || (titles.fr)[type] || 'Notification';
+          const title = (titles[language] || titles.fr)[type] || 'Notification';
+          const displayMsg = translateApiMessage(message, t);
           return (
             <div key={id} className={`auth-toast ${type}`}>
               <div className={`auth-toast-icon ${type}`}>
@@ -106,7 +131,7 @@ function ToastContainer() {
               </div>
               <div className="auth-toast-content">
                 <h4 className="auth-toast-title">{title}</h4>
-                <p className="auth-toast-message">{message}</p>
+                <p className="auth-toast-message">{displayMsg}</p>
               </div>
               <button onClick={() => dismiss(id)} className="auth-toast-close">
                 <i className="ki-filled ki-cross text-sm"></i>
