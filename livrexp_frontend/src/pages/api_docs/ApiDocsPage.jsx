@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function ApiDocsPage({ navigate, showNotification }) {
+export default function ApiDocsPage({ showNotification }) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('key');
   const [apiKey, setApiKey] = useState('');
@@ -11,34 +11,33 @@ export default function ApiDocsPage({ navigate, showNotification }) {
   const [generating, setGenerating] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
 
-  const fetchDocsInfo = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/api-docs', {
-        headers: {
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setApiKey(json.api_key || '');
-        if (json.host) {
-          setHostInfo({
-            host: json.host,
-            schemeAndHttpHost: json.schemeAndHttpHost || `http://${json.host}`
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Erreur chargement documentation API:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchDocsInfo = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/api-docs', {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setApiKey(json.api_key || '');
+          if (json.host) {
+            setHostInfo({
+              host: json.host,
+              schemeAndHttpHost: json.schemeAndHttpHost || `http://${json.host}`
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement documentation API:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDocsInfo();
   }, []);
 
