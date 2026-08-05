@@ -1,14 +1,115 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function DispatchMapPage({ navigate, currentUser }) {
+const DEFAULT_DRIVERS = [
+  {
+    id: 1,
+    fullName: 'Karim Alami (Livreur Casa Anfa)',
+    phone: '0661234567',
+    city: 'Casablanca',
+    latitude: 33.5731,
+    longitude: -7.5898,
+    isLive: true,
+    lastUpdated: 'À l\'instant',
+    activeParcels: 8,
+    status: 'En livraison'
+  },
+  {
+    id: 2,
+    fullName: 'Youssef Benali (Livreur Rabat Agdal)',
+    phone: '0662345678',
+    city: 'Rabat',
+    latitude: 34.0209,
+    longitude: -6.8416,
+    isLive: true,
+    lastUpdated: 'Il y a 2 min',
+    activeParcels: 5,
+    status: 'En tournée'
+  },
+  {
+    id: 3,
+    fullName: 'Omar Tazi (Livreur Marrakech Guéliz)',
+    phone: '0663456789',
+    city: 'Marrakech',
+    latitude: 31.6295,
+    longitude: -7.9811,
+    isLive: true,
+    lastUpdated: 'Il y a 1 min',
+    activeParcels: 11,
+    status: 'En livraison'
+  },
+  {
+    id: 4,
+    fullName: 'Hamza Naji (Livreur Tanger Centre)',
+    phone: '0664567890',
+    city: 'Tanger',
+    latitude: 35.7595,
+    longitude: -5.8340,
+    isLive: false,
+    lastUpdated: 'Il y a 10 min',
+    activeParcels: 4,
+    status: 'En attente'
+  }
+];
+
+const DEFAULT_PARCELS = [
+  {
+    id: 101,
+    code: 'CMD-84920',
+    recipient: 'Sofia Bennani',
+    phone: '0611223344',
+    city: 'Casablanca',
+    price: 350,
+    etat: 'Expédié',
+    statut: 'En livraison',
+    latitude: 33.5850,
+    longitude: -7.6100
+  },
+  {
+    id: 102,
+    code: 'CMD-84921',
+    recipient: 'Mehdi Chraibi',
+    phone: '0655667788',
+    city: 'Casablanca',
+    price: 200,
+    etat: 'Expédié',
+    statut: 'En attente',
+    latitude: 33.5600,
+    longitude: -7.5700
+  },
+  {
+    id: 103,
+    code: 'CMD-84922',
+    recipient: 'Amine Zaki',
+    phone: '0699887766',
+    city: 'Rabat',
+    price: 490,
+    etat: 'Expédié',
+    statut: 'En livraison',
+    latitude: 34.0150,
+    longitude: -6.8300
+  },
+  {
+    id: 104,
+    code: 'CMD-84923',
+    recipient: 'Laila Kabbaj',
+    phone: '0644332211',
+    city: 'Marrakech',
+    price: 150,
+    etat: 'Expédié',
+    statut: 'En livraison',
+    latitude: 31.6350,
+    longitude: -7.9900
+  }
+];
+
+export default function DispatchMapPage({ navigate }) {
   const { t } = useLanguage();
-  const [drivers, setDrivers] = useState([]);
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [leafletReady, setLeafletReady] = useState(false);
+  const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
+  const [parcels, setParcels] = useState(DEFAULT_PARCELS);
+  const [leafletReady, setLeafletReady] = useState(() => Boolean(typeof window !== 'undefined' && window.L));
   const [selectedCity, setSelectedCity] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -17,7 +118,6 @@ export default function DispatchMapPage({ navigate, currentUser }) {
     return localStorage.getItem('livrexp_gps_enabled') === 'true';
   });
 
-  const [currentCoords, setCurrentCoords] = useState(null);
   const [gpsError, setGpsError] = useState(null);
   const watchIdRef = useRef(null);
 
@@ -25,7 +125,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
 
-  const formatStatutLabel = (statut) => {
+  const formatStatutLabel = useCallback((statut) => {
     if (!statut) return t('status.pending', 'En attente');
     const clean = String(statut).trim().toLowerCase();
     const map = {
@@ -41,12 +141,11 @@ export default function DispatchMapPage({ navigate, currentUser }) {
       'livré': t('status.delivered', 'Livré')
     };
     return map[clean] || statut;
-  };
+  }, [t]);
 
   // Load Leaflet CSS and JS dynamically
   useEffect(() => {
     if (window.L) {
-      setLeafletReady(true);
       return;
     }
 
@@ -79,133 +178,26 @@ export default function DispatchMapPage({ navigate, currentUser }) {
     }
   }, []);
 
-  const DEFAULT_DRIVERS = [
-    {
-      id: 1,
-      fullName: 'Karim Alami (Livreur Casa Anfa)',
-      phone: '0661234567',
-      city: 'Casablanca',
-      latitude: 33.5731,
-      longitude: -7.5898,
-      isLive: true,
-      lastUpdated: 'À l\'instant',
-      activeParcels: 8,
-      status: 'En livraison'
-    },
-    {
-      id: 2,
-      fullName: 'Youssef Benali (Livreur Rabat Agdal)',
-      phone: '0662345678',
-      city: 'Rabat',
-      latitude: 34.0209,
-      longitude: -6.8416,
-      isLive: true,
-      lastUpdated: 'Il y a 2 min',
-      activeParcels: 5,
-      status: 'En tournée'
-    },
-    {
-      id: 3,
-      fullName: 'Omar Tazi (Livreur Marrakech Guéliz)',
-      phone: '0663456789',
-      city: 'Marrakech',
-      latitude: 31.6295,
-      longitude: -7.9811,
-      isLive: true,
-      lastUpdated: 'Il y a 1 min',
-      activeParcels: 11,
-      status: 'En livraison'
-    },
-    {
-      id: 4,
-      fullName: 'Hamza Naji (Livreur Tanger Centre)',
-      phone: '0664567890',
-      city: 'Tanger',
-      latitude: 35.7595,
-      longitude: -5.8340,
-      isLive: false,
-      lastUpdated: 'Il y a 10 min',
-      activeParcels: 4,
-      status: 'En attente'
-    }
-  ];
-
-  const DEFAULT_PARCELS = [
-    {
-      id: 101,
-      code: 'CMD-84920',
-      recipient: 'Sofia Bennani',
-      phone: '0611223344',
-      city: 'Casablanca',
-      price: 350,
-      etat: 'Expédié',
-      statut: 'En livraison',
-      latitude: 33.5850,
-      longitude: -7.6100
-    },
-    {
-      id: 102,
-      code: 'CMD-84921',
-      recipient: 'Mehdi Chraibi',
-      phone: '0655667788',
-      city: 'Casablanca',
-      price: 200,
-      etat: 'Expédié',
-      statut: 'En attente',
-      latitude: 33.5600,
-      longitude: -7.5700
-    },
-    {
-      id: 103,
-      code: 'CMD-84922',
-      recipient: 'Amine Zaki',
-      phone: '0699887766',
-      city: 'Rabat',
-      price: 490,
-      etat: 'Expédié',
-      statut: 'En livraison',
-      latitude: 34.0150,
-      longitude: -6.8300
-    },
-    {
-      id: 104,
-      code: 'CMD-84923',
-      recipient: 'Laila Kabbaj',
-      phone: '0644332211',
-      city: 'Marrakech',
-      price: 150,
-      etat: 'Expédié',
-      statut: 'En livraison',
-      latitude: 31.6350,
-      longitude: -7.9900
-    }
-  ];
-
-  // Fetch Driver & Parcel GPS locations from backend
-  const fetchMapData = async () => {
-    try {
-      const response = await fetch('/api/driver/locations', {
-        headers: { 'Accept': 'application/json' },
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && (data.drivers?.length > 0 || data.parcels?.length > 0)) {
-          setDrivers(data.drivers || []);
-          setParcels(data.parcels || []);
-          setLoading(false);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Backend fetch unaccessible, using default map dataset:', err);
-    }
-    setDrivers(DEFAULT_DRIVERS);
-    setParcels(DEFAULT_PARCELS);
-    setLoading(false);
-  };
-
   useEffect(() => {
+    // Fetch Driver & Parcel GPS locations from backend
+    const fetchMapData = async () => {
+      try {
+        const response = await fetch('/api/driver/locations', {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && (data.drivers?.length > 0 || data.parcels?.length > 0)) {
+            setDrivers(data.drivers || []);
+            setParcels(data.parcels || []);
+          }
+        }
+      } catch (err) {
+        console.warn('Backend fetch unaccessible, using default map dataset:', err);
+      }
+    };
+
     fetchMapData();
     const interval = setInterval(fetchMapData, 12000);
     return () => clearInterval(interval);
@@ -225,7 +217,6 @@ export default function DispatchMapPage({ navigate, currentUser }) {
         watchIdRef.current = navigator.geolocation.watchPosition(
           async (pos) => {
             const { latitude, longitude } = pos.coords;
-            setCurrentCoords({ latitude, longitude });
             setGpsError(null);
 
             try {
@@ -245,14 +236,13 @@ export default function DispatchMapPage({ navigate, currentUser }) {
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
-        setGpsError(t('gpsMap.gpsErrorUnsupported', 'La géolocalisation n\'est pas prise en charge par ce navigateur.'));
+        setTimeout(() => setGpsError(t('gpsMap.gpsErrorUnsupported', 'La géolocalisation n\'est pas prise en charge par ce navigateur.')), 0);
       }
     } else {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
-      setCurrentCoords(null);
     }
 
     return () => {
@@ -260,7 +250,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
-  }, [isGpsActive]);
+  }, [isGpsActive, t]);
 
   // Render & Update Leaflet Map
   useEffect(() => {
@@ -289,7 +279,6 @@ export default function DispatchMapPage({ navigate, currentUser }) {
       }, 250);
     }
 
-    const map = mapInstanceRef.current;
     const markersGroup = markersGroupRef.current;
     markersGroup.clearLayers();
 
@@ -433,7 +422,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
       }
     });
 
-  }, [leafletReady, drivers, parcels, selectedCity, searchQuery, t]);
+  }, [leafletReady, drivers, parcels, selectedCity, searchQuery, t, formatStatutLabel]);
 
   return (
     <DashboardLayout navigate={navigate} activeMenu="dispatch-map">
