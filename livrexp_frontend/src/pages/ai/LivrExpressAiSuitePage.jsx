@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function LivrExpressAiSuitePage({ navigate, showNotification, defaultTab = 'predictions', activeMenu = 'ai_predictions' }) {
+export default function LivrExpressAiSuitePage({ showNotification, defaultTab = 'predictions', activeMenu = 'ai_predictions' }) {
   const { t } = useLanguage();
 
   const getInitialTab = () => {
@@ -29,7 +29,6 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
       else setActiveTab(defaultTab);
     };
 
-    syncTab();
     window.addEventListener('popstate', syncTab);
     return () => window.removeEventListener('popstate', syncTab);
   }, [defaultTab, activeMenu]);
@@ -38,7 +37,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage] = useState(10);
 
   // Search & Filter state for anomalies table
   const [anomalySearchQuery, setAnomalySearchQuery] = useState('');
@@ -77,7 +76,6 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const [isChatSending, setIsChatSending] = useState(false);
 
   const fetchPredictions = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/ai/predict-return-risk', {
@@ -87,15 +85,14 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
         const data = await res.json();
         setPredictions(data.predictions || []);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAnomalies = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/ai/anomalies', {
@@ -105,15 +102,14 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
         const data = await res.json();
         setAnomalies(data.anomalies || []);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchRouteOptimization = async () => {
-    setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/ai/route-optimizer', {
@@ -124,17 +120,55 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
         setRouteStops(data.stops || []);
         if (data.metrics) setRouteMetrics(data.metrics);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'predictions') fetchPredictions();
-    if (activeTab === 'anomalies') fetchAnomalies();
-    if (activeTab === 'route') fetchRouteOptimization();
+    let ignore = false;
+
+    const loadData = async () => {
+      const token = localStorage.getItem('auth_token');
+      const headers = { 'Accept': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+      try {
+        if (activeTab === 'predictions') {
+          const res = await fetch('/api/ai/predict-return-risk', { headers });
+          if (res.ok) {
+            const data = await res.json();
+            if (!ignore) setPredictions(data.predictions || []);
+          }
+        } else if (activeTab === 'anomalies') {
+          const res = await fetch('/api/ai/anomalies', { headers });
+          if (res.ok) {
+            const data = await res.json();
+            if (!ignore) setAnomalies(data.anomalies || []);
+          }
+        } else if (activeTab === 'route') {
+          const res = await fetch('/api/ai/route-optimizer', { headers });
+          if (res.ok) {
+            const data = await res.json();
+            if (!ignore) {
+              setRouteStops(data.stops || []);
+              if (data.metrics) setRouteMetrics(data.metrics);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      ignore = false;
+    };
   }, [activeTab]);
 
   const handleSendChat = async (msgText = null) => {
@@ -169,7 +203,8 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
           }
         ]);
       }
-    } catch (e) {
+    } catch (err) {
+      console.error(err);
       setChatMessages(prev => [
         ...prev,
         { sender: 'bot', text: t('aiSuite.chatAiError', "Erreur de connexion avec l'IA.") }
@@ -245,6 +280,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
               <button
                 type="button"
                 onClick={() => {
+                  setLoading(true);
                   if (activeTab === 'predictions') fetchPredictions();
                   if (activeTab === 'anomalies') fetchAnomalies();
                   if (activeTab === 'route') fetchRouteOptimization();
