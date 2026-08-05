@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const GMAIL_GRADIENTS = [
   'linear-gradient(135deg, #4285F4 0%, #3b82f6 100%)', // Google Blue
@@ -19,18 +19,17 @@ function getGmailGradient(name) {
   return GMAIL_GRADIENTS[charCodeSum % GMAIL_GRADIENTS.length];
 }
 
-export default function SafeAvatar({ src, name, size = 32, sizeClass, textClass = "text-xs" }) {
+export default function SafeAvatar({ src, name, size = 32, sizeClass = "", textClass = "text-xs" }) {
   const [imgError, setImgError] = useState(false);
   const initial = (name && name.trim().length > 0) ? name.trim()[0].toUpperCase() : 'U';
   const background = getGmailGradient(name);
 
-  const dimensionClass = sizeClass || `w-[${size}px] h-[${size}px]`;
   const inlineStyle = { width: `${size}px`, height: `${size}px`, minWidth: `${size}px`, minHeight: `${size}px` };
 
   if (src && !imgError) {
     return (
       <img
-        className="relative shrink-0 rounded-full ring-2 ring-background object-cover shadow-sm"
+        className={`relative shrink-0 rounded-full ring-2 ring-background object-cover shadow-sm ${sizeClass}`}
         style={inlineStyle}
         src={src}
         alt={name || 'Avatar'}
@@ -42,7 +41,7 @@ export default function SafeAvatar({ src, name, size = 32, sizeClass, textClass 
   return (
     <span
       title={name || 'Utilisateur'}
-      className={`relative inline-flex items-center justify-center shrink-0 rounded-full ring-2 font-bold ${textClass} text-white ring-background shadow-sm`}
+      className={`relative inline-flex items-center justify-center shrink-0 rounded-full ring-2 font-bold ${textClass} text-white ring-background shadow-sm ${sizeClass}`}
       style={{ ...inlineStyle, background }}
     >
       {initial}

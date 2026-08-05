@@ -1,10 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [message, setMessage] = useState('Connexion réseau interrompue. Le serveur est inaccessible.');
   const [isRetrying, setIsRetrying] = useState(false);
   const [reconnectedToast, setReconnectedToast] = useState(false);
+
+  const triggerReconnectedToast = useCallback(() => {
+    setReconnectedToast(true);
+    setTimeout(() => {
+      setReconnectedToast(false);
+    }, 4000);
+  }, []);
+
+  const checkServerHealth = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      const res = await fetch('/api/cities', { method: 'GET' });
+      if (res.ok) {
+        setIsOffline(false);
+        triggerReconnectedToast();
+      } else {
+        setIsOffline(true);
+      }
+    } catch {
+      setIsOffline(true);
+      setMessage('Le serveur backend est toujours inaccessible.');
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [triggerReconnectedToast]);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -37,32 +62,7 @@ export default function OfflineBanner() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('app:connection_status', handleConnectionStatus);
     };
-  }, [isOffline]);
-
-  const triggerReconnectedToast = () => {
-    setReconnectedToast(true);
-    setTimeout(() => {
-      setReconnectedToast(false);
-    }, 4000);
-  };
-
-  const checkServerHealth = async () => {
-    setIsRetrying(true);
-    try {
-      const res = await fetch('/api/cities', { method: 'GET' });
-      if (res.ok) {
-        setIsOffline(false);
-        triggerReconnectedToast();
-      } else {
-        setIsOffline(true);
-      }
-    } catch (err) {
-      setIsOffline(true);
-      setMessage('Le serveur backend est toujours inaccessible.');
-    } finally {
-      setIsRetrying(false);
-    }
-  };
+  }, [checkServerHealth, isOffline, triggerReconnectedToast]);
 
   if (!isOffline && !reconnectedToast) return null;
 

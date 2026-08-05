@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const FlagFR = ({ className = "w-5 h-3.5" }) => (

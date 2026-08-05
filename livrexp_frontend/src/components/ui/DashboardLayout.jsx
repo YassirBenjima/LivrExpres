@@ -67,8 +67,34 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const [isRetourMenuOpen, setIsRetourMenuOpen] = useState(currentActive.startsWith('retour'));
   const [isFacturationMenuOpen, setIsFacturationMenuOpen] = useState(currentActive.startsWith('facturation'));
   const [isAiMenuOpen, setIsAiMenuOpen] = useState(currentActive.startsWith('ai'));
-  const [user, setUser] = useState(null);
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      let initialUser = storedUser ? JSON.parse(storedUser) : null;
+      const cachedProfile = sessionStorage.getItem('user_profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        if (parsed.fullName) {
+          initialUser = initialUser ? { ...initialUser, name: parsed.fullName, email: parsed.email } : { name: parsed.fullName, email: parsed.email };
+        }
+      }
+      return initialUser;
+    } catch {
+      return null;
+    }
+  });
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    try {
+      const cachedProfile = sessionStorage.getItem('user_profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        return parsed.avatarUrl || null;
+      }
+    } catch {
+      // Ignore
+    }
+    return null;
+  });
   const [isNotifMenuOpen, setIsNotifMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -93,8 +119,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   useEffect(() => {
 
     const fetchNotifications = async () => {
-      let rawNotifs = [];
-      let rawUnread = 0;
+      let rawNotifs;
+      let rawUnread;
       const defaultList = [
           { id: '1', title: 'Colis Livré avec succès', message: 'Le colis F-20260731-001 à Casablanca a été livré.', type: 'success', icon: 'ki-check-circle', createdAt: 'Il y a 10 min', isRead: false, link: '/colis' },
           { id: '2', title: 'Nouvelle demande de ramassage', message: 'Une nouvelle demande a été soumise pour Agadir.', type: 'info', icon: 'ki-delivery-3', createdAt: 'Il y a 30 min', isRead: false, link: '/ramassage' },
@@ -123,7 +149,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
           rawNotifs = defaultList;
           rawUnread = 7;
         }
-      } catch (e) {
+      } catch {
         rawNotifs = defaultList;
         rawUnread = 7;
       }
@@ -158,7 +184,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
         headers: { 'Accept': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
         credentials: 'include',
       });
-    } catch {}
+    } catch {
+      // Ignore network errors
+    }
   };
 
   const handleNotifClick = async (notif) => {
@@ -178,7 +206,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
           headers: { 'Accept': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
           credentials: 'include',
         });
-      } catch {}
+      } catch {
+        // Ignore network errors
+      }
     }
     if (notif.link) {
       window.history.pushState({}, '', notif.link);
@@ -187,28 +217,10 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        // Ignore
-      }
-    }
-
     // Check if profile is already cached in sessionStorage to prevent refetching on every page change
     const cachedProfile = sessionStorage.getItem('user_profile');
     if (cachedProfile) {
-      try {
-        const parsed = JSON.parse(cachedProfile);
-        setAvatarUrl(parsed.avatarUrl || null);
-        if (parsed.fullName) {
-          setUser(prev => prev ? { ...prev, name: parsed.fullName, email: parsed.email } : prev);
-        }
-        return;
-      } catch (e) {
-        // Ignore parse error and proceed to fetch
-      }
+      return;
     }
 
     // Fetch real avatar from profile API if not cached

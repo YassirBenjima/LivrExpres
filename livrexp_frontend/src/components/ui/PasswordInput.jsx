@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function PasswordInput({ value, onChange, placeholder, name, id, autoComplete, disabled }) {
   const [showPassword, setShowPassword] = useState(false);

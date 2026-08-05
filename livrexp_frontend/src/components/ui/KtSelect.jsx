@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 /**
  * KtSelect - Replicates the exact Metronic UI / ktui select markup structure.
@@ -29,17 +29,12 @@ export default function KtSelect({
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setOpen(false);
+        setSearchQuery('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (!open) {
-      setSearchQuery('');
-    }
-  }, [open]);
 
   // Prepend placeholder option if it exists and there isn't already an option with value === ''
   const hasEmptyOption = safeOptions.some(o => o.value === '');
@@ -66,7 +61,12 @@ export default function KtSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={`kt-select-display kt-select bg-background text-foreground border-border${open ? ' active' : ''}`}
-        onClick={() => setOpen(prev => !prev)}
+        onClick={() => {
+          setOpen(prev => {
+            if (prev) setSearchQuery('');
+            return !prev;
+          });
+        }}
       >
         <span className={isPlaceholder ? 'kt-select-placeholder' : 'kt-select-option-text'}>
           {displayLabel}
@@ -135,6 +135,7 @@ export default function KtSelect({
                     onClick={() => {
                       onChange(option.value);
                       setOpen(false);
+                      setSearchQuery('');
                     }}
                   >
                     <span className="kt-select-option-text">{option.label}</span>
