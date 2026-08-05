@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function AffiliatePage({ navigate, showNotification }) {
+export default function AffiliatePage({ showNotification }) {
   const { t } = useLanguage();
   const [data, setData] = useState({
     next_payment: 0,
@@ -14,29 +14,37 @@ export default function AffiliatePage({ navigate, showNotification }) {
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState('');
 
-  const fetchAffiliateData = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/affiliate', {
-        headers: {
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch (err) {
-      console.error('Erreur chargement données affiliation:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchAffiliateData = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/affiliate', {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted) {
+            setData(json);
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement données affiliation:', err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchAffiliateData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const copyToClipboard = (text, type) => {
