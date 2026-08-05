@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -17,7 +17,6 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Modal Delete state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bonToDelete, setBonToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -80,13 +79,18 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
     }
   };
 
-  const fetchBons = async () => {
-    setLoading(true);
+  const fetchBons = useCallback(async (showSkeleton = false, overrideSearch = null, overrideStatus = null) => {
+    if (showSkeleton) {
+      setLoading(true);
+    }
     try {
       const token = localStorage.getItem('auth_token');
+      const q = overrideSearch !== null ? overrideSearch : searchQuery;
+      const st = overrideStatus !== null ? overrideStatus : statusFilter;
+
       const queryParams = new URLSearchParams();
-      if (searchQuery) queryParams.append('q', searchQuery);
-      if (statusFilter) queryParams.append('statut', statusFilter);
+      if (q) queryParams.append('q', q);
+      if (st) queryParams.append('statut', st);
 
       const res = await fetch(`/api/bon-livraison?${queryParams.toString()}`, {
         headers: {
@@ -104,11 +108,11 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, statusFilter]);
 
   useEffect(() => {
     fetchBons();
-  }, [statusFilter]);
+  }, [fetchBons]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -118,9 +122,7 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
   const handleReset = () => {
     setSearchQuery('');
     setStatusFilter('');
-    setTimeout(() => {
-      fetchBons();
-    }, 0);
+    fetchBons(true, '', '');
   };
 
   const toggleDropdown = (id) => {
@@ -160,6 +162,7 @@ export default function BonLivraisonListPage({ navigate, showNotification }) {
         showNotification?.('error', errData.message || t('deliverySlip.deleteError', 'Erreur lors de la suppression.'));
       }
     } catch (err) {
+      console.error('Erreur suppression bon de livraison:', err);
       showNotification?.('error', t('deliverySlip.serverError', 'Erreur serveur.'));
     } finally {
       setDeleting(false);

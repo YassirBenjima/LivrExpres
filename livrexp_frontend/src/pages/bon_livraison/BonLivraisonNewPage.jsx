@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
@@ -31,7 +31,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
     return map[cleanLabel] || cleanLabel;
   };
 
-  const fetchAvailableColis = async (query = '') => {
+  const fetchAvailableColis = useCallback(async (query = '') => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -63,9 +63,9 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
     } finally {
       setLoading(false);
     }
-  };
+  }, [bonId, isEditMode]);
 
-  const fetchBonDetails = async () => {
+  const fetchBonDetails = useCallback(async () => {
     if (!bonId) return;
     try {
       const token = localStorage.getItem('auth_token');
@@ -85,14 +85,23 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
     } catch (err) {
       console.error('Erreur chargement détails du bon:', err);
     }
-  };
+  }, [bonId]);
 
   useEffect(() => {
-    if (isEditMode) {
-      fetchBonDetails();
-    }
-    fetchAvailableColis();
-  }, [bonId]);
+    let active = true;
+    const loadData = async () => {
+      await Promise.resolve();
+      if (!active) return;
+      if (isEditMode) {
+        await fetchBonDetails();
+      }
+      await fetchAvailableColis();
+    };
+    loadData();
+    return () => {
+      active = false;
+    };
+  }, [fetchAvailableColis, fetchBonDetails, isEditMode]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -152,9 +161,10 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
         showNotification?.('success', isEditMode ? t('deliverySlip.updateSuccess', 'Bon de livraison mis à jour avec succès.') : t('deliverySlip.createSuccess', 'Bon de livraison créé avec succès.'));
         navigate('/bon-livraison');
       } else {
-        showNotification?.('error', t('deliverySlip.saveError', 'Erreur lors de l\'enregistrement.'));
+        showNotification?.('error', data?.message || t('deliverySlip.saveError', 'Erreur lors de l\'enregistrement.'));
       }
     } catch (err) {
+      console.error('Erreur lors de l\'enregistrement:', err);
       showNotification?.('error', t('deliverySlip.serverError', 'Erreur de connexion serveur.'));
     } finally {
       setSubmitting(false);
