@@ -1,14 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-const mockPickupColis = [
-  { id: 10, trackingCode: 'F-20260623-0010', productNature: 'Montre Homme', createdAt: '23/06/2026 11:45', address: 'Bvd Zero, N 5', etatLabel: 'En attente', etatBadgeClass: 'kt-badge-warning', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Casablanca', price: 890.00, comment: '-' },
-  { id: 11, trackingCode: 'F-20260623-0011', productNature: 'Sac à dos sport', createdAt: '23/06/2026 11:50', address: 'Gare Rabat Ville', etatLabel: 'En attente', etatBadgeClass: 'kt-badge-warning', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Rabat', price: 320.00, comment: 'Livrer après 17h' }
-];
-
-export default function ColisPickupPage({ navigate, showNotification }) {
+export default function ColisPickupPage({ showNotification }) {
   const { t } = useLanguage();
   const [colisList, setColisList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +17,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
   
   useEffect(() => {
     const fetchColis = async (silent = false) => {
-      if (!silent && colisList.length === 0) {
+      if (!silent) {
         setLoading(true);
       }
       try {
@@ -35,10 +30,10 @@ export default function ColisPickupPage({ navigate, showNotification }) {
           const json = await response.json();
           setColisList(json.colis_list || json);
         } else {
-          setColisList(mockPickupColis);
+          setColisList([]);
         }
-      } catch (err) {
-        setColisList(mockPickupColis);
+      } catch {
+        setColisList([]);
       } finally {
         setLoading(false);
       }
@@ -103,7 +98,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
         setColisList(prev => prev.filter(c => !selectedIds.includes(c.id)));
         setSelectedIds([]);
       }
-    } catch (err) {
+    } catch {
       const demoMsg = t('notifications.pickupDemo', 'Demande de ramassage (Simulée) envoyée avec succès !');
       if (showNotification) {
         showNotification('success', demoMsg);
@@ -143,13 +138,11 @@ export default function ColisPickupPage({ navigate, showNotification }) {
     perPageOptions.push({ value: '50', label: '50' });
   }
 
-  useEffect(() => {
-    const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
-    if (!exists) {
-      setPerPage(10);
-      setCurrentPage(1);
-    }
-  }, [totalColis, perPage]);
+  const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
+  if (!exists && perPage !== 10) {
+    setPerPage(10);
+    setCurrentPage(1);
+  }
 
   // Pagination logic
   const totalPages = Math.ceil(totalColis / perPage) || 1;

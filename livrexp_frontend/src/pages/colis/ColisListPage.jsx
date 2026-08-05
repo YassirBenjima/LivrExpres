@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -120,25 +120,19 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
   const totalMontant = filteredColis.reduce((sum, item) => sum + item.price, 0);
 
   // Filter options: always keep 5 and 10, enable 20 if >10, enable 50 if >=50
-  const perPageOptions = [
-    { value: '5', label: '5' },
-    { value: '10', label: '10' },
-  ];
-  if (totalColis > 10) {
-    perPageOptions.push({ value: '20', label: '20' });
-  }
-  if (totalColis >= 50) {
-    perPageOptions.push({ value: '50', label: '50' });
-  }
-
-  useEffect(() => {
-    // If current perPage is no longer in the allowed options list, fallback to 10
-    const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
-    if (!exists) {
-      setPerPage(10);
-      setCurrentPage(1);
+  const perPageOptions = useMemo(() => {
+    const options = [
+      { value: '5', label: '5' },
+      { value: '10', label: '10' },
+    ];
+    if (totalColis > 10) {
+      options.push({ value: '20', label: '20' });
     }
-  }, [totalColis, perPage, perPageOptions]);
+    if (totalColis >= 50) {
+      options.push({ value: '50', label: '50' });
+    }
+    return options;
+  }, [totalColis]);
 
   useEffect(() => {
     const handleDocumentClick = (e) => {
@@ -153,9 +147,10 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
   }, [activeDropdownId]);
 
   // Pagination logic
-  const totalPages = Math.ceil(totalColis / perPage) || 1;
+  const effectivePerPage = perPageOptions.some(opt => Number(opt.value) === perPage) ? perPage : 10;
+  const totalPages = Math.ceil(totalColis / effectivePerPage) || 1;
   const validPage = Math.min(Math.max(1, currentPage), totalPages);
-  const paginatedColis = filteredColis.slice((validPage - 1) * perPage, validPage * perPage);
+  const paginatedColis = filteredColis.slice((validPage - 1) * effectivePerPage, validPage * effectivePerPage);
 
   // Unique lists for filters
   const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
@@ -505,7 +500,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                       <div className="flex items-center gap-2 order-2 md:order-1">
                         {t('dashboard.display', 'Afficher')}
                         <KtSelect
-                          value={String(perPage)}
+                          value={String(effectivePerPage)}
                           onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                           className="w-16"
                           options={perPageOptions}
@@ -516,22 +511,22 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                       <div className="flex items-center gap-4 order-1 md:order-2">
                         <span>
                           {totalColis > 0
-                            ? `${t('dashboard.showing', 'Affichage de')} ${Math.min(totalColis, (currentPage - 1) * perPage + 1)} ${t('dashboard.to', 'à')} ${Math.min(totalColis, currentPage * perPage)} ${t('dashboard.of', 'sur')} ${totalColis} ${t('nav.parcels', 'colis')}`
+                            ? `${t('dashboard.showing', 'Affichage de')} ${Math.min(totalColis, (validPage - 1) * effectivePerPage + 1)} ${t('dashboard.to', 'à')} ${Math.min(totalColis, validPage * effectivePerPage)} ${t('dashboard.of', 'sur')} ${totalColis} ${t('nav.parcels', 'colis')}`
                             : t('dashboard.showingZero', 'Affichage de 0 sur 0 entrées')}
                         </span>
                         {totalPages > 1 && (
                           <div className="flex gap-1">
                             <button 
                               className="kt-btn kt-btn-sm kt-btn-outline px-2"
-                              disabled={currentPage === 1}
+                              disabled={validPage === 1}
                               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             >
                               {t('dashboard.prev', 'Précédent')}
                             </button>
-                            <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
+                            <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{validPage} / {totalPages}</span>
                             <button 
                               className="kt-btn kt-btn-sm kt-btn-outline px-2"
-                              disabled={currentPage === totalPages}
+                              disabled={validPage === totalPages}
                               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             >
                               {t('dashboard.next', 'Suivant')}

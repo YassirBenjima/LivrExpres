@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function ColisSettingsPage({ navigate, showNotification }) {
+export default function ColisSettingsPage({ showNotification }) {
   const { t } = useLanguage();
   const [fragile, setFragile] = useState(false);
   const [openColis, setOpenColis] = useState(false);
@@ -23,7 +23,7 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
           setOpenColis(data.openColis || false);
           setUniqueOrderNumber(data.uniqueOrderNumber || false);
         }
-      } catch (err) {
+      } catch {
         console.warn('API error, using default settings');
       } finally {
         setLoading(false);
@@ -59,7 +59,7 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
           setMsg(demoMsg);
         }
       }
-    } catch (err) {
+    } catch {
       const demoMsg = t('notifications.settingsSavedShort', 'Paramètres enregistrés !');
       if (showNotification) {
         showNotification('success', demoMsg);

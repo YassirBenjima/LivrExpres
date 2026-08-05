@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
@@ -85,7 +85,7 @@ export default function ColisEditPage({ colisId, navigate, colisList = [], showN
       .finally(() => {
         setFetchLoading(false);
       });
-  }, [colisId]);
+  }, [colisId, showNotification]);
 
   const oldColisChoices = Array.from(
     new Set(

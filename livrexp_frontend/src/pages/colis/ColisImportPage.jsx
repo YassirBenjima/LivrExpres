@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -124,7 +124,7 @@ export default function ColisImportPage({ showNotification }) {
           setErrorMsg(errMsgText);
         }
       }
-    } catch (err) {
+    } catch {
       clearInterval(interval);
       setProgress(100);
       setTimeout(() => {
