@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
+
 
 const mockDataFallback = {
   totalColis: 142,
@@ -91,7 +93,9 @@ function SafeAvatar({ src, name, sizeClass = "size-8", textClass = "text-[11px]"
 }
 
 export default function DashboardPage({ dashboardData = null, loading = false, refetchData }) {
+  const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
+
   const [period, setPeriod] = useState('7');
   const [fetchedData, setFetchedData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -102,9 +106,11 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
   const handleDownloadMonthlyReport = () => {
     const dataToUse = fetchedData || dashboardData || DEFAULT_DATA;
     const now = new Date();
-    const monthName = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    const formattedDate = now.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const locale = language === 'en' ? 'en-US' : 'fr-FR';
+    const monthName = now.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    const formattedDate = now.toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' });
     const refCode = `REP-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
 
     const totalColis = dataToUse.totalColis || 0;
     const colisLivres = dataToUse.colisLivres || 0;
@@ -426,113 +432,113 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
           <div class="top-brand-bar">
             <div>
               <div class="brand-logo-text">Livr<span>Express</span></div>
-              <div class="brand-subtitle">Plateforme Nationale de Logistique & Transport</div>
+              <div class="brand-subtitle">${t('pdfReport.platformTitle', 'Plateforme Nationale de Logistique & Transport')}</div>
             </div>
             <div class="report-meta-box">
-              <div class="report-tag">Rapport Officiel Certifié</div>
-              <div class="meta-line">Date d'édition : <strong>${formattedDate}</strong></div>
+              <div class="report-tag">${t('pdfReport.officialTag', 'Rapport Officiel Certifié')}</div>
+              <div class="meta-line">${t('pdfReport.issueDate', "Date d'édition")} : <strong>${formattedDate}</strong></div>
             </div>
           </div>
 
           <!-- Document Banner -->
           <div class="doc-title-box">
             <div>
-              <h1>Rapport Mensuel d'Activité Logistique</h1>
-              <p>Bilan analytique et financier des expéditions de <strong>${monthName.toUpperCase()}</strong></p>
+              <h1>${t('pdfReport.docTitle', "Rapport Mensuel d'Activité Logistique")}</h1>
+              <p>${t('pdfReport.docSubtitle', 'Bilan analytique et financier des expéditions de')} <strong>${monthName.toUpperCase()}</strong></p>
             </div>
             <div class="ref-pill">${refCode}</div>
           </div>
 
           <!-- Executive KPIs -->
-          <div class="section-header">1. Indicateurs Clés de Performance (KPI)</div>
+          <div class="section-header">${t('pdfReport.kpiSection', '1. Indicateurs Clés de Performance (KPI)')}</div>
           <div class="kpi-grid">
             <div class="kpi-card blue">
-              <div class="kpi-label">Volume Expéditions</div>
+              <div class="kpi-label">${t('pdfReport.shipmentVolume', 'Volume Expéditions')}</div>
               <div class="kpi-val">${totalColis}</div>
-              <div class="kpi-sub" style="color: #2563eb;">100% Traité</div>
+              <div class="kpi-sub" style="color: #2563eb;">100% ${t('pdfReport.processed', 'Traité')}</div>
             </div>
             <div class="kpi-card green">
-              <div class="kpi-label">Livraisons Réussies</div>
+              <div class="kpi-label">${t('pdfReport.successfulDeliveries', 'Livraisons Réussies')}</div>
               <div class="kpi-val">${colisLivres}</div>
-              <div class="kpi-sub" style="color: #10b981;">Taux : ${successRate}%</div>
+              <div class="kpi-sub" style="color: #10b981;">${t('pdfReport.successRate', 'Taux')} : ${successRate}%</div>
             </div>
             <div class="kpi-card amber">
-              <div class="kpi-label">En Cours de Transit</div>
+              <div class="kpi-label">${t('pdfReport.inTransit', 'En Cours de Transit')}</div>
               <div class="kpi-val">${colisEnCours}</div>
-              <div class="kpi-sub" style="color: #f59e0b;">Dispatch Actif</div>
+              <div class="kpi-sub" style="color: #f59e0b;">${t('pdfReport.activeDispatch', 'Dispatch Actif')}</div>
             </div>
             <div class="kpi-card rose">
-              <div class="kpi-label">Retours & Refus</div>
+              <div class="kpi-label">${t('pdfReport.returnsRefusals', 'Retours & Refus')}</div>
               <div class="kpi-val">${colisRetournes}</div>
-              <div class="kpi-sub" style="color: #f43f5e;">Taux : ${returnRate}%</div>
+              <div class="kpi-sub" style="color: #f43f5e;">${t('pdfReport.returnRate', 'Taux')} : ${returnRate}%</div>
             </div>
           </div>
 
           <!-- Financial Table -->
-          <div class="section-header">2. Synthèse Financière & Remboursements CRBT (MAD)</div>
+          <div class="section-header">${t('pdfReport.financialSection', '2. Synthèse Financière & Remboursements CRBT (MAD)')}</div>
           <table class="custom-table">
             <thead>
               <tr>
-                <th>Poste Financier</th>
-                <th>Description</th>
-                <th class="text-center">Statut</th>
-                <th class="text-right">Montant Brut</th>
+                <th>${t('pdfReport.item', 'Poste Financier')}</th>
+                <th>${t('pdfReport.description', 'Description')}</th>
+                <th class="text-center">${t('pdfReport.status', 'Statut')}</th>
+                <th class="text-right">${t('pdfReport.grossAmount', 'Montant Brut')}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>CRBT Encaissé (Livraisons Réussies)</strong></td>
-                <td>Montant global collecté auprès des destinataires</td>
-                <td class="text-center"><span style="color: #10b981; font-weight: 700;">Encaissé</span></td>
+                <td><strong>${t('pdfReport.collectedCrbt', 'CRBT Encaissé (Livraisons Réussies)')}</strong></td>
+                <td>${t('pdfReport.collectedDesc', 'Montant global collecté auprès des destinataires')}</td>
+                <td class="text-center"><span style="color: #10b981; font-weight: 700;">${t('pdfReport.collectedStatus', 'Encaissé')}</span></td>
                 <td class="text-right" style="font-weight: 700; color: #10b981;">${crbtLivreVal.toFixed(2)} MAD</td>
               </tr>
               <tr>
-                <td><strong>CRBT En Cours de Collection</strong></td>
-                <td>Fonds en cours de transport chez les livreurs</td>
-                <td class="text-center"><span style="color: #2563eb; font-weight: 700;">En transit</span></td>
+                <td><strong>${t('pdfReport.pendingCrbt', 'CRBT En Cours de Collection')}</strong></td>
+                <td>${t('pdfReport.pendingDesc', 'Fonds en cours de transport chez les livreurs')}</td>
+                <td class="text-center"><span style="color: #2563eb; font-weight: 700;">${t('pdfReport.pendingStatus', 'En transit')}</span></td>
                 <td class="text-right" style="font-weight: 700; color: #2563eb;">${crbtTransitVal.toFixed(2)} MAD</td>
               </tr>
               <tr>
-                <td><strong>Frais de Livraison Déduits</strong></td>
-                <td>Frais de prestation LivrExpress (${colisLivres} colis × 35.00 MAD)</td>
-                <td class="text-center"><span style="color: #64748b; font-weight: 600;">Déduit</span></td>
+                <td><strong>${t('pdfReport.deliveryFees', 'Frais de Livraison Déduits')}</strong></td>
+                <td>${t('pdfReport.deliveryFeesDesc', 'Frais de prestation LivrExpress')} (${colisLivres} colis × 35.00 MAD)</td>
+                <td class="text-center"><span style="color: #64748b; font-weight: 600;">${t('pdfReport.deductedStatus', 'Déduit')}</span></td>
                 <td class="text-right" style="font-weight: 600; color: #64748b;">-${fraisLivraisonVal.toFixed(2)} MAD</td>
               </tr>
               <tr class="total-row">
-                <td><strong>Portefeuille Global Géré</strong></td>
-                <td>Total Valeur Marchande Traitée</td>
-                <td class="text-center"><strong>Global</strong></td>
+                <td><strong>${t('pdfReport.managedPortfolio', 'Portefeuille Global Géré')}</strong></td>
+                <td>${t('pdfReport.managedPortfolioDesc', 'Total Valeur Marchande Traitée')}</td>
+                <td class="text-center"><strong>${t('pdfReport.globalStatus', 'Global')}</strong></td>
                 <td class="text-right"><strong>${crbtTotalVal.toFixed(2)} MAD</strong></td>
               </tr>
               <tr style="background: #eff6ff;">
-                <td style="color: #1d4ed8;"><strong>SOLDE NET À REVERSER AU CLIENT</strong></td>
-                <td style="color: #1e40af;">Total Encaissé déduit des frais de service</td>
-                <td class="text-center"><span style="color: #1d4ed8; font-weight: 800;">À régler</span></td>
+                <td style="color: #1d4ed8;"><strong>${t('pdfReport.netBalance', 'SOLDE NET À REVERSER AU CLIENT')}</strong></td>
+                <td style="color: #1e40af;">${t('pdfReport.netBalanceDesc', 'Total Encaissé déduit des frais de service')}</td>
+                <td class="text-center"><span style="color: #1d4ed8; font-weight: 800;">${t('pdfReport.toSettle', 'À régler')}</span></td>
                 <td class="text-right" style="font-size: 15px; font-weight: 800; color: #1d4ed8;">${netPayeurVal.toFixed(2)} MAD</td>
               </tr>
             </tbody>
           </table>
 
           <!-- Quality SLA -->
-          <div class="section-header">3. Respect des Normes de Qualité & Délais (SLA)</div>
+          <div class="section-header">${t('pdfReport.slaSection', '3. Respect des Normes de Qualité & Délais (SLA)')}</div>
           <div class="sla-box">
             <div>
-              <div class="sla-title">Taux de Succès Livraison</div>
+              <div class="sla-title">${t('pdfReport.deliverySuccessRate', 'Taux de Succès Livraison')}</div>
               <div class="sla-val" style="color: #10b981;">${successRate}%</div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: ${Math.min(100, parseFloat(successRate))}%;"></div>
               </div>
             </div>
             <div>
-              <div class="sla-title">Délai Moyen d'Expédition</div>
-              <div class="sla-val" style="color: #2563eb;">&lt; 24 Heures</div>
+              <div class="sla-title">${t('pdfReport.avgShippingTime', "Délai Moyen d'Expédition")}</div>
+              <div class="sla-val" style="color: #2563eb;">${t('pdfReport.avgTimeValue', '< 24 Heures')}</div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: 95%; background: #2563eb;"></div>
               </div>
             </div>
             <div>
-              <div class="sla-title">Conformité des Retours</div>
-              <div class="sla-val" style="color: #0f172a;">100% Traités</div>
+              <div class="sla-title">${t('pdfReport.returnCompliance', 'Conformité des Retours')}</div>
+              <div class="sla-val" style="color: #0f172a;">${t('pdfReport.returnComplianceValue', '100% Traités')}</div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: 100%; background: #0f172a;"></div>
               </div>
@@ -542,14 +548,15 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
           <!-- Signatures & Footer -->
           <div class="footer-section">
             <div class="page-footer-note">
-              LivrExpress S.A.R.L - Plateforme Nationale de Gestion Logistique & Transport.<br>
-              Document officiel généré automatiquement. Toute modification non autorisée annule sa validité.
+              ${t('pdfReport.officialFooter', 'LivrExpress S.A.R.L - Plateforme Nationale de Gestion Logistique & Transport.')}<br>
+              ${t('pdfReport.footerNote', 'Document officiel généré automatiquement. Toute modification non autorisée annule sa validité.')}
             </div>
             <div class="signature-box">
-              <div class="signature-title">Direction des Opérations</div>
-              <div class="signature-seal">Sceau Numérique Approuvé</div>
+              <div class="signature-title">${t('pdfReport.operationsDirection', 'Direction des Opérations')}</div>
+              <div class="signature-seal">${t('pdfReport.approvedSeal', 'Sceau Numérique Approuvé')}</div>
             </div>
           </div>
+
 
         </div>
 
@@ -624,11 +631,11 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     const options = {
       series: [
         {
-          name: 'Colis enregistrés',
+          name: t('dashboard.registeredParcels', 'Colis enregistrés'),
           data: chartData
         },
         {
-          name: 'Colis livrés',
+          name: t('dashboard.deliveredParcels', 'Colis livrés'),
           data: chartDataLivres
         }
       ],
@@ -696,7 +703,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
     return () => {
       chart.destroy();
     };
-  }, [period, fetchedData, dashboardData]);
+  }, [period, fetchedData, dashboardData, language, t]);
 
   if (loading) {
     return (
@@ -914,10 +921,10 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Dashboard
+                {t('dashboard.title', 'Dashboard')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Aperçu global de l'activité logistique et financière de LivrExpress
+                {t('dashboard.subtitle', "Aperçu global de l'activité logistique et financière de LivrExpress")}
               </div>
             </div>
             <div className="flex items-center gap-2.5">
@@ -927,15 +934,15 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                 onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/colis/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}
               >
                 <i className="ki-filled ki-plus text-xs me-1" />
-                Nouveau Colis
+                {t('dashboard.newParcel', 'Nouveau Colis')}
               </a>
               <button 
                 className="kt-btn kt-btn-primary flex items-center gap-1.5 cursor-pointer shadow-sm"
                 onClick={handleDownloadMonthlyReport}
-                title="Générer et télécharger le rapport mensuel d'activité en PDF"
+                title={t('dashboard.monthlyReportPdf', "Rapport Mensuel (PDF)")}
               >
                 <i className="ki-filled ki-file-sheet text-base" />
-                Rapport Mensuel (PDF)
+                {t('dashboard.monthlyReportPdf', "Rapport Mensuel (PDF)")}
               </button>
             </div>
           </div>
@@ -960,7 +967,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                         {data.totalColis}
                       </span>
                       <span className="text-sm font-normal text-secondary-foreground">
-                        Total Colis
+                        {t('dashboard.totalParcels', 'Total Colis')}
                       </span>
                     </div>
                   </div>
@@ -975,7 +982,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                         {data.colisLivres}
                       </span>
                       <span className="text-sm font-normal text-secondary-foreground">
-                        Colis Livrés
+                        {t('dashboard.deliveredParcels', 'Colis Livrés')}
                       </span>
                     </div>
                   </div>
@@ -990,7 +997,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                         {data.colisExpedies + data.colisEnPreparation}
                       </span>
                       <span className="text-sm font-normal text-secondary-foreground">
-                        Colis En Cours
+                        {t('dashboard.inTransitParcels', 'Colis En Cours')}
                       </span>
                     </div>
                   </div>
@@ -1005,13 +1012,14 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                         {data.colisRetournes}
                       </span>
                       <span className="text-sm font-normal text-secondary-foreground">
-                        Colis Retournés
+                        {t('dashboard.returnedParcels', 'Colis Retournés')}
                       </span>
                     </div>
                   </div>
 
                 </div>
               </div>
+
 
               {/* Enhanced Welcome Banner Card without overflow */}
               <div className="lg:col-span-2">
@@ -1052,18 +1060,18 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             </span>
                           </div>
                           <span className="kt-badge kt-badge-outline kt-badge-success rounded-full text-[11px] px-2.5 py-0.5">
-                            En direct
+                            {t('dashboard.liveStatus', 'En direct')}
                           </span>
                         </div>
 
                         <div>
                           <h2 className="text-lg font-bold text-mono text-foreground flex items-center gap-2">
-                            LivrExpress <span className="text-xs font-normal text-muted-foreground">| Tableau de Bord</span>
+                            LivrExpress <span className="text-xs font-normal text-muted-foreground">| {t('dashboard.title', 'Tableau de Bord')}</span>
                           </h2>
                         </div>
 
                         <p className="text-xs font-normal text-secondary-foreground leading-relaxed">
-                          Gérez vos colis, vos ramassages, vos retours et vos bons de livraison en toute simplicité avec notre interface d'administration temps réel.
+                          {t('dashboard.welcomeSubtitle', "Gérez vos colis, vos ramassages, vos retours et vos bons de livraison en toute simplicité avec notre interface d'administration temps réel.")}
                         </p>
                       </div>
 
@@ -1075,7 +1083,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             backgroundColor: 'rgba(16, 185, 129, 0.12)',
                             borderColor: 'rgba(16, 185, 129, 0.3)'
                           }}
-                          title="Taux de réussite des livraisons"
+                          title={t('dashboard.successRateTitle', 'Taux de Succès')}
                         >
                           <div 
                             className="size-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200"
@@ -1090,7 +1098,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             <span className="text-sm font-bold leading-tight" style={{ color: '#047857' }}>
                               {data.totalColis > 0 ? ((data.colisLivres / data.totalColis) * 100).toFixed(1) + '%' : '94.2%'}
                             </span>
-                            <span className="text-[11px] font-semibold truncate" style={{ color: '#065f46' }}>Taux de Succès</span>
+                            <span className="text-[11px] font-semibold truncate" style={{ color: '#065f46' }}>{t('dashboard.successRateTitle', 'Taux de Succès')}</span>
                           </div>
                         </div>
 
@@ -1100,7 +1108,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             backgroundColor: 'rgba(59, 130, 246, 0.12)',
                             borderColor: 'rgba(59, 130, 246, 0.3)'
                           }}
-                          title="Délai moyen d'expédition"
+                          title={t('dashboard.avgDelayTitle', 'Délai Moyen')}
                         >
                           <div 
                             className="size-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200"
@@ -1113,7 +1121,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                           </div>
                           <div className="min-w-0 flex flex-col">
                             <span className="text-sm font-bold leading-tight" style={{ color: '#1d4ed8' }}>&lt; 24h</span>
-                            <span className="text-[11px] font-semibold truncate" style={{ color: '#1e40af' }}>Délai Moyen</span>
+                            <span className="text-[11px] font-semibold truncate" style={{ color: '#1e40af' }}>{t('dashboard.avgDelayTitle', 'Délai Moyen')}</span>
                           </div>
                         </div>
                       </div>
@@ -1123,15 +1131,16 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
 
                   {/* Footer */}
                   <div className="kt-card-footer justify-between border-t border-border px-6 py-3 text-xs text-muted-foreground">
-                    <span>Dernière mise à jour aujourd'hui</span>
+                    <span>{t('dashboard.lastUpdateToday', "Dernière mise à jour aujourd'hui")}</span>
                     <a 
                       href="/colis" 
                       className="kt-link kt-link-underlined kt-link-dashed flex items-center gap-1 font-medium"
                       onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}
                     >
-                      Gérer les Colis <i className="ki-filled ki-arrow-right text-xs" />
+                      {t('dashboard.manageParcels', 'Gérer les Colis')} <i className="ki-filled ki-arrow-right text-xs" />
                     </a>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1171,19 +1180,19 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       <div className="flex items-center gap-1.5">
                         <span className="rounded-full size-2 bg-green-500"></span>
                         <span className="text-sm font-normal text-foreground">
-                          Livré ({percentLivre.toFixed(1)}%)
+                          {t('status.delivered', 'Livré')} ({percentLivre.toFixed(1)}%)
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="rounded-full size-2 bg-red-500"></span>
                         <span className="text-sm font-normal text-foreground">
-                          Retourné ({percentRetour.toFixed(1)}%)
+                          {t('status.returned', 'Retourné')} ({percentRetour.toFixed(1)}%)
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="rounded-full size-2 bg-violet-500"></span>
                         <span className="text-sm font-normal text-foreground">
-                          En cours ({percentAutre.toFixed(1)}%)
+                          {t('status.inProgress', 'En cours')} ({percentAutre.toFixed(1)}%)
                         </span>
                       </div>
                     </div>
@@ -1195,7 +1204,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-1.5">
                           <i className="ki-filled ki-wallet text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT Total</span>
+                          <span className="text-sm font-normal text-mono">{t('dashboard.totalCrbt', 'CRBT Total')}</span>
                         </div>
                         <div className="flex items-center text-sm font-medium text-foreground gap-6">
                           <span>{data.totalCrbt.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
@@ -1206,7 +1215,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-1.5">
                           <i className="ki-filled ki-verify text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT Livré</span>
+                          <span className="text-sm font-normal text-mono">{t('dashboard.crbtDelivered', 'CRBT Livré')}</span>
                         </div>
                         <div className="flex items-center text-sm font-medium text-foreground gap-6">
                           <span>{data.crbtLivres.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
@@ -1220,7 +1229,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-1.5">
                           <i className="ki-filled ki-delivery-3 text-base text-muted-foreground"></i>
-                          <span className="text-sm font-normal text-mono">CRBT En Transit</span>
+                          <span className="text-sm font-normal text-mono">{t('dashboard.crbtPending', 'CRBT En Transit')}</span>
                         </div>
                         <div className="flex items-center text-sm font-medium text-foreground gap-6">
                           <span>{data.crbtEnCours.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
@@ -1240,7 +1249,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
               <div className="lg:col-span-2">
                 <div className="kt-card h-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Évolution des Colis</h3>
+                    <h3 className="kt-card-title">{t('dashboard.activityOverview', 'Évolution des Colis')}</h3>
                     <div className="flex gap-5">
                       <KtSelect
                         value={period}
@@ -1249,16 +1258,17 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                           if (refetchData) refetchData(val);
                         }}
                         options={[
-                          { value: 'today', label: "Aujourd'hui" },
-                          { value: '7', label: '7 jours' },
-                          { value: 'month', label: 'Ce mois' },
-                          { value: 'year', label: 'Cette année' },
+                          { value: 'today', label: t('dashboard.today', "Aujourd'hui") },
+                          { value: '7', label: t('dashboard.days7', '7 jours') },
+                          { value: 'month', label: t('dashboard.thisMonth', 'Ce mois') },
+                          { value: 'year', label: t('dashboard.thisYear', 'Cette année') },
                         ]}
                         enableSearch={false}
                         className="w-36"
                       />
                     </div>
                   </div>
+
                   <div className="kt-card-content flex flex-col justify-end items-stretch grow px-3 py-1">
                     <div id="real_earnings_chart" style={{ minHeight: '250px', width: '100%' }}></div>
                   </div>
@@ -1275,26 +1285,26 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                   <div className="kt-card-content lg:p-7.5 lg:pt-6 p-5">
                     <div className="flex items-center justify-between flex-wrap gap-5 mb-7.5">
                       <div className="flex flex-col gap-1">
-                        <span className="text-xl font-semibold text-mono">Performance</span>
-                        <span className="text-sm font-semibold text-foreground">Statistiques Globales</span>
+                        <span className="text-xl font-semibold text-mono">{t('dashboard.performance', 'Performance')}</span>
+                        <span className="text-sm font-semibold text-foreground">{t('dashboard.globalStats', 'Statistiques Globales')}</span>
                       </div>
                       <i className="ki-filled ki-delivery-3 text-3xl text-primary"></i>
                     </div>
                     <p className="text-sm font-normal text-foreground leading-5.5 mb-8">
-                      Visualisez la performance et la répartition de vos livraisons. Vos données sont mises à jour en temps réel.
+                      {t('dashboard.performanceDesc', 'Visualisez la performance et la répartition de vos livraisons. Vos données sont mises à jour en temps réel.')}
                     </p>
                     <div className="flex rounded-lg bg-accent/50 gap-10 p-5">
                       <div className="flex flex-col gap-5">
                         <div className="flex items-center gap-1.5 text-sm font-normal text-foreground">
                           <i className="ki-filled ki-geolocation text-base text-muted-foreground"></i>
-                          Plateforme
+                          {t('dashboard.platform', 'Plateforme')}
                         </div>
                         <div className="text-sm font-medium text-foreground pt-1.5">LivrExpress</div>
                       </div>
                       <div className="flex flex-col gap-5">
                         <div className="flex items-center gap-1.5 text-sm font-normal text-foreground">
                           <i className="ki-filled ki-users text-base text-muted-foreground"></i>
-                          Livreurs
+                          {t('dashboard.drivers', 'Livreurs')}
                         </div>
                         <div className="flex -space-x-2">
                           {livreursList && livreursList.length > 0 ? (
@@ -1325,7 +1335,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                   </div>
                   <div className="kt-card-footer justify-center">
                     <a className="kt-link kt-link-underlined kt-link-dashed" href="/colis/">
-                      Consulter l'historique
+                      {t('dashboard.viewHistory', "Consulter l'historique")}
                     </a>
                   </div>
                 </div>
@@ -1335,13 +1345,13 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
               <div className="lg:col-span-2">
                 <div className="kt-card kt-card-grid h-full min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Derniers Colis Enregistrés</h3>
+                    <h3 className="kt-card-title">{t('dashboard.recentRegisteredParcels', 'Derniers Colis Enregistrés')}</h3>
                     <div className="kt-input max-w-48">
                       <i className="ki-filled ki-magnifier"></i>
                       <input 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Rechercher..." 
+                        placeholder={t('common.search', 'Rechercher...')} 
                         type="text" 
                       />
                     </div>
@@ -1356,10 +1366,10 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                               <th className="w-[50px]">
                                 <input className="kt-checkbox kt-checkbox-sm" type="checkbox" />
                               </th>
-                              <th className="w-[280px]">Code &amp; Nature</th>
-                              <th className="w-[125px]">État</th>
-                              <th className="w-[135px]">Date d'Enregistrement</th>
-                              <th className="w-[150px]">Ville &amp; Prix</th>
+                              <th className="w-[280px]">{t('dashboard.codeNature', 'Code & Nature')}</th>
+                              <th className="w-[125px]">{t('dashboard.status', 'État')}</th>
+                              <th className="w-[135px]">{t('dashboard.registrationDate', "Date d'Enregistrement")}</th>
+                              <th className="w-[150px]">{t('dashboard.cityPrice', 'Ville & Prix')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1381,7 +1391,12 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                                   </td>
                                   <td>
                                     <span className={`kt-badge ${colis.etatBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
-                                      {colis.etatLabel}
+                                      {colis.etatLabel === 'Livré' ? t('dashboard.delivered', 'Livré')
+                                        : colis.etatLabel === 'En préparation' ? t('dashboard.inPrep', 'En préparation')
+                                        : colis.etatLabel === 'Expédié' ? t('dashboard.expedited', 'Expédié')
+                                        : colis.etatLabel === 'Retourné' ? t('dashboard.returned', 'Retourné')
+                                        : colis.etatLabel === 'Créé' ? t('dashboard.created', 'Créé')
+                                        : colis.etatLabel}
                                     </span>
                                   </td>
                                   <td className="text-sm font-normal text-secondary-foreground">
@@ -1400,7 +1415,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             ) : (
                               <tr>
                                 <td colSpan={5} className="py-8 text-center text-secondary-foreground">
-                                  Aucun colis correspondant
+                                  {t('dashboard.noMatchingParcels', 'Aucun colis correspondant')}
                                 </td>
                               </tr>
                             )}
@@ -1411,7 +1426,7 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                       {/* Datatable Footer */}
                       <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                         <div className="flex items-center gap-2 order-2 md:order-1">
-                          <span>Afficher</span>
+                          <span>{t('dashboard.display', 'Afficher')}</span>
                           <KtSelect
                             value={String(itemsPerPage)}
                             onChange={(val) => {
@@ -1427,13 +1442,13 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
                             enableSearch={false}
                             className="w-20"
                           />
-                          <span>par page</span>
+                          <span>{t('dashboard.perPage', 'par page')}</span>
                         </div>
                         <div className="flex items-center gap-4 order-1 md:order-2">
                           <span>
                             {totalEntries > 0
-                              ? `Affichage de ${startIndex + 1} à ${endIndex} sur ${totalEntries} entrées`
-                              : `Affichage de 0 sur 0 entrées`}
+                              ? `${t('dashboard.showing', 'Affichage de')} ${startIndex + 1} ${t('dashboard.to', 'à')} ${endIndex} ${t('dashboard.of', 'sur')} ${totalEntries} ${t('dashboard.entries', 'entrées')}`
+                              : t('dashboard.showingZero', 'Affichage de 0 sur 0 entrées')}
                           </span>
                           {totalPages > 1 && (
                             <div className="flex items-center gap-1 ms-2">
@@ -1467,10 +1482,8 @@ export default function DashboardPage({ dashboardData = null, loading = false, r
               </div>
 
             </div>
-
           </div>
         </div>
-
       </main>
     </DashboardLayout>
   );

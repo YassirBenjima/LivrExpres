@@ -1,21 +1,24 @@
 import React, { useState, useRef } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
-
-const CATEGORIES = [
-  { value: '1', label: 'Vêtements & Accessoires' },
-  { value: '2', label: 'Caméras et optiques' },
-  { value: '3', label: 'Électronique' },
-  { value: '4', label: 'Santé & Beauté' },
-  { value: '5', label: 'Maison & Jardin' },
-  { value: '6', label: 'Fournitures de bureau' },
-  { value: '7', label: 'Articles de sport' },
-  { value: '8', label: 'Jouets' },
-  { value: '9', label: 'Pièces' },
-  { value: '10', label: 'Animaux et fournitures pour animaux' },
-  { value: '11', label: 'Autres' },
-];
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function StockProductNewPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
+
+  const CATEGORIES = [
+    { value: '1',  label: t('stockPage.catClothing',    'Vêtements & Accessoires') },
+    { value: '2',  label: t('stockPage.catCameras',     'Caméras et optiques') },
+    { value: '3',  label: t('stockPage.catElectronics', 'Électronique') },
+    { value: '4',  label: t('stockPage.catHealth',      'Santé & Beauté') },
+    { value: '5',  label: t('stockPage.catHome',        'Maison & Jardin') },
+    { value: '6',  label: t('stockPage.catOffice',      'Fournitures de bureau') },
+    { value: '7',  label: t('stockPage.catSports',      'Articles de sport') },
+    { value: '8',  label: t('stockPage.catToys',        'Jouets') },
+    { value: '9',  label: t('stockPage.catParts',       'Pièces') },
+    { value: '10', label: t('stockPage.catPets',        'Animaux et fournitures pour animaux') },
+    { value: '11', label: t('stockPage.catOther',       'Autres') },
+  ];
+
   const [name, setName]                       = useState('');
   const [category, setCategory]               = useState('');
   const [barcode, setBarcode]                 = useState('');
@@ -119,8 +122,8 @@ export default function StockProductNewPage({ navigate, showNotification }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name) { triggerLocalNotification('error', 'Le nom du produit est obligatoire.'); return; }
-    if (!category) { triggerLocalNotification('error', 'Veuillez choisir une catégorie valide.'); return; }
+    if (!name) { triggerLocalNotification('error', t('stockPage.productNameRequired', 'Le nom du produit est obligatoire.')); return; }
+    if (!category) { triggerLocalNotification('error', t('stockPage.categoryRequired', 'Veuillez choisir une catégorie valide.')); return; }
     
     setLoading(true);
     try {
@@ -152,14 +155,14 @@ export default function StockProductNewPage({ navigate, showNotification }) {
         headers: { 'Accept': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
       });
       if (res.ok) {
-        triggerLocalNotification('success', 'Produit créé avec succès !');
+        triggerLocalNotification('success', t('stockPage.productCreatedSuccess', 'Produit créé avec succès !'));
         setTimeout(() => navigate('/stock/produits'), 1200);
       } else {
         const data = await res.json();
-        triggerLocalNotification('error', data.message || 'Erreur.');
+        triggerLocalNotification('error', data.message || t('stockPage.error', 'Erreur.'));
       }
     } catch {
-      triggerLocalNotification('error', 'Erreur réseau.');
+      triggerLocalNotification('error', t('stockPage.networkError', 'Erreur réseau.'));
     } finally {
       setLoading(false);
     }
@@ -171,8 +174,8 @@ export default function StockProductNewPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Ajouter un produit</h1>
-              <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">Créez un produit</div>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('stockPage.addProductTitle', 'Ajouter un produit')}</h1>
+              <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">{t('stockPage.addProductSubtitle', 'Créez un produit')}</div>
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
@@ -182,7 +185,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                   onClick={handlePreFillNormal}
                   style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
                 >
-                  Remplir ( Simple )
+                  {t('stockPage.fillSimple', 'Remplir ( Simple )')}
                 </button>
                 <button 
                   className="kt-btn kt-btn-outline" 
@@ -190,10 +193,10 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                   onClick={handlePreFillVariants}
                   style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
                 >
-                  Remplir ( Variante )
+                  {t('stockPage.fillVariant', 'Remplir ( Variante )')}
                 </button>
-                <button className="kt-btn kt-btn-outline" type="button" onClick={() => navigate('/stock/produits')}>Retour à la liste</button>
-                <button className="kt-btn kt-btn-primary" onClick={handleSubmit} disabled={loading}>{loading ? 'Enregistrement...' : 'Enregistrer'}</button>
+                <button className="kt-btn kt-btn-outline" type="button" onClick={() => navigate('/stock/produits')}>{t('stockPage.backToList', 'Retour à la liste')}</button>
+                <button className="kt-btn kt-btn-primary" onClick={handleSubmit} disabled={loading}>{loading ? t('stockPage.saving', 'Enregistrement...') : t('stockPage.save', 'Enregistrer')}</button>
               </div>
             </div>
           </div>
@@ -207,14 +210,14 @@ export default function StockProductNewPage({ navigate, showNotification }) {
               <div className="col-span-1">
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Informations du produit</h3>
+                    <h3 className="kt-card-title">{t('stockPage.productInfoTitle', 'Informations du produit')}</h3>
                   </div>
                   <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
                     <table className="kt-table align-middle text-sm text-muted-foreground">
                       <tbody>
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Photo</td>
-                          <td className="py-2 text-secondary-foreground font-normal text-sm">Image du produit (JPG/PNG)</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('stockPage.photoLabel', 'Photo')}</td>
+                          <td className="py-2 text-secondary-foreground font-normal text-sm">{t('stockPage.photoHint', 'Image du produit (JPG/PNG)')}</td>
                           <td className="py-2">
                             <div className="flex justify-center items-center">
                               <div 
@@ -255,7 +258,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                                     }}
                                     onClick={handleRemovePhoto}
                                     type="button"
-                                    title="Supprimer la photo"
+                                    title={t('common.delete', 'Supprimer')}
                                   >
                                     <i className="ki-filled ki-cross" style={{ fontSize: '10px', color: '#71717a' }}></i>
                                   </button>
@@ -304,12 +307,12 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                           </td>
                         </tr>
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nom du produit</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('stockPage.productNameLabel', 'Nom du produit')}</td>
                           <td className="py-2">
                             <input 
                               type="text" 
                               className="kt-input h-8 text-sm w-full" 
-                              placeholder="Nom du produit" 
+                              placeholder={t('stockPage.productNamePlaceholder', 'Nom du produit')} 
                               value={name} 
                               onChange={e => setName(e.target.value)} 
                               required 
@@ -317,7 +320,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                           </td>
                         </tr>
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Catégorie</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('stockPage.categoryLabel', 'Catégorie')}</td>
                           <td className="py-2">
                             <select 
                               className="kt-select w-full h-8 text-sm" 
@@ -325,7 +328,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                               onChange={e => setCategory(e.target.value)} 
                               required
                             >
-                              <option value="" disabled>Choisir une catégorie</option>
+                              <option value="" disabled>{t('stockPage.categoryPlaceholder', 'Choisir une catégorie')}</option>
                               {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                             </select>
                           </td>
@@ -334,24 +337,24 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                         {!variantsEnabled && (
                           <>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Votre Code Barre</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('stockPage.barcodeLabel', 'Votre Code Barre')}</td>
                               <td className="py-2">
                                 <input 
                                   type="text" 
                                   className="kt-input h-8 text-sm w-full" 
-                                  placeholder="Code barre" 
+                                  placeholder={t('stockPage.barcodePlaceholder', 'Code barre')} 
                                   value={barcode} 
                                   onChange={e => setBarcode(e.target.value)} 
                                 />
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Quantité</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('stockPage.qtyLabel', 'Quantité')}</td>
                               <td className="py-2">
                                 <input 
                                   type="text" 
                                   className="kt-input h-8 text-sm w-full" 
-                                  placeholder="Quantité" 
+                                  placeholder={t('stockPage.qtyPlaceholder', 'Quantité')} 
                                   value={quantity} 
                                   onChange={e => setQuantity(e.target.value.replace(/[^0-9]/g, ''))} 
                                   required 
@@ -362,12 +365,12 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                         )}
                         
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Note du produit</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('stockPage.noteLabel', 'Note du produit')}</td>
                           <td className="py-2">
                             <input 
                               type="text" 
                               className="kt-input h-8 text-sm w-full" 
-                              placeholder="Note" 
+                              placeholder={t('stockPage.notePlaceholder', 'Note')} 
                               value={note} 
                               onChange={e => setNote(e.target.value)} 
                             />
@@ -383,9 +386,9 @@ export default function StockProductNewPage({ navigate, showNotification }) {
               <div className="col-span-1">
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Détails</h3>
+                    <h3 className="kt-card-title">{t('stockPage.detailsTab', 'Détails')}</h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-secondary-foreground select-none mr-2">Variantes</span>
+                      <span className="text-sm font-medium text-secondary-foreground select-none mr-2">{t('stockPage.variantsTab', 'Variantes')}</span>
                       <label className="relative inline-flex items-center cursor-pointer select-none">
                         <input 
                           type="checkbox" 
@@ -423,9 +426,9 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                         <table className="kt-table align-middle text-sm text-muted-foreground">
                           <thead>
                             <tr className="text-secondary-foreground">
-                              <th className="py-2 min-w-40 font-normal">Votre Code Barre</th>
-                              <th className="py-2 min-w-44 font-normal">Nom de la variante</th>
-                              <th className="py-2 min-w-28 font-normal">Quantité</th>
+                              <th className="py-2 min-w-40 font-normal">{t('stockPage.barcodeLabel', 'Votre Code Barre')}</th>
+                              <th className="py-2 min-w-44 font-normal">{t('stockPage.editVariantName', 'Nom de la variante')}</th>
+                              <th className="py-2 min-w-28 font-normal">{t('stockPage.qtyLabel', 'Quantité')}</th>
                               <th className="py-2 w-[60px]"></th>
                             </tr>
                           </thead>
@@ -436,7 +439,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                                   <input 
                                     type="text" 
                                     className="kt-input h-8 text-sm w-full" 
-                                    placeholder="Code barre" 
+                                    placeholder={t('stockPage.barcodePlaceholder', 'Code barre')} 
                                     value={v.barcode} 
                                     onChange={e => handleVariantChange(idx, 'barcode', e.target.value)} 
                                   />
@@ -445,7 +448,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                                   <input 
                                     type="text" 
                                     className="kt-input h-8 text-sm w-full" 
-                                    placeholder="Nom de la variante" 
+                                    placeholder={t('stockPage.editVariantNamePlaceholder', 'Nom de la variante')} 
                                     value={v.name} 
                                     onChange={e => handleVariantChange(idx, 'name', e.target.value)} 
                                   />
@@ -465,7 +468,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                                       className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost kt-btn-destructive" 
                                       onClick={() => handleRemoveVariantRow(idx)} 
                                       type="button" 
-                                      title="Supprimer"
+                                      title={t('common.delete', 'Supprimer')}
                                     >
                                       <i className="ki-filled ki-trash"></i>
                                     </button>
@@ -485,7 +488,7 @@ export default function StockProductNewPage({ navigate, showNotification }) {
                             onClick={handleAddVariantRow}
                           >
                             <i className="ki-filled ki-plus"></i>
-                            Ajouter une variante
+                            {t('stockPage.editAddVariant', 'Ajouter une variante')}
                           </button>
                         </div>
                       </div>

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 const FIVE_MINUTES_IN_SECONDS = 300; // 5 minutes
 
 export default function CheckEmailPage({ navigate }) {
+  const { t } = useLanguage();
   const [userEmail, setUserEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [resendStatus, setResendStatus] = useState('');
@@ -17,7 +19,6 @@ export default function CheckEmailPage({ navigate }) {
     const savedEmail = sessionStorage.getItem('reset_email') || 'yassirbenjima18@gmail.com';
     setUserEmail(savedEmail);
 
-    // Check if a resend timer was explicitly triggered previously
     const resendTimerTimeStr = sessionStorage.getItem('resend_timer_time');
     if (resendTimerTimeStr) {
       const resendTimerTime = parseInt(resendTimerTimeStr, 10);
@@ -71,13 +72,13 @@ export default function CheckEmailPage({ navigate }) {
       sessionStorage.setItem('resend_timer_time', now.toString());
       setTimeLeft(FIVE_MINUTES_IN_SECONDS);
 
-      setResendStatus(data.message || `Un nouvel e-mail de réinitialisation a été envoyé à ${emailToSend} !`);
+      setResendStatus(data.message || t('auth.resetEmailSent', `Un nouvel e-mail de réinitialisation a été envoyé à ${emailToSend} !`));
     } catch (err) {
       console.warn('API connection issue during resend, simulating success...', err);
       const now = Date.now();
       sessionStorage.setItem('resend_timer_time', now.toString());
       setTimeLeft(FIVE_MINUTES_IN_SECONDS);
-      setResendStatus(`Un nouvel e-mail de réinitialisation a été envoyé à ${userEmail} !`);
+      setResendStatus(t('auth.resetEmailSent', `Un nouvel e-mail de réinitialisation a été envoyé à ${userEmail} !`));
     } finally {
       setIsResending(false);
     }
@@ -85,8 +86,9 @@ export default function CheckEmailPage({ navigate }) {
 
   return (
     <AuthLayout
-      rightPaneTitle="Portail d'accès sécurisé"
-      rightPaneDesc="Une passerelle d'authentification robuste assurant un accès sécurisé et efficace à l'interface de gestion de LivrExpress."
+      docTitle={t('auth.pageTitleCheckEmail', 'Vérification E-mail - LivrExpress')}
+      rightPaneTitle={t('auth.securePortalTitle', "Portail d'accès sécurisé")}
+      rightPaneDesc={t('auth.securePortalDesc', "Une passerelle d'authentification robuste assurant un accès sécurisé et efficace à l'interface de gestion de LivrExpress.")}
     >
       <div className="kt-card-content p-10 flex flex-col gap-5">
         <div className="flex justify-center mb-1">
@@ -106,11 +108,11 @@ export default function CheckEmailPage({ navigate }) {
         </div>
         
         <h3 className="text-lg font-medium text-mono text-center leading-none">
-          Vérifiez vos e-mails
+          {t('auth.checkEmailTitle', 'Vérifiez vos e-mails')}
         </h3>
         
         <div className="text-sm text-center text-secondary-foreground">
-          Nous avons envoyé un e-mail de récupération de mot de passe à l'adresse <strong className="text-foreground">{userEmail}</strong>. Veuillez cliquer sur le lien contenu dans le message pour réinitialiser votre mot de passe.
+          {t('auth.checkEmailDesc', "Nous avons envoyé un lien de réinitialisation de mot de passe à l'adresse e-mail indiquée.")} <strong className="text-foreground">{userEmail}</strong>.
         </div>
 
         <ApiAlert type="success" message={resendStatus} />
@@ -125,19 +127,19 @@ export default function CheckEmailPage({ navigate }) {
               navigate('/login');
             }}
           >
-            Retour à la connexion
+            {t('auth.backToLogin', 'Retour à la connexion')}
           </a>
         </div>
 
         <div className="flex flex-col items-center justify-center gap-1 mt-4 text-center">
           <span className="text-xs text-secondary-foreground">
-            Vous n'avez pas reçu l'e-mail ?
+            {t('auth.didNotReceiveEmail', "Vous n'avez pas reçu l'e-mail ?")}
           </span>
 
           {timeLeft > 0 ? (
             <span className="text-xs font-semibold text-muted-foreground bg-accent/50 px-3 py-1.5 rounded-md mt-1 flex items-center gap-1.5">
               <i className="ki-filled ki-time text-sm text-primary"></i>
-              Renvoi disponible dans <span className="text-primary font-bold">{formatTime(timeLeft)}</span>
+              <span>Renvoi disponible dans <span className="text-primary font-bold">{formatTime(timeLeft)}</span></span>
             </span>
           ) : (
             <button
@@ -145,7 +147,7 @@ export default function CheckEmailPage({ navigate }) {
               disabled={isResending}
               className="text-xs font-semibold text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 mt-1"
             >
-              {isResending ? 'Envoi en cours...' : "Renvoyer l'e-mail"}
+              {isResending ? t('auth.sendingLink', 'Envoi en cours...') : t('auth.resendLink', "Renvoyer le lien")}
             </button>
           )}
         </div>

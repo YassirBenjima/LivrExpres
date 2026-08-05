@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function StockStickerPage({ navigate, id, isVariant, showNotification }) {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,11 +27,11 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
           const json = await res.json();
           setData(json);
         } else {
-          showNotification('error', 'Impossible de charger les données du sticker.');
+          showNotification('error', t('stockPage.stickerLoadError', 'Impossible de charger les données du sticker.'));
         }
       } catch (e) {
         console.error(e);
-        showNotification('error', 'Erreur de connexion avec le serveur.');
+        showNotification('error', t('stockPage.notifServerError', 'Erreur de connexion avec le serveur.'));
       } finally {
         setLoading(false);
       }
@@ -58,9 +60,14 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
         <main className="grow pt-5 dashboard-content-shift">
           <div className="kt-container-fixed">
             <div className="text-center py-10">
-              <p className="text-secondary-foreground">Aucune donnée trouvée pour ce sticker.</p>
-              <button onClick={() => navigate('/stock/produits')} className="kt-btn kt-btn-primary mt-4">
-                Retour aux produits
+              <p className="text-secondary-foreground">
+                {t('stockPage.stickerNoData', 'Aucune donnée trouvée pour ce sticker.')}
+              </p>
+              <button
+                onClick={() => navigate('/stock/produits')}
+                className="kt-btn kt-btn-primary mt-4"
+              >
+                {t('stockPage.stickerBackToProducts', 'Retour aux produits')}
               </button>
             </div>
           </div>
@@ -91,7 +98,6 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
             border: none !important;
             box-shadow: none !important;
           }
-          /* Prevent showing URL/headers/footers from browsers if possible */
           @page {
             size: 90mm 50mm;
             margin: 0;
@@ -131,26 +137,29 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5 print:hidden">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Sticker {isVariant ? 'variante' : 'produit'}
+                {isVariant
+                  ? t('stockPage.stickerVariantTitle', 'Sticker variante')
+                  : t('stockPage.stickerProductTitle', 'Sticker produit')}
               </h1>
               <div className="text-sm text-secondary-foreground">
                 {data.product_name} {data.variant_name && `— ${data.variant_name}`}
               </div>
             </div>
             <div className="flex items-center gap-2.5">
-              <button 
-                onClick={() => navigate('/stock/produits')} 
+              <button
+                onClick={() => navigate('/stock/produits')}
                 className="kt-btn kt-btn-outline"
                 type="button"
               >
-                Retour
+                {t('stockPage.backToList', 'Retour')}
               </button>
-              <button 
-                className="kt-btn kt-btn-primary" 
-                type="button" 
+              <button
+                className="kt-btn kt-btn-primary"
+                type="button"
                 onClick={() => window.print()}
               >
-                Imprimer
+                <i className="ki-filled ki-printer me-1"></i>
+                {t('stockPage.stickerPrint', 'Imprimer')}
               </button>
             </div>
           </div>
@@ -162,7 +171,9 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
                 {data.qr_data_uri ? (
                   <img className="qr" alt="QR" src={data.qr_data_uri} />
                 ) : (
-                  <div className="text-secondary-foreground text-xs">QR indisponible</div>
+                  <div className="text-secondary-foreground text-xs">
+                    {t('stockPage.stickerQrUnavailable', 'QR indisponible')}
+                  </div>
                 )}
               </div>
               <div className="flex flex-col justify-between h-full text-left">

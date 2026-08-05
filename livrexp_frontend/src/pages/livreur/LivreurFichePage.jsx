@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LivreurFichePage({ navigate, showNotification, livreurId }) {
+  const { t } = useLanguage();
   const [livreur, setLivreur]     = useState(null);
   const [colis, setColis]         = useState([]);
   const [tournees, setTournees]   = useState({});
@@ -13,8 +15,8 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   const id = livreurId || window.location.pathname.split('/livreurs/')[1]?.split('/')[0];
 
   const headers = () => {
-    const t = localStorage.getItem('auth_token');
-    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+    const token = localStorage.getItem('auth_token');
+    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   };
 
   const load = useCallback(async () => {
@@ -45,8 +47,8 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
         body: JSON.stringify({ disponible: !livreur.disponible }),
       });
       const d = await r.json();
-      if (d.success) { setLivreur(p => ({ ...p, disponible: !p.disponible })); showNotification?.('success', 'Disponibilité mise à jour.'); }
-    } catch { showNotification?.('error', 'Erreur de connexion.'); }
+      if (d.success) { setLivreur(p => ({ ...p, disponible: !p.disponible })); showNotification?.('success', d.message || t('drivers.dispoUpdated', 'Disponibilité mise à jour.')); }
+    } catch { showNotification?.('error', t('drivers.connError', 'Erreur de connexion.')); }
     finally { setToggling(false); }
   };
 
@@ -54,7 +56,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   const statutBadge = (s) => ({ 'Terminé': 'kt-badge-success', 'En cours': 'kt-badge-primary', 'Reporté': 'kt-badge-info', 'Échec': 'kt-badge-destructive' }[s] || 'kt-badge-warning');
 
   if (loading) return (
-    <DashboardLayout activeMenu="livreurs_list">
+    <DashboardLayout activeMenu="livreurs_fiche">
       <main className="grow pt-5 dashboard-content-shift">
         <div className="kt-container-fixed">
           {/* Skeleton Header */}
@@ -78,12 +80,12 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   );
 
   if (!livreur) return (
-    <DashboardLayout activeMenu="livreurs_list">
+    <DashboardLayout activeMenu="livreurs_fiche">
       <main className="grow pt-5 dashboard-content-shift">
         <div className="kt-container-fixed py-20 text-center text-secondary-foreground">
           <i className="ki-filled ki-user text-5xl block mb-3 text-muted-foreground" />
-          <p className="font-medium text-lg">Livreur introuvable</p>
-          <button className="kt-btn kt-btn-primary mt-4" onClick={() => navigate('/livreurs')}>Retour à la liste</button>
+          <p className="font-medium text-lg">{t('drivers.notFoundTitle', 'Livreur introuvable')}</p>
+          <button className="kt-btn kt-btn-primary mt-4" onClick={() => navigate('/livreurs')}>{t('drivers.backToList', 'Retour à la liste')}</button>
         </div>
       </main>
     </DashboardLayout>
@@ -94,7 +96,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
   const tauxColor = taux >= 75 ? 'text-success' : taux >= 50 ? 'text-warning' : 'text-destructive';
 
   return (
-    <DashboardLayout activeMenu="livreurs_list">
+    <DashboardLayout activeMenu="livreurs_fiche">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
         {/* Page Header */}
@@ -102,12 +104,12 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Fiche Livreur — {livreur.fullName}
+                {t('drivers.ficheTitle', 'Fiche Livreur')} — {livreur.fullName}
               </h1>
               <div className="flex items-center flex-wrap gap-2">
                 <span className="text-base text-secondary-foreground">{livreur.city}</span>
                 <span className={`kt-badge ${livreur.disponible ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline rounded-[30px]`}>
-                  <span className="kt-badge-dot size-1.5" />{livreur.disponible ? 'Disponible' : 'Indisponible'}
+                  <span className="kt-badge-dot size-1.5" />{livreur.disponible ? t('drivers.available', 'Disponible') : t('drivers.unavailable', 'Indisponible')}
                 </span>
                 {livreur.isLive && (
                   <span className="kt-badge kt-badge-success kt-badge-outline rounded-[30px]">
@@ -118,7 +120,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
             </div>
             <div className="flex items-center gap-2.5">
               <button type="button" className="kt-btn kt-btn-outline" onClick={() => navigate('/livreurs')}>
-                Retour à la liste
+                {t('drivers.backToList', 'Retour à la liste')}
               </button>
               <button
                 type="button"
@@ -126,7 +128,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                 onClick={toggleDispo}
                 disabled={toggling}
               >
-                {livreur.disponible ? 'Marquer Indisponible' : 'Marquer Disponible'}
+                {livreur.disponible ? t('drivers.markUnavailable', 'Marquer Indisponible') : t('drivers.markAvailable', 'Marquer Disponible')}
               </button>
             </div>
           </div>
@@ -138,10 +140,10 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
             {/* Stats Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { label: 'Colis Total', value: stats.total ?? 0, icon: 'ki-package', color: 'text-primary', sub: 'dans sa ville' },
-                { label: 'Colis Livrés', value: stats.livres ?? 0, icon: 'ki-verify', color: 'text-success', sub: `Taux: ${taux}%` },
-                { label: 'En Cours', value: stats.enCours ?? 0, icon: 'ki-delivery-3', color: 'text-info', sub: 'Actuellement' },
-                { label: 'Commission', value: `${(stats.commission ?? 0).toLocaleString('fr-FR')} MAD`, icon: 'ki-dollar', color: 'text-warning', sub: '15 MAD/livré' },
+                { label: t('drivers.totalParcelsCard', 'Colis Total'), value: stats.total ?? 0, icon: 'ki-package', color: 'text-primary', sub: t('drivers.inTheirCity', 'dans sa ville') },
+                { label: t('drivers.deliveredParcelsCard', 'Colis Livrés'), value: stats.livres ?? 0, icon: 'ki-verify', color: 'text-success', sub: `${t('drivers.rateSub', 'Taux:')} ${taux}%` },
+                { label: t('drivers.inProgressCard', 'En Cours'), value: stats.enCours ?? 0, icon: 'ki-delivery-3', color: 'text-info', sub: t('drivers.currentlySub', 'Actuellement') },
+                { label: t('drivers.commissionCard', 'Commission'), value: `${(stats.commission ?? 0).toLocaleString('fr-FR')} MAD`, icon: 'ki-dollar', color: 'text-warning', sub: t('drivers.perDeliveredSub', '15 MAD/livré') },
               ].map((s, i) => (
                 <div key={i} className="kt-card flex-col justify-between gap-6 h-full bg-cover bg-no-repeat bg-[right_top_-1.7rem] bg-stats-gradient">
                   <div className={`mt-4 ms-5 ${s.color}`}>
@@ -162,17 +164,17 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
               {/* Info Card */}
               <div className="kt-card">
                 <div className="kt-card-header">
-                  <h3 className="kt-card-title">Informations</h3>
+                  <h3 className="kt-card-title">{t('drivers.infoSection', 'Informations')}</h3>
                 </div>
                 <div className="kt-card-table pb-3">
                   <table className="kt-table align-middle text-sm text-muted-foreground">
                     <tbody>
                       {[
-                        { label: 'Email', value: livreur.email, icon: 'ki-sms' },
-                        { label: 'Téléphone', value: livreur.phone, icon: 'ki-phone' },
-                        { label: 'Ville', value: livreur.city, icon: 'ki-geolocation' },
-                        { label: 'Adresse', value: livreur.address || '-', icon: 'ki-home' },
-                        { label: 'Dernière activité', value: livreur.lastSeen, icon: 'ki-time' },
+                        { label: t('drivers.emailLabel', 'Email'), value: livreur.email, icon: 'ki-sms' },
+                        { label: t('drivers.phoneLabel', 'Téléphone'), value: livreur.phone, icon: 'ki-phone' },
+                        { label: t('drivers.cityLabel', 'Ville'), value: livreur.city, icon: 'ki-geolocation' },
+                        { label: t('drivers.addressLabel', 'Adresse'), value: livreur.address || '-', icon: 'ki-home' },
+                        { label: t('drivers.lastActivityLabel', 'Dernière activité'), value: livreur.lastSeen === "À l'instant" ? t('drivers.justNow', "À l'instant") : livreur.lastSeen, icon: 'ki-time' },
                       ].map(({ label, value, icon }) => (
                         <tr key={label}>
                           <td className="py-2 text-secondary-foreground font-normal min-w-32">
@@ -192,16 +194,16 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
               {/* Performance Card */}
               <div className="lg:col-span-2 kt-card">
                 <div className="kt-card-header">
-                  <h3 className="kt-card-title">Performance</h3>
-                  <span className="text-sm text-secondary-foreground">Statistiques globales</span>
+                  <h3 className="kt-card-title">{t('drivers.perfSection', 'Performance')}</h3>
+                  <span className="text-sm text-secondary-foreground">{t('drivers.globalStats', 'Statistiques globales')}</span>
                 </div>
                 <div className="kt-card-content p-5 lg:p-7.5 lg:pt-4">
                   <div className="flex flex-col gap-0.5 mb-4">
-                    <span className="text-sm font-normal text-secondary-foreground">Taux de livraison</span>
+                    <span className="text-sm font-normal text-secondary-foreground">{t('drivers.deliveryRateLabel', 'Taux de livraison')}</span>
                     <div className="flex items-center gap-2.5">
                       <span className={`text-2xl font-bold text-mono ${tauxColor}`}>{taux}%</span>
                       <span className={`kt-badge kt-badge-outline kt-badge-sm ${taux >= 75 ? 'kt-badge-success' : taux >= 50 ? 'kt-badge-warning' : 'kt-badge-destructive'}`}>
-                        {taux >= 75 ? 'Excellent' : taux >= 50 ? 'Moyen' : 'Insuffisant'}
+                        {taux >= 75 ? t('drivers.rateExcellent', 'Excellent') : taux >= 50 ? t('drivers.rateAverage', 'Moyen') : t('drivers.rateInsufficient', 'Insuffisant')}
                       </span>
                     </div>
                   </div>
@@ -215,9 +217,9 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
 
                   <div className="flex items-center flex-wrap gap-4 mb-4">
                     {[
-                      { label: `Livré (${stats.livres ?? 0})`, color: 'bg-green-500' },
-                      { label: `Retourné (${stats.retours ?? 0})`, color: 'bg-destructive' },
-                      { label: `En cours (${stats.enCours ?? 0})`, color: 'bg-violet-500' },
+                      { label: t('drivers.legendDelivered', 'Livré ({count})').replace('{count}', stats.livres ?? 0), color: 'bg-green-500' },
+                      { label: t('drivers.legendReturned', 'Retourné ({count})').replace('{count}', stats.retours ?? 0), color: 'bg-destructive' },
+                      { label: t('drivers.legendInProgress', 'En cours ({count})').replace('{count}', stats.enCours ?? 0), color: 'bg-violet-500' },
                     ].map(({ label, color }) => (
                       <div key={label} className="flex items-center gap-1.5">
                         <span className={`rounded-full size-2 ${color}`} />
@@ -230,9 +232,9 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
 
                   <div className="grid gap-3">
                     {[
-                      { icon: 'ki-package', label: 'Total colis (ville)', value: `${stats.total ?? 0}`, pct: '100%' },
-                      { icon: 'ki-verify', label: 'Colis livrés', value: `${stats.livres ?? 0}`, pct: `${taux}%`, color: 'text-success' },
-                      { icon: 'ki-delivery-time', label: 'Colis retournés', value: `${stats.retours ?? 0}`, pct: `${stats.tauxRetour ?? 0}%`, color: 'text-destructive' },
+                      { icon: 'ki-package', label: t('drivers.totalCityParcels', 'Total colis (ville)'), value: `${stats.total ?? 0}`, pct: '100%' },
+                      { icon: 'ki-verify', label: t('drivers.deliveredParcels', 'Colis livrés'), value: `${stats.livres ?? 0}`, pct: `${taux}%`, color: 'text-success' },
+                      { icon: 'ki-delivery-time', label: t('drivers.returnedParcels', 'Colis retournés'), value: `${stats.retours ?? 0}`, pct: `${stats.tauxRetour ?? 0}%`, color: 'text-destructive' },
                     ].map(({ icon, label, value, pct, color }) => (
                       <div key={label} className="flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-1.5">
@@ -256,16 +258,16 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
               <div className="kt-card-header border-b-0 pb-0">
                 <div className="flex gap-0">
                   {[
-                    { key: 'colis', label: 'Colis assignés' },
-                    { key: 'tournee', label: 'Tournée du jour' },
-                    { key: 'commission', label: 'Commission' },
-                  ].map(t => (
+                    { key: 'colis', label: t('drivers.assignedTab', 'Colis assignés') },
+                    { key: 'tournee', label: t('drivers.todayRouteTab', 'Tournée du jour') },
+                    { key: 'commission', label: t('drivers.commissionTab', 'Commission') },
+                  ].map(tab => (
                     <button
-                      key={t.key}
-                      onClick={() => setActiveTab(t.key)}
-                      className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === t.key ? 'border-primary text-primary' : 'border-transparent text-secondary-foreground hover:text-foreground'}`}
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === tab.key ? 'border-primary text-primary' : 'border-transparent text-secondary-foreground hover:text-foreground'}`}
                     >
-                      {t.label}
+                      {tab.label}
                     </button>
                   ))}
                 </div>
@@ -279,18 +281,18 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                       <table className="kt-table table-auto kt-table-border">
                         <thead>
                           <tr>
-                            <th className="min-w-[150px]"><span className="kt-table-col"><span className="kt-table-col-label">Code de suivi</span></span></th>
-                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">Destinataire</span></span></th>
-                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">Adresse</span></span></th>
-                            <th className="min-w-[100px]"><span className="kt-table-col"><span className="kt-table-col-label">Prix</span></span></th>
-                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">État</span></span></th>
-                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">Statut</span></span></th>
-                            <th className="min-w-[130px]"><span className="kt-table-col"><span className="kt-table-col-label">Date</span></span></th>
+                            <th className="min-w-[150px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colTrackingCode', 'Code de suivi')}</span></span></th>
+                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colRecipient', 'Destinataire')}</span></span></th>
+                            <th className="min-w-[140px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colAddress', 'Adresse')}</span></span></th>
+                            <th className="min-w-[100px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colPrice', 'Prix')}</span></span></th>
+                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colState', 'État')}</span></span></th>
+                            <th className="min-w-[110px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colStatus', 'Statut')}</span></span></th>
+                            <th className="min-w-[130px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colDate', 'Date')}</span></span></th>
                           </tr>
                         </thead>
                         <tbody>
                           {colis.length === 0 ? (
-                            <tr><td colSpan={7} className="py-8 text-center text-secondary-foreground">Aucun colis assigné pour cette ville</td></tr>
+                            <tr><td colSpan={7} className="py-8 text-center text-secondary-foreground">{t('drivers.noAssignedParcels', 'Aucun colis assigné pour cette ville')}</td></tr>
                           ) : colis.map(c => (
                             <tr key={c.id}>
                               <td className="font-medium text-foreground">{c.trackingCode}</td>
@@ -329,11 +331,11 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="font-semibold text-foreground">{statut}</h4>
                           <span className={`kt-badge kt-badge-outline rounded-[30px] ${statutBadge(statut)}`}>
-                            <span className="kt-badge-dot size-1.5" />{items.length} colis
+                            <span className="kt-badge-dot size-1.5" />{items.length} {t('changeRecipient.parcelsCount', 'colis')}
                           </span>
                         </div>
                         {items.length === 0 ? (
-                          <p className="text-sm text-secondary-foreground text-center py-4">Aucun colis</p>
+                          <p className="text-sm text-secondary-foreground text-center py-4">{t('drivers.noParcelsInTournee', 'Aucun colis')}</p>
                         ) : (
                           <div className="flex flex-col gap-2">
                             {items.slice(0, 5).map(c => (
@@ -345,7 +347,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                                 <span className="text-sm font-semibold text-primary">{c.price} MAD</span>
                               </div>
                             ))}
-                            {items.length > 5 && <p className="text-xs text-center text-secondary-foreground">+{items.length - 5} autres colis</p>}
+                            {items.length > 5 && <p className="text-xs text-center text-secondary-foreground">{t('drivers.moreParcels', '+{count} autres colis').replace('{count}', items.length - 5)}</p>}
                           </div>
                         )}
                       </div>
@@ -360,9 +362,9 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                   <div className="max-w-md">
                     <div className="grid gap-3">
                       {[
-                        { icon: 'ki-verify', label: 'Colis livrés avec succès', value: commission.livres },
-                        { icon: 'ki-dollar', label: 'Taux par colis livré', value: `${commission.tauxParColis} ${commission.devise}` },
-                        { icon: 'ki-geolocation', label: 'Ville couverte', value: livreur.city },
+                        { icon: 'ki-verify', label: t('drivers.deliveredSuccessLabel', 'Colis livrés avec succès'), value: commission.livres },
+                        { icon: 'ki-dollar', label: t('drivers.ratePerParcelLabel', 'Taux par colis livré'), value: `${commission.tauxParColis} ${commission.devise}` },
+                        { icon: 'ki-geolocation', label: t('drivers.coveredCityLabel', 'Ville couverte'), value: livreur.city },
                       ].map(({ icon, label, value }) => (
                         <div key={label} className="flex items-center justify-between flex-wrap gap-2 border-b border-border pb-3">
                           <div className="flex items-center gap-1.5">
@@ -374,7 +376,7 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
                       ))}
                     </div>
                     <div className="flex items-center justify-between bg-accent/50 rounded-xl p-5 mt-4">
-                      <span className="font-semibold text-foreground">Commission totale</span>
+                      <span className="font-semibold text-foreground">{t('drivers.totalCommissionLabel', 'Commission totale')}</span>
                       <span className="text-2xl font-bold text-success">{commission.totalCommission.toLocaleString('fr-FR')} {commission.devise}</span>
                     </div>
                   </div>

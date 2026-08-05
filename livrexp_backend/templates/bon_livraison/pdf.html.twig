@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="fr">
+{% set is_en = (lang|default('fr')) == 'en' %}
+<html lang="{{ is_en ? 'en' : 'fr' }}">
 <head>
   <meta charset="utf-8">
-  <title>Bon de livraison {{ bon.reference }}</title>
+  <title>{{ is_en ? 'Delivery Slip' : 'Bon de livraison' }} {{ bon.reference }}</title>
   <style>
     @page {
       margin: 12mm 14mm 14mm 14mm;
@@ -104,17 +105,15 @@
       color: #64748b;
     }
 
-    /* Section Title */
+    /* Table for Colis */
     .section-header {
-      font-size: 11pt;
+      font-size: 10pt;
       font-weight: 800;
       color: #0f172a;
-      margin: 0 0 8px 0;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
     }
-
-    /* Colis Main Table */
     .colis-table {
       width: 100%;
       border-collapse: collapse;
@@ -123,79 +122,51 @@
     .colis-table th {
       background-color: #1b84ff;
       color: #ffffff;
-      font-size: 8.5pt;
-      font-weight: 700;
+      font-size: 8pt;
+      font-weight: 800;
       text-transform: uppercase;
       padding: 8px 10px;
-      text-align: left;
       border: 1px solid #1b84ff;
     }
     .colis-table td {
-      font-size: 9pt;
+      font-size: 8.5pt;
       padding: 8px 10px;
       border: 1px solid #e2e8f0;
-      color: #334155;
       vertical-align: middle;
     }
-    .colis-table tr:nth-child(even) td {
+    .colis-table tbody tr:nth-child(even) {
       background-color: #f8fafc;
     }
-
-    /* Tracking & Badges */
     .tracking-code {
-      font-family: DejaVu Sans Mono, monospace, sans-serif;
-      font-weight: 700;
+      font-weight: bold;
       color: #0f172a;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
+      background: #e0f2fe;
       padding: 2px 6px;
       border-radius: 4px;
-      display: inline-block;
-      font-size: 8.5pt;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 9999px;
       font-size: 8pt;
-      font-weight: 700;
-    }
-    .badge-success {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #86efac;
-    }
-    .badge-warning {
-      background: #fef3c7;
-      color: #b45309;
-      border: 1px solid #fde68a;
-    }
-    .badge-danger {
-      background: #ffe4e6;
-      color: #be123c;
-      border: 1px solid #fecdd3;
+      display: inline-block;
     }
 
-    /* Total / Summary Footer Row */
+    /* Table Total Summary Row */
     .summary-row td {
-      background-color: #f1f5f9 !important;
+      background-color: #f1f5f9;
       font-weight: 800;
       font-size: 9.5pt;
       color: #0f172a;
-      border-top: 2px solid #94a3b8;
+      border-top: 2px solid #cbd5e1;
     }
 
-    /* Signatures Section */
+    /* Signatures Table */
     .signatures-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 22px;
-      margin-bottom: 14px;
+      margin-top: 15px;
+      margin-bottom: 20px;
     }
     .signature-card {
       width: 48%;
       vertical-align: top;
-      border: 1px solid #cbd5e1;
+      border: 1px dashed #cbd5e1;
       border-radius: 6px;
       padding: 10px 12px;
       height: 90px;
@@ -236,12 +207,14 @@
         {% else %}
           <h1 class="brand-title">LivrExpress</h1>
         {% endif %}
-        <div class="brand-sub">Express Delivery & Supply Chain Logistics — Maroc</div>
+        <div class="brand-sub">Express Delivery & Supply Chain Logistics — {{ is_en ? 'Morocco' : 'Maroc' }}</div>
       </td>
       <td class="doc-badge-box" style="width: 45%;">
-        <div class="doc-title">Bon de Livraison</div>
-        <div class="doc-ref">Réf: {{ bon.reference }}</div>
-        <div class="doc-date">Émis le : {{ bon.createdAt ? bon.createdAt|date('d/m/Y à H:i') : 'N/A' }}</div>
+        <div class="doc-title">{{ is_en ? 'Delivery Slip' : 'Bon de Livraison' }}</div>
+        <div class="doc-ref">{{ is_en ? 'Ref:' : 'Réf:' }} {{ bon.reference }}</div>
+        <div class="doc-date">
+          {{ is_en ? 'Issued on :' : 'Émis le :' }} {{ bon.createdAt ? bon.createdAt|date(is_en ? 'm/d/Y \\a\\t H:i' : 'd/m/Y à H:i') : 'N/A' }}
+        </div>
       </td>
     </tr>
   </table>
@@ -251,36 +224,36 @@
     <tr>
       <!-- Left Card: Company/Transporter -->
       <td class="info-card">
-        <div class="info-card-title">Émetteur / Transporteur</div>
-        <div class="info-row"><span class="info-label">Société :</span> LivrExpress Logistics</div>
-        <div class="info-row"><span class="info-label">Service :</span> Gestion des expéditions</div>
-        <div class="info-row"><span class="info-label">Statut du bon :</span> <strong>{{ status_label }}</strong></div>
+        <div class="info-card-title">{{ is_en ? 'Sender / Transporter' : 'Émetteur / Transporteur' }}</div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Company :' : 'Société :' }}</span> LivrExpress Logistics</div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Department :' : 'Service :' }}</span> {{ is_en ? 'Shipment Management' : 'Gestion des expéditions' }}</div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Slip status :' : 'Statut du bon :' }}</span> <strong>{{ status_label }}</strong></div>
       </td>
       
       <!-- Right Card: Delivery Summary -->
       <td style="width: 4%;"></td>
       <td class="info-card">
-        <div class="info-card-title">Résumé du Chargement</div>
-        <div class="info-row"><span class="info-label">Nombre total de colis :</span> <strong>{{ bon.colis|length }} colis</strong></div>
-        <div class="info-row"><span class="info-label">Enregistré le :</span> {{ bon.registeredAt ? bon.registeredAt|date('d/m/Y H:i') : '-' }}</div>
-        <div class="info-row"><span class="info-label">Document Réf :</span> {{ bon.reference }}</div>
+        <div class="info-card-title">{{ is_en ? 'Shipment Summary' : 'Résumé du Chargement' }}</div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Total parcels :' : 'Nombre total de colis :' }}</span> <strong>{{ bon.colis|length }} {{ is_en ? 'parcels' : 'colis' }}</strong></div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Registered on :' : 'Enregistré le :' }}</span> {{ bon.registeredAt ? bon.registeredAt|date(is_en ? 'm/d/Y H:i' : 'd/m/Y H:i') : '-' }}</div>
+        <div class="info-row"><span class="info-label">{{ is_en ? 'Document Ref :' : 'Document Réf :' }}</span> {{ bon.reference }}</div>
       </td>
     </tr>
   </table>
 
   <!-- Colis Section Title -->
-  <div class="section-header">Détails des colis expédiés</div>
+  <div class="section-header">{{ is_en ? 'Details of Shipped Parcels' : 'Détails des colis expédiés' }}</div>
 
   <!-- Main Colis Table -->
   <table class="colis-table">
     <thead>
       <tr>
         <th style="width: 36px; text-align: center;">#</th>
-        <th style="width: 140px;">Code de Suivi</th>
-        <th>Destinataire / Client</th>
-        <th style="width: 110px;">Ville</th>
-        <th>Nature du Produit</th>
-        <th style="width: 95px; text-align: right;">Prix (MAD)</th>
+        <th style="width: 140px;">{{ is_en ? 'Tracking Code' : 'Code de Suivi' }}</th>
+        <th>{{ is_en ? 'Recipient / Client' : 'Destinataire / Client' }}</th>
+        <th style="width: 110px;">{{ is_en ? 'City' : 'Ville' }}</th>
+        <th>{{ is_en ? 'Product Nature' : 'Nature du Produit' }}</th>
+        <th style="width: 95px; text-align: right;">{{ is_en ? 'Price (MAD)' : 'Prix (MAD)' }}</th>
       </tr>
     </thead>
     <tbody>
@@ -292,7 +265,7 @@
           <td><span class="tracking-code">{{ colis.trackingCode }}</span></td>
           <td><strong>{{ colis.recipient ? colis.recipient : '-' }}</strong></td>
           <td>{{ colis.city ? colis.city : '-' }}</td>
-          <td>{{ colis.productNature ? colis.productNature : 'Colis' }}</td>
+          <td>{{ colis.productNature ? colis.productNature : (is_en ? 'Parcel' : 'Produit test') }}</td>
           <td style="text-align: right; font-weight: bold; font-family: DejaVu Sans Mono, monospace;">
             {{ colis.price ? colis.price|number_format(2, ',', ' ') : '0,00' }} MAD
           </td>
@@ -300,7 +273,7 @@
       {% else %}
         <tr>
           <td colspan="6" style="text-align: center; padding: 18px; color: #94a3b8;">
-            Aucun colis associé à ce bon de livraison.
+            {{ is_en ? 'No parcels associated with this delivery slip.' : 'Aucun colis associé à ce bon de livraison.' }}
           </td>
         </tr>
       {% endfor %}
@@ -308,7 +281,9 @@
       <!-- Total Summary Row -->
       {% if bon.colis|length > 0 %}
         <tr class="summary-row">
-          <td colspan="4" style="text-align: right; text-transform: uppercase;">Total Général ({{ bon.colis|length }} colis) :</td>
+          <td colspan="4" style="text-align: right; text-transform: uppercase;">
+            {{ is_en ? 'Grand Total' : 'Total Général' }} ({{ bon.colis|length }} {{ is_en ? 'parcels' : 'colis' }}) :
+          </td>
           <td colspan="2" style="text-align: right; font-family: DejaVu Sans Mono, monospace; color: #1b84ff;">
             {{ totalPrix|number_format(2, ',', ' ') }} MAD
           </td>
@@ -321,20 +296,20 @@
   <table class="signatures-table">
     <tr>
       <td class="signature-card">
-        <div class="signature-title">Signature & Cachet Transporteur</div>
-        <div class="signature-note">Remis par le livreur / représentant LivrExpress</div>
+        <div class="signature-title">{{ is_en ? 'Transporter Signature & Stamp' : 'Signature & Cachet Transporteur' }}</div>
+        <div class="signature-note">{{ is_en ? 'Handed by driver / LivrExpress representative' : 'Remis par le livreur / représentant LivrExpress' }}</div>
       </td>
       <td style="width: 4%;"></td>
       <td class="signature-card">
-        <div class="signature-title">Signature & Cachet Réceptionnaire</div>
-        <div class="signature-note">« Bon pour réception conforme des colis énumérés »</div>
+        <div class="signature-title">{{ is_en ? 'Recipient Signature & Stamp' : 'Signature & Cachet Réceptionnaire' }}</div>
+        <div class="signature-note">{{ is_en ? '« Good for compliant receipt of listed parcels »' : '« Bon pour réception conforme des colis énumérés »' }}</div>
       </td>
     </tr>
   </table>
 
   <!-- Legal Notice Footer -->
   <div class="legal-footer">
-    Ce bon de livraison fait foi de la prise en charge et de l'expédition des colis mentionnés ci-dessus. LivrExpress Maroc — Document informatique confidentiel.
+    {{ is_en ? 'This delivery slip serves as proof of receipt and shipment of the parcels listed above. LivrExpress Morocco — Confidential computer document.' : 'Ce bon de livraison fait foi de la prise en charge et de l\'expédition des colis mentionnés ci-dessus. LivrExpress Maroc — Document informatique confidentiel.' }}
   </div>
 
 </body>

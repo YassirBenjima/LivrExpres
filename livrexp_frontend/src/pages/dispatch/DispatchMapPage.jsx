@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function DispatchMapPage({ navigate, currentUser }) {
+  const { t } = useLanguage();
   const [drivers, setDrivers] = useState([]);
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,24 @@ export default function DispatchMapPage({ navigate, currentUser }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
+
+  const formatStatutLabel = (statut) => {
+    if (!statut) return t('status.pending', 'En attente');
+    const clean = String(statut).trim().toLowerCase();
+    const map = {
+      'en attente': t('status.pending', 'En attente'),
+      'en cours': t('status.in_progress', 'En cours'),
+      'en livraison': t('status.in_progress', 'En livraison'),
+      'en tournée': t('status.in_progress', 'En tournée'),
+      'expédié': t('status.in_progress', 'Expédié'),
+      'expedie': t('status.in_progress', 'Expédié'),
+      'terminé': t('status.done', 'Terminé'),
+      'reporté': t('status.postponed', 'Reporté'),
+      'échec': t('status.failed', 'Échec'),
+      'livré': t('status.delivered', 'Livré')
+    };
+    return map[clean] || statut;
+  };
 
   // Load Leaflet CSS and JS dynamically
   useEffect(() => {
@@ -220,12 +240,12 @@ export default function DispatchMapPage({ navigate, currentUser }) {
           },
           (err) => {
             console.warn('GPS Warning:', err.message);
-            setGpsError('Position GPS indisponible. Activez la géolocalisation sur votre navigateur/appareil.');
+            setGpsError(t('gpsMap.gpsErrorUnavailable', 'Position GPS indisponible. Activez la géolocalisation sur votre navigateur/appareil.'));
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
-        setGpsError('La géolocalisation n\'est pas prise en charge par ce navigateur.');
+        setGpsError(t('gpsMap.gpsErrorUnsupported', 'La géolocalisation n\'est pas prise en charge par ce navigateur.'));
       }
     } else {
       if (watchIdRef.current !== null) {
@@ -319,13 +339,13 @@ export default function DispatchMapPage({ navigate, currentUser }) {
               🚚 ${driver.fullName}
             </div>
             <div style="font-size: 11px; color: #5e6278; margin-bottom: 4px;">
-              📍 Ville : <strong>${driver.city}</strong>
+              📍 ${t('gpsMap.cityLabel', 'Ville :')} <strong>${driver.city}</strong>
             </div>
             <div style="font-size: 11px; color: #10b981; font-weight: 600; margin-bottom: 6px;">
-              📦 Colis en tournée : ${driver.activeParcels}
+              📦 ${t('gpsMap.activeParcelsLabel', 'Colis en tournée :')} ${driver.activeParcels}
             </div>
             <div style="font-size: 10px; color: #a1a5b7; margin-bottom: 8px;">
-              🕒 Dernière sync : ${driver.lastUpdated}
+              🕒 ${t('gpsMap.lastSyncLabel', 'Dernière sync :')} ${driver.lastUpdated}
             </div>
             <a href="tel:${driver.phone}" style="
               display: block;
@@ -338,7 +358,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
               border-radius: 6px;
               text-align: center;
             ">
-              Appeler (${driver.phone})
+              ${t('gpsMap.callBtn', 'Appeler')} (${driver.phone})
             </a>
           </div>
         `;
@@ -386,13 +406,13 @@ export default function DispatchMapPage({ navigate, currentUser }) {
               📦 ${parcel.code}
             </div>
             <div style="font-size: 11px; color: #181c32; margin-bottom: 4px;">
-              👤 Destinataire : <strong>${parcel.recipient}</strong>
+              👤 ${t('gpsMap.recipientLabel', 'Destinataire :')} <strong>${parcel.recipient}</strong>
             </div>
             <div style="font-size: 11px; color: #5e6278; margin-bottom: 4px;">
-              📍 Ville : <strong>${parcel.city}</strong>
+              📍 ${t('gpsMap.cityLabel', 'Ville :')} <strong>${parcel.city}</strong>
             </div>
             <div style="font-size: 11px; font-weight: 700; color: #10b981; margin-bottom: 6px;">
-              💵 Prix : ${parcel.price} MAD
+              💵 ${t('gpsMap.priceLabel', 'Prix :')} ${parcel.price} MAD
             </div>
             <span style="
               display: inline-block;
@@ -403,7 +423,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
               padding: 3px 8px;
               border-radius: 4px;
             ">
-              ${parcel.statut}
+              ${formatStatutLabel(parcel.statut)}
             </span>
           </div>
         `;
@@ -413,7 +433,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
       }
     });
 
-  }, [leafletReady, drivers, parcels, selectedCity, searchQuery]);
+  }, [leafletReady, drivers, parcels, selectedCity, searchQuery, t]);
 
   return (
     <DashboardLayout navigate={navigate} activeMenu="dispatch-map">
@@ -422,17 +442,17 @@ export default function DispatchMapPage({ navigate, currentUser }) {
         <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-5 border-b border-border">
           <div className="flex flex-col justify-center gap-2">
             <h1 className="text-xl font-medium leading-none text-mono">
-              Carte Suivi GPS
+              {t('gpsMap.pageTitle', 'Carte Suivi GPS')}
             </h1>
             <div className="flex items-center flex-wrap gap-1.5 font-medium">
               <span className="text-base text-secondary-foreground">
-                Livreurs actifs :
+                {t('gpsMap.activeDrivers', 'Livreurs actifs :')}
               </span>
               <span className="text-base text-foreground font-medium me-4">
                 {drivers.filter(d => d.isLive).length || drivers.length}
               </span>
               <span className="text-base text-secondary-foreground">
-                Colis en cours :
+                {t('gpsMap.parcelsInProgress', 'Colis en cours :')}
               </span>
               <span className="text-base text-foreground font-medium">
                 {parcels.length}
@@ -450,7 +470,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
               }`}
             >
               <i className={`ki-filled ${isGpsActive ? 'ki-check-circle' : 'ki-geolocation'} text-sm me-1.5`}></i>
-              {isGpsActive ? 'GPS Actif (En direct)' : 'Activer Mon GPS'}
+              {isGpsActive ? t('gpsMap.gpsActiveBtn', 'GPS Actif (En direct)') : t('gpsMap.enableGpsBtn', 'Activer Mon GPS')}
             </button>
           </div>
         </div>
@@ -470,7 +490,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
             {/* Filter Bar */}
             <div className="kt-card-header flex-wrap gap-3">
               <h3 className="kt-card-title text-sm">
-                Vue carte en temps réel
+                {t('gpsMap.mapViewTitle', 'Vue carte en temps réel')}
               </h3>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex">
@@ -479,7 +499,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
                     <input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher livreur ou N° colis..."
+                      placeholder={t('gpsMap.searchPlaceholder', 'Rechercher livreur ou N° colis...')}
                       type="text"
                     />
                   </label>
@@ -488,10 +508,10 @@ export default function DispatchMapPage({ navigate, currentUser }) {
                 <KtSelect
                   value={selectedCity}
                   onChange={(val) => setSelectedCity(val)}
-                  placeholder="Filtrer par ville"
+                  placeholder={t('gpsMap.filterCity', 'Filtrer par ville')}
                   className="w-48"
                   options={[
-                    { value: '', label: 'Toutes les villes' },
+                    { value: '', label: t('gpsMap.allCities', 'Toutes les villes') },
                     { value: 'Casablanca', label: 'Casablanca' },
                     { value: 'Rabat', label: 'Rabat' },
                     { value: 'Marrakech', label: 'Marrakech' },
@@ -507,7 +527,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
                     className="kt-btn kt-btn-outline"
                     onClick={() => { setSelectedCity(''); setSearchQuery(''); }}
                   >
-                    Réinitialiser
+                    {t('gpsMap.resetBtn', 'Réinitialiser')}
                   </button>
                 )}
               </div>
@@ -525,7 +545,7 @@ export default function DispatchMapPage({ navigate, currentUser }) {
                 <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-xs z-20">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <i className="ki-filled ki-loading animate-spin text-lg"></i>
-                    Chargement de la carte interactive...
+                    {t('gpsMap.loadingMap', 'Chargement de la carte interactive...')}
                   </div>
                 </div>
               )}

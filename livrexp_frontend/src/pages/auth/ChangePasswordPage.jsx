@@ -3,9 +3,11 @@ import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function ChangePasswordPage({ navigate }) {
+  const { t } = useLanguage();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,17 +54,17 @@ export default function ChangePasswordPage({ navigate }) {
     const otpCode = otp.join('');
 
     if (otpCode.length < 6) {
-      tempErrors.otp = "Veuillez entrer le code à 6 chiffres reçu par e-mail";
+      tempErrors.otp = t('auth.otpReq', "Veuillez entrer le code à 6 chiffres reçu par e-mail");
     }
 
     if (!password) {
-      tempErrors.password = "Le mot de passe est requis";
+      tempErrors.password = t('auth.passwordReq', "Le mot de passe est requis");
     } else if (password.length < 6) {
-      tempErrors.password = "Le mot de passe doit comporter au moins 6 caractères";
+      tempErrors.password = t('auth.passMinChars', "Le mot de passe doit comporter au moins 6 caractères");
     }
 
     if (password !== confirmPassword) {
-      tempErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+      tempErrors.confirmPassword = t('auth.passMismatch', "Les mots de passe ne correspondent pas");
     }
 
     setErrors(tempErrors);
@@ -81,12 +83,12 @@ export default function ChangePasswordPage({ navigate }) {
     try {
       const otpCode = otp.join('');
       const data = await authService.resetPasswordChange(password, confirmPassword, otpCode);
-      setApiSuccess(data.message || 'Votre mot de passe a été réinitialisé avec succès.');
+      setApiSuccess(data.message || t('auth.resetSuccessMsg', 'Votre mot de passe a été réinitialisé avec succès.'));
       setTimeout(() => {
         navigate('/reset-password/changed');
       }, 1500);
     } catch (error) {
-      setApiError(error.message || 'Erreur lors de la réinitialisation du mot de passe.');
+      setApiError(error.message || t('auth.serverError', 'Erreur lors de la réinitialisation du mot de passe.'));
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +96,9 @@ export default function ChangePasswordPage({ navigate }) {
 
   return (
     <AuthLayout
-      rightPaneTitle="Sécurité renforcée"
-      rightPaneDesc="Saisissez le code de vérification à 6 chiffres reçu par e-mail ainsi que votre nouveau mot de passe pour sécuriser votre compte."
+      docTitle={t('auth.pageTitleResetPassword', 'Réinitialisation du Mot de Passe - LivrExpress')}
+      rightPaneTitle={t('auth.securePortalTitle', "Portail d'accès sécurisé")}
+      rightPaneDesc={t('auth.resetPasswordDesc', "Veuillez saisir votre nouveau mot de passe ci-dessous.")}
     >
       <form onSubmit={handleSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="reset_password_change_password_form">
         <div className="text-center mb-1">
@@ -103,10 +106,10 @@ export default function ChangePasswordPage({ navigate }) {
             <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
           </div>
           <h3 className="text-lg font-medium text-mono mb-1">
-            Changer le mot de passe
+            {t('auth.resetPasswordTitle', 'Réinitialiser le mot de passe')}
           </h3>
           <span className="text-xs text-secondary-foreground">
-            Saisissez le code de vérification à 6 chiffres et définissez votre nouveau mot de passe.
+            {t('auth.resetPasswordDesc', 'Veuillez saisir votre nouveau mot de passe ci-dessous.')}
           </span>
         </div>
 
@@ -116,7 +119,7 @@ export default function ChangePasswordPage({ navigate }) {
         {/* 6-Digit OTP Code Section */}
         <div className="flex flex-col gap-2">
           <label className="kt-form-label text-mono text-xs font-semibold text-center">
-            Code de vérification (6 chiffres)
+            {t('auth.otpCodeLabel', 'Code de vérification (6 chiffres)')}
           </label>
           <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
             {otp.map((digit, idx) => (
@@ -138,7 +141,7 @@ export default function ChangePasswordPage({ navigate }) {
 
         <div className="flex flex-col gap-1">
           <label className="kt-form-label text-mono text-xs">
-            Nouveau mot de passe
+            {t('auth.newPasswordLabel', 'Nouveau mot de passe')}
           </label>
           <PasswordInput
             value={password}
@@ -153,7 +156,7 @@ export default function ChangePasswordPage({ navigate }) {
 
         <div className="flex flex-col gap-1">
           <label className="kt-form-label text-mono text-xs">
-            Confirmer le mot de passe
+            {t('auth.confirmNewPasswordLabel', 'Confirmer le nouveau mot de passe')}
           </label>
           <PasswordInput
             value={confirmPassword}
@@ -166,8 +169,8 @@ export default function ChangePasswordPage({ navigate }) {
           {errors.confirmPassword && <span className="text-red-500 text-xs mt-1">{errors.confirmPassword}</span>}
         </div>
 
-        <button className="kt-btn kt-btn-primary flex justify-center grow py-2.5 mt-2" type="submit" disabled={isLoading}>
-          {isLoading ? 'Réinitialisation...' : 'Valider et réinitialiser'}
+        <button className="kt-btn kt-btn-primary flex justify-center grow" type="submit" disabled={isLoading}>
+          {isLoading ? t('profile.updatingPasswordBtn', 'Mise à jour...') : t('auth.resetPasswordTitle', 'Réinitialiser le mot de passe')}
         </button>
       </form>
     </AuthLayout>

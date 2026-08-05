@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function FacturationCrbtPage({ navigate, showNotification }) {
+  const { t, language } = useLanguage();
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState({ totalNet: 14484, totalBrut: 16722, fraisLivraison: 2193, fraisRefus: 45, nbrColis: 59 });
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,14 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const formatStatusLabel = (statut, rawLabel) => {
+    const clean = String(statut || '').trim().toUpperCase();
+    if (clean === 'DISPONIBLE' || clean.includes('DISPONIBLE')) return t('finances.statusAvailable', 'Disponible à virer');
+    if (clean === 'PAYE' || clean.includes('PAYÉ') || clean.includes('PAYE')) return t('finances.statusPaid', 'Payé (Viré)');
+    if (clean === 'EN_ATTENTE' || clean.includes('COLLECTE')) return t('finances.statusInCollection', 'En cours de collecte');
+    return rawLabel || statut;
+  };
 
   const DEFAULT_ENTRIES = [
     { id: 1, code: 'CRBT-20260731-01', client: 'Boutique Casa Chic', dateCreation: '31/07/2026 10:15', nbrColis: 12, totalBrut: 4850.00, fraisLivraison: 420.00, fraisRefus: 0.00, totalNet: 4430.00, statut: 'DISPONIBLE', statutLabel: 'Disponible à virer', statutBadgeClass: 'kt-badge-info' },
@@ -66,10 +76,10 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
         }
         if (data.statuts_possibles && data.statut_labels) {
           const opts = [
-            { value: '', label: 'Tous les statuts' },
+            { value: '', label: t('finances.allStatuses', 'Tous les statuts') },
             ...data.statuts_possibles.map(s => ({
               value: s,
-              label: data.statut_labels[s] || s
+              label: formatStatusLabel(s, data.statut_labels[s])
             }))
           ];
           setStatutOptions(opts);
@@ -93,110 +103,91 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
   const paginatedEntries = entries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const defaultStatutOptions = [
+    { value: '', label: t('finances.allStatuses', 'Tous les statuts') },
+    { value: 'DISPONIBLE', label: t('finances.statusAvailable', 'Disponible à virer') },
+    { value: 'PAYE', label: t('finances.statusPaid', 'Payé (Viré)') },
+    { value: 'EN_ATTENTE', label: t('finances.statusInCollection', 'En cours de collecte') }
+  ];
+
   // PDF Client Invoice Generator
   const handlePrintInvoice = (crbt) => {
     const printWin = window.open('', '_blank', 'width=950,height=1000');
     if (!printWin) return;
 
+    const isEn = language === 'en';
+
     printWin.document.write(`
       <!DOCTYPE html>
-      <html lang="fr">
+      <html>
       <head>
-        <meta charset="UTF-8">
-        <title>Facture Client ${crbt.code}</title>
+        <title>${isEn ? 'Client Statement Invoice' : 'Facture Relevé Client'} - ${crbt.code}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
-          * { box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; margin: 0; background: #ffffff; line-height: 1.5; }
-          
-          .invoice-header { display: flex; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 24px; margin-bottom: 28px; }
-          .logo { font-size: 28px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
-          .logo span { color: #0f172a; }
-          .sub-brand { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500; }
-          
-          .inv-title-box { text-align: right; }
-          .inv-title-box h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
-          .inv-ref { font-size: 14px; font-weight: 700; color: #2563eb; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
-          .inv-date { font-size: 12px; color: #64748b; margin-top: 2px; }
-
-          .info-grid { display: flex; gap: 20px; margin-bottom: 30px; }
-          .info-card { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; }
-          .info-card-title { font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
-          .info-line { font-size: 13px; color: #334155; margin-bottom: 4px; }
-          .info-label { font-weight: 600; color: #64748b; }
-
-          table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-          th { background: #1e293b; color: #ffffff; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 12px 14px; text-align: left; }
-          td { padding: 14px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #334155; }
-          tr:nth-child(even) td { background-color: #f8fafc; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; background-color: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #ef4444; padding-bottom: 20px; margin-bottom: 30px; }
+          .brand { font-size: 28px; font-weight: 800; color: #ef4444; letter-spacing: -0.5px; }
+          .doc-type { font-size: 20px; font-weight: 700; text-align: right; color: #0f172a; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 35px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+          .meta-box h4 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+          .table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .table th { background: #1e293b; color: white; padding: 12px; text-align: left; font-size: 13px; font-weight: 600; }
+          .table td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
           .text-right { text-align: right; }
-          .font-mono { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
-
-          .summary-wrapper { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
-          .payment-info { width: 55%; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; font-size: 12px; color: #0369a1; }
-          .payment-info h4 { margin: 0 0 6px 0; font-size: 13px; color: #0284c7; text-transform: uppercase; }
-
-          .total-card { width: 340px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 18px; }
-          .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #334155; }
-          .total-row.grand-total { border-top: 2px solid #0f172a; padding-top: 10px; margin-top: 10px; font-size: 16px; font-weight: 800; color: #0f172a; }
-
-          .signatures { display: flex; justify-content: space-between; margin-top: 40px; margin-bottom: 20px; }
-          .sig-box { width: 48%; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 14px; height: 95px; background: #fafafa; font-size: 11px; color: #64748b; }
-          .sig-box strong { display: block; color: #0f172a; text-transform: uppercase; margin-bottom: 4px; font-size: 12px; }
-
-          .footer { margin-top: 40px; font-size: 10px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px; }
-
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
+          .font-mono { font-family: monospace; font-weight: 600; }
+          .summary-wrapper { display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; margin-top: 20px; }
+          .payment-info { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px; border-radius: 8px; font-size: 13px; color: #166534; }
+          .payment-info h4 { margin: 0 0 8px 0; color: #15803d; font-size: 14px; }
+          .total-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; }
+          .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+          .grand-total { border-top: 2px solid #0f172a; padding-top: 10px; margin-top: 6px; font-size: 16px; font-weight: 800; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; }
+          .sig-box { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 15px; height: 100px; text-align: center; }
+          .sig-box strong { display: block; font-size: 13px; color: #475569; margin-bottom: 5px; }
+          .sig-box em { font-size: 11px; color: #94a3b8; }
+          .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         </style>
       </head>
       <body>
-
-        <div class="invoice-header">
+        <div class="header">
           <div>
-            <div class="logo">Livr<span>Express</span></div>
-            <div class="sub-brand">Service de Facturation & Transfert CRBT — Maroc</div>
+            <div class="brand">LivrExpress</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">${isEn ? 'Logistics & Cash on Delivery Management' : 'Service de Gestion Logistique & CRBT Maroc'}</div>
           </div>
-          <div class="inv-title-box">
-            <h1>Facture de Règlement</h1>
-            <div class="inv-ref">N° FAC-${crbt.code}</div>
-            <div class="inv-date">Date d'émission : ${crbt.dateCreation || new Date().toLocaleDateString('fr-FR')}</div>
-          </div>
-        </div>
-
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-card-title">Facturé à (Client)</div>
-            <div class="info-line" style="font-size: 15px; font-weight: 800; color: #0f172a;">${crbt.client || 'Client Privé'}</div>
-            <div class="info-line"><span class="info-label">ICE :</span> 002948102000049</div>
-            <div class="info-line"><span class="info-label">Adresse :</span> Casablanca, Maroc</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-title">Émetteur & Règlement</div>
-            <div class="info-line"><span class="info-label">Société :</span> LivrExpress S.A.R.L</div>
-            <div class="info-line"><span class="info-label">Mode de règlement :</span> Virement Bancaire (CRBT)</div>
-            <div class="info-line"><span class="info-label">Statut du dossier :</span> <strong>${crbt.statutLabel || crbt.statut}</strong></div>
+          <div class="doc-type">
+            ${isEn ? 'COD STATEMENT INVOICE' : 'FACTURE RELEVÉ CRBT'}
+            <div style="font-size: 13px; font-weight: 500; color: #64748b; margin-top: 4px;">${isEn ? 'Ref:' : 'Réf:'} ${crbt.code}</div>
+            <div style="font-size: 12px; font-weight: 400; color: #94a3b8;">${isEn ? 'Date:' : 'Date:'} ${crbt.dateCreation}</div>
           </div>
         </div>
 
-        <table>
+        <div class="meta-grid">
+          <div class="meta-box">
+            <h4>${isEn ? 'Merchant / Client Information' : 'Informations Marchand / Client'}</h4>
+            <div><strong>${crbt.client || (isEn ? 'Private Client' : 'Client Privé')}</strong></div>
+            <div>${isEn ? 'Account Status: Active' : 'Compte Client : Actif'}</div>
+            <div>${isEn ? 'Payout Type: Bank Transfer' : 'Règlement : Virement Bancaire'}</div>
+          </div>
+          <div class="meta-box">
+            <h4>${isEn ? 'Statement Summary' : 'Récapitulatif Relevé'}</h4>
+            <div>${isEn ? 'Statement Reference:' : 'Code Relevé :'} <strong>${crbt.code}</strong></div>
+            <div>${isEn ? 'Total Parcels:' : 'Total Colis Concernés :'} <strong>${crbt.nbrColis} ${isEn ? 'parcels' : 'colis'}</strong></div>
+            <div>${isEn ? 'Status:' : 'Statut Virement :'} <strong style="color: #10b981;">${formatStatusLabel(crbt.statut, crbt.statutLabel)}</strong></div>
+          </div>
+        </div>
+
+        <table class="table">
           <thead>
             <tr>
-              <th>Prestration / Relevé d'encaissement</th>
-              <th class="text-right">Colis</th>
-              <th class="text-right">Total Brut (MAD)</th>
-              <th class="text-right">Frais Livr. (MAD)</th>
-              <th class="text-right">Net à Virer (MAD)</th>
+              <th>${isEn ? 'Description' : 'Désignation Opération'}</th>
+              <th class="text-right">${isEn ? 'Parcel Count' : 'Nombre Colis'}</th>
+              <th class="text-right">${isEn ? 'Gross Amount' : 'Montant Encassé'}</th>
+              <th class="text-right">${isEn ? 'Delivery Fees' : 'Frais de Livraison'}</th>
+              <th class="text-right">${isEn ? 'Net Payable' : 'Net à Payer (MAD)'}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>
-                <strong>Encaissement des fonds CRBT — Relevé ${crbt.code}</strong>
-                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Comprend les encaissements à la livraison et déduction des frais d'expédition.</div>
-              </td>
+              <td>${isEn ? 'COD Collection for statement' : 'Encaissement CRBT selon relevé'} ${crbt.code}</td>
               <td class="text-right font-mono">${crbt.nbrColis}</td>
               <td class="text-right font-mono">${crbt.totalBrut.toFixed(2)} MAD</td>
               <td class="text-right font-mono" style="color:#dc2626;">-${crbt.fraisLivraison.toFixed(2)} MAD</td>
@@ -207,23 +198,23 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
         <div class="summary-wrapper">
           <div class="payment-info">
-            <h4>Instructions de Virement</h4>
-            <div>Bénéficiaire : <strong>${crbt.client || 'Client Privé'}</strong></div>
-            <div>Banque partenaire : <strong>Attijariwafa Bank / BMCE</strong></div>
-            <div>Montant net transféré : <strong style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</strong></div>
+            <h4>${isEn ? 'Transfer Instructions' : 'Instructions de Virement'}</h4>
+            <div>${isEn ? 'Beneficiary:' : 'Bénéficiaire :'} <strong>${crbt.client || (isEn ? 'Private Client' : 'Client Privé')}</strong></div>
+            <div>${isEn ? 'Partner Bank:' : 'Banque partenaire :'} <strong>Attijariwafa Bank / BMCE</strong></div>
+            <div>${isEn ? 'Net Transferred Amount:' : 'Montant net transféré :'} <strong style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</strong></div>
           </div>
 
           <div class="total-card">
             <div class="total-row">
-              <span>Total Encaissement Brut :</span>
+              <span>${isEn ? 'Gross Collection Total:' : 'Total Encaissement Brut :'}</span>
               <strong class="font-mono">${crbt.totalBrut.toFixed(2)} MAD</strong>
             </div>
             <div class="total-row">
-              <span>Frais de livraison appliqués :</span>
+              <span>${isEn ? 'Applied Delivery Fees:' : 'Frais de livraison appliqués :'}</span>
               <strong class="font-mono" style="color:#dc2626;">-${crbt.fraisLivraison.toFixed(2)} MAD</strong>
             </div>
             <div class="total-row grand-total">
-              <span>NET À PAYER :</span>
+              <span>${isEn ? 'NET TO PAY:' : 'NET À PAYER :'}</span>
               <span class="font-mono" style="color:#16a34a;">${crbt.totalNet.toFixed(2)} MAD</span>
             </div>
           </div>
@@ -231,12 +222,12 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
         <div class="signatures">
           <div class="sig-box">
-            <strong>Cachet &amp; Validation LivrExpress</strong>
-            <em>Direction Financière et Comptabilité</em>
+            <strong>${isEn ? 'LivrExpress Stamp & Validation' : 'Cachet & Validation LivrExpress'}</strong>
+            <em>${isEn ? 'Finance & Accounting Department' : 'Direction Financière et Comptabilité'}</em>
           </div>
           <div class="sig-box">
-            <strong>Reçu &amp; Accusé de Réception Client</strong>
-            <em>Pour accord du virement et décharge</em>
+            <strong>${isEn ? 'Client Acknowledgment & Receipt' : 'Reçu & Accusé de Réception Client'}</strong>
+            <em>${isEn ? 'For transfer approval and discharge' : 'Pour accord du virement et décharge'}</em>
           </div>
         </div>
 
@@ -269,7 +260,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
     } else {
       fileName += '.csv';
       content = `CODE_RELEVÉ,CLIENT,DATE,COLIS,TOTAL_BRUT_MAD,FRAIS_LIVRAISON_MAD,TOTAL_NET_MAD,STATUT\n` +
-        entries.map(e => `"${e.code}","${e.client || 'Client'}","${e.dateCreation}",${e.nbrColis},${e.totalBrut},${e.fraisLivraison},${e.totalNet},"${e.statutLabel || e.statut}"`).join("\n");
+        entries.map(e => `"${e.code}","${e.client || 'Client'}","${e.dateCreation}",${e.nbrColis},${e.totalBrut},${e.fraisLivraison},${e.totalNet},"${formatStatusLabel(e.statut, e.statutLabel)}"`).join("\n");
     }
 
     const blob = new Blob(["\ufeff" + content], { type: 'text/csv;charset=utf-8;' });
@@ -282,7 +273,8 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
     document.body.removeChild(link);
 
     if (showNotification) {
-      showNotification('success', `Export comptable (${format}) téléchargé avec succès !`);
+      const msg = t('finances.exportSuccess', `Export comptable (${format}) téléchargé avec succès !`).replace('{format}', format);
+      showNotification('success', msg);
     }
   };
 
@@ -328,20 +320,23 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
     setEntries(prev => prev.map(item => item.id === selectedCrbtForVirement.id ? {
       ...item,
       statut: 'PAYE',
-      statutLabel: 'Payé (Viré)',
+      statutLabel: t('finances.statusPaid', 'Payé (Viré)'),
       statutBadgeClass: 'kt-badge-success'
     } : item));
 
     setIsVirementModalOpen(false);
     if (showNotification) {
-      showNotification('success', `Virement ${virementForm.refVirement} de ${Number(virementForm.montant).toFixed(2)} MAD exécuté avec succès !`);
+      const msg = t('finances.transferSuccess', `Virement ${virementForm.refVirement} de ${Number(virementForm.montant).toFixed(2)} MAD exécuté avec succès !`)
+        .replace('{ref}', virementForm.refVirement)
+        .replace('{amount}', Number(virementForm.montant).toFixed(2));
+      showNotification('success', msg);
     }
   };
 
   // Handle Automatic Bank Reconciliation
   const handleRunReconciliation = () => {
     if (showNotification) {
-      showNotification('success', 'Réconciliation bancaire exécutée : 100% des montants concordent avec les encaissements !');
+      showNotification('success', t('finances.reconciliationSuccess', 'Réconciliation bancaire exécutée : 100% des montants concordent avec les encaissements !'));
     }
   };
 
@@ -368,15 +363,15 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
     <DashboardLayout activeMenu="facturation_crbt">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Header (Standard App Design) */}
+        {/* Header */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Facturation CRBT</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('finances.crbtTitle', 'Facturation CRBT')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total relevés :</span>
+                <span className="text-base text-secondary-foreground">{t('finances.totalStatements', 'Total relevés :')}</span>
                 <span className="text-base text-foreground font-medium me-3">{totalEntries}</span>
-                <span className="text-base text-secondary-foreground">Solde Net à Virer :</span>
+                <span className="text-base text-secondary-foreground">{t('finances.netBalanceToTransfer', 'Solde Net à Virer :')}</span>
                 <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                   {summary.totalNet.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
                 </span>
@@ -390,7 +385,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-outline cursor-pointer"
               >
                 <i className="ki-filled ki-file-down text-base me-1"></i>
-                Export Excel / CSV
+                {t('finances.exportExcel', 'Export Excel / CSV')}
               </button>
               <button
                 type="button"
@@ -398,7 +393,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-outline cursor-pointer"
               >
                 <i className="ki-filled ki-file-sheet text-base me-1"></i>
-                Export Sage
+                {t('finances.exportSage', 'Export Sage')}
               </button>
               <button
                 type="button"
@@ -406,35 +401,35 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-primary cursor-pointer"
               >
                 <i className="ki-filled ki-arrow-up-down text-base me-1"></i>
-                Réconciliation Automatique
+                {t('finances.autoReconciliation', 'Réconciliation Automatique')}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Summary Cards (Standard App Design) */}
+        {/* Summary Cards */}
         <div className="kt-container-fixed mb-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Total Net Payé (Solde Clients)</span>
+              <span className="text-2sm text-secondary-foreground font-medium">{t('finances.totalNetPaid', 'Total Net Payé (Solde Clients)')}</span>
               <span className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
                 {summary.totalNet.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
               </span>
             </div>
             <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Total Brut Encaissé</span>
+              <span className="text-2sm text-secondary-foreground font-medium">{t('finances.totalGrossCollected', 'Total Brut Encaissé')}</span>
               <span className="text-xl font-semibold text-foreground">
                 {summary.totalBrut.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
               </span>
             </div>
             <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Frais de Livraison (CA)</span>
+              <span className="text-2sm text-secondary-foreground font-medium">{t('finances.deliveryFees', 'Frais de Livraison (CA)')}</span>
               <span className="text-xl font-semibold text-foreground">
                 {summary.fraisLivraison.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
               </span>
             </div>
             <div className="kt-card p-4 flex flex-col gap-1 border border-border/60">
-              <span className="text-2sm text-secondary-foreground font-medium">Total Colis Relevés</span>
+              <span className="text-2sm text-secondary-foreground font-medium">{t('finances.totalStatementParcels', 'Total Colis Relevés')}</span>
               <span className="text-xl font-semibold text-foreground">
                 {summary.nbrColis}
               </span>
@@ -442,14 +437,14 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
           </div>
         </div>
 
-        {/* Table Container (Standard App Design) */}
+        {/* Table Container */}
         <div className="kt-container-fixed">
           <div className="grid gap-5 lg:gap-7.5">
             <div className="kt-card kt-card-grid min-w-full">
               
               {/* Header Filters */}
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm">Affichage de {totalEntries} relevé(s)</h3>
+                <h3 className="kt-card-title text-sm">{t('finances.showingCount', 'Affichage de')} {totalEntries} {t('finances.statementsCount', 'relevé(s)')}</h3>
                 <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                   <div className="flex">
                     <label className="kt-input">
@@ -457,7 +452,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                       <input
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder="Rechercher par code ou client..."
+                        placeholder={t('finances.searchPlaceholder', 'Rechercher par code ou client...')}
                         type="text"
                       />
                     </label>
@@ -470,7 +465,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                       value={dateFrom}
                       onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
                     />
-                    <span className="text-muted-foreground text-xs">à</span>
+                    <span className="text-muted-foreground text-xs">{t('finances.to', 'à')}</span>
                     <input
                       type="date"
                       className="kt-input text-xs"
@@ -483,14 +478,9 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                     <KtSelect
                       value={selectedStatut}
                       onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
+                      placeholder={t('finances.allStatuses', 'Tous les statuts')}
                       className="w-40"
-                      options={statutOptions.length > 0 ? statutOptions : [
-                        { value: '', label: 'Tous les statuts' },
-                        { value: 'DISPONIBLE', label: 'Disponible à virer' },
-                        { value: 'PAYE', label: 'Payé (Viré)' },
-                        { value: 'EN_ATTENTE', label: 'En cours de collecte' }
-                      ]}
+                      options={statutOptions.length > 0 ? statutOptions : defaultStatutOptions}
                     />
 
                     <button
@@ -504,7 +494,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                         setCurrentPage(1);
                       }}
                     >
-                      Réinitialiser
+                      {t('finances.resetBtn', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -516,15 +506,15 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                   <table className="kt-table table-auto kt-table-border">
                     <thead>
                       <tr>
-                        <th className="min-w-[140px]">Code Relevé</th>
-                        <th className="min-w-[150px]">Client / Marchand</th>
-                        <th className="min-w-[130px]">Date création</th>
-                        <th className="min-w-[90px]">Nbr Colis</th>
-                        <th className="min-w-[110px]">Total Brut</th>
-                        <th className="min-w-[110px]">Frais Livraison</th>
-                        <th className="min-w-[110px]">Total Net</th>
-                        <th className="min-w-[130px]">Statut</th>
-                        <th className="min-w-[140px] text-right">Actions</th>
+                        <th className="min-w-[140px]">{t('finances.colStatementCode', 'Code Relevé')}</th>
+                        <th className="min-w-[150px]">{t('finances.colClient', 'Client / Marchand')}</th>
+                        <th className="min-w-[130px]">{t('finances.colCreationDate', 'Date création')}</th>
+                        <th className="min-w-[90px]">{t('finances.colParcelCount', 'Nbr Colis')}</th>
+                        <th className="min-w-[110px]">{t('finances.colGrossTotal', 'Total Brut')}</th>
+                        <th className="min-w-[110px]">{t('finances.colDeliveryFees', 'Frais Livraison')}</th>
+                        <th className="min-w-[110px]">{t('finances.colNetTotal', 'Total Net')}</th>
+                        <th className="min-w-[130px]">{t('finances.colStatus', 'Statut')}</th>
+                        <th className="min-w-[140px] text-right">{t('finances.colActions', 'Actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -533,14 +523,14 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                       ) : paginatedEntries.length === 0 ? (
                         <tr>
                           <td colSpan={9} className="text-secondary-foreground text-center py-8">
-                            Aucun relevé CRBT trouvé.
+                            {t('finances.noStatementFound', 'Aucun relevé CRBT trouvé.')}
                           </td>
                         </tr>
                       ) : (
                         paginatedEntries.map((crbt) => (
                           <tr key={crbt.id}>
                             <td className="text-foreground font-medium text-mono">{crbt.code}</td>
-                            <td className="text-foreground font-semibold">{crbt.client || 'Client Privé'}</td>
+                            <td className="text-foreground font-semibold">{crbt.client || t('finances.privateClient', 'Client Privé')}</td>
                             <td className="text-foreground font-normal">{crbt.dateCreation || '-'}</td>
                             <td className="text-foreground font-medium">{crbt.nbrColis}</td>
                             <td className="text-foreground font-medium">
@@ -555,7 +545,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                             <td>
                               <span className={`kt-badge ${crbt.statutBadgeClass || 'kt-badge-warning'} kt-badge-outline rounded-[30px]`}>
                                 <span className="kt-badge-dot size-1.5"></span>
-                                {crbt.statutLabel || crbt.statut}
+                                {formatStatusLabel(crbt.statut, crbt.statutLabel)}
                               </span>
                             </td>
                             <td className="text-right">
@@ -564,10 +554,10 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                                   type="button"
                                   onClick={() => handlePrintInvoice(crbt)}
                                   className="kt-btn kt-btn-xs kt-btn-outline cursor-pointer"
-                                  title="Télécharger la facture client PDF"
+                                  title={t('finances.invoicePdf', 'Facture PDF')}
                                 >
                                   <i className="ki-filled ki-file-down text-xs"></i>
-                                  Facture PDF
+                                  {t('finances.invoicePdf', 'Facture PDF')}
                                 </button>
                                 {crbt.statut !== 'PAYE' && crbt.statut !== 'Payé' && crbt.statut !== 'paye' ? (
                                   <button
@@ -580,12 +570,12 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                                     className="kt-btn kt-btn-xs kt-btn-primary cursor-pointer"
                                   >
                                     <i className="ki-filled ki-check text-xs me-1"></i>
-                                    Virer
+                                    {t('finances.transferBtn', 'Virer')}
                                   </button>
                                 ) : (
                                   <span className="text-xs font-semibold text-emerald-600 flex items-center gap-0.5">
                                     <i className="ki-solid ki-verify text-xs" />
-                                    Payé
+                                    {t('finances.paidTag', 'Payé')}
                                   </span>
                                 )}
                               </div>
@@ -600,7 +590,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 {/* Footer Pagination */}
                 <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    Afficher
+                    {t('finances.show', 'Afficher')}
                     <KtSelect
                       value={String(itemsPerPage)}
                       onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
@@ -611,12 +601,12 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                         { value: '20', label: '20' },
                       ]}
                     />
-                    par page
+                    {t('finances.perPage', 'par page')}
                   </div>
 
                   <div className="flex items-center gap-4">
                     <span>
-                      Affichage de {Math.min(totalEntries, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalEntries, currentPage * itemsPerPage)} sur {totalEntries} relevés
+                      {t('finances.showing', 'Affichage de')} {totalEntries === 0 ? 0 : Math.min(totalEntries, (currentPage - 1) * itemsPerPage + 1)} {t('finances.to', 'à')} {Math.min(totalEntries, currentPage * itemsPerPage)} {t('finances.of', 'sur')} {totalEntries} {t('finances.statements', 'relevés')}
                     </span>
                     {totalPages > 1 && (
                       <div className="flex gap-1">
@@ -626,7 +616,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                           disabled={currentPage === 1}
                           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         >
-                          Précédent
+                          {t('finances.previous', 'Précédent')}
                         </button>
                         <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                         <button
@@ -635,7 +625,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                           disabled={currentPage === totalPages}
                           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         >
-                          Suivant
+                          {t('finances.next', 'Suivant')}
                         </button>
                       </div>
                     )}
@@ -652,7 +642,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
           <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 p-4">
             <div className="bg-background border border-border rounded-xl shadow-2xl w-full max-w-md p-6">
               <div className="flex justify-between items-center pb-3 border-b border-border">
-                <h3 className="font-bold text-base">Exécuter un Virement Bancaire CRBT</h3>
+                <h3 className="font-bold text-base">{t('finances.virementModalTitle', 'Exécuter un Virement Bancaire CRBT')}</h3>
                 <button
                   onClick={() => setIsVirementModalOpen(false)}
                   className="text-muted-foreground hover:text-foreground font-bold text-lg border-0 bg-transparent cursor-pointer"
@@ -663,17 +653,17 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
 
               <form onSubmit={handleConfirmVirement} className="flex flex-col gap-4 mt-4">
                 <div>
-                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">Client Bénéficiaire</label>
+                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">{t('finances.beneficiaryClient', 'Client Bénéficiaire')}</label>
                   <input
                     type="text"
                     readOnly
                     className="kt-input bg-accent/20"
-                    value={selectedCrbtForVirement.client || 'Client Privé'}
+                    value={selectedCrbtForVirement.client || t('finances.privateClient', 'Client Privé')}
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">Référence du Virement (RIB / Ordre)</label>
+                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">{t('finances.virementRef', 'Référence du Virement (RIB / Ordre)')}</label>
                   <input
                     type="text"
                     required
@@ -684,7 +674,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">Banque Émettrice</label>
+                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">{t('finances.issuingBank', 'Banque Émettrice')}</label>
                   <select
                     className="kt-input"
                     value={virementForm.banque}
@@ -699,7 +689,7 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">Montant Net Viré (MAD)</label>
+                  <label className="text-xs font-semibold text-secondary-foreground block mb-1">{t('finances.netAmountTransferred', 'Montant Net Viré (MAD)')}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -716,13 +706,13 @@ export default function FacturationCrbtPage({ navigate, showNotification }) {
                     onClick={() => setIsVirementModalOpen(false)}
                     className="kt-btn kt-btn-outline cursor-pointer"
                   >
-                    Annuler
+                    {t('finances.cancel', 'Annuler')}
                   </button>
                   <button
                     type="submit"
                     className="kt-btn kt-btn-primary cursor-pointer"
                   >
-                    Confirmer le Virement
+                    {t('finances.confirmTransfer', 'Confirmer le Virement')}
                   </button>
                 </div>
               </form>

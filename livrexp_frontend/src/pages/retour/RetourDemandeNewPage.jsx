@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RetourDemandeNewPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [availableColis, setAvailableColis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +70,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedIds.length === 0) {
-      showNotification?.('error', 'Veuillez sélectionner au moins un colis.');
+      showNotification?.('error', t('returns.selectAtLeastOne', 'Veuillez sélectionner au moins un colis.'));
       return;
     }
 
@@ -93,13 +95,13 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
 
       const data = await res.json();
       if (res.ok) {
-        showNotification?.('success', data.message || 'Demande créée avec succès.');
+        showNotification?.('success', data.message || t('returns.createSuccess', 'Demande créée avec succès.'));
         navigate('/retour/demandes');
       } else {
-        showNotification?.('error', data.message || 'Erreur lors de la création.');
+        showNotification?.('error', data.message || t('returns.createError', 'Erreur lors de la création.'));
       }
     } catch (err) {
-      showNotification?.('error', 'Erreur de communication avec le serveur.');
+      showNotification?.('error', t('returns.serverError', 'Erreur de communication avec le serveur.'));
     } finally {
       setSubmitting(false);
     }
@@ -137,9 +139,9 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Demander le retour de colis</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('returns.newRequestTitle', 'Demander le retour de colis')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total colis éligibles :</span>
+                <span className="text-base text-secondary-foreground">{t('returns.totalEligibleParcels', 'Total colis éligibles :')}</span>
                 <span className="text-base text-foreground font-medium">{totalColis}</span>
               </div>
             </div>
@@ -148,7 +150,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-outline"
                 onClick={() => navigate('/retour/demandes')}
               >
-                Retour aux demandes
+                {t('returns.backToRequests', 'Retour aux demandes')}
               </button>
             </div>
           </div>
@@ -162,23 +164,23 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div className="flex flex-wrap items-end gap-4 grow">
                     <div className="flex flex-col gap-1.5 min-w-[200px]">
-                      <label className="text-sm font-medium text-foreground">Type de réception</label>
+                      <label className="text-sm font-medium text-foreground">{t('returns.receptionTypeLabel', 'Type de réception')}</label>
                       <KtSelect
                         value={receptionType}
                         onChange={(val) => setReceptionType(val)}
-                        placeholder="Choisir le type"
+                        placeholder={t('returns.selectType', 'Choisir le type')}
                         className="w-full"
                         options={[
-                          { value: 'En Agence', label: 'En Agence' },
-                          { value: 'À Domicile', label: 'À Domicile' },
+                          { value: 'En Agence', label: t('returns.atBranch', 'En Agence') },
+                          { value: 'À Domicile', label: t('returns.atHome', 'À Domicile') },
                         ]}
                       />
                     </div>
                     <div className="flex flex-col gap-1.5 grow min-w-[250px]">
-                      <label className="text-sm font-medium text-foreground">Note / Remarque (Optionnel)</label>
+                      <label className="text-sm font-medium text-foreground">{t('returns.noteOptional', 'Note / Remarque (Optionnel)')}</label>
                       <input
                         className="kt-input w-full"
-                        placeholder="Ajouter une remarque..."
+                        placeholder={t('returns.addNotePlaceholder', 'Ajouter une remarque...')}
                         type="text"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
@@ -188,7 +190,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                   <div className="flex items-center gap-3">
                     <span className="kt-badge kt-badge-info kt-badge-outline rounded-[30px]">
                       <span className="kt-badge-dot size-1.5"></span>
-                      {selectedIds.length}&nbsp;sélectionné(s)
+                      {selectedIds.length}&nbsp;{t('returns.selectedCount', 'sélectionné(s)')}
                     </span>
                     <button
                       className="kt-btn kt-btn-primary"
@@ -196,7 +198,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                       disabled={selectedIds.length === 0 || submitting}
                     >
                       <i className="ki-filled ki-check"></i>
-                      {submitting ? 'Validation...' : 'Valider la demande'}
+                      {submitting ? t('returns.submitting', 'Validation...') : t('returns.submitRequest', 'Valider la demande')}
                     </button>
                   </div>
                 </div>
@@ -206,14 +208,14 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
             {/* Table */}
             <div className="kt-card kt-card-grid min-w-full">
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm">Sélectionner les colis à retourner</h3>
+                <h3 className="kt-card-title text-sm">{t('returns.selectParcelsTitle', 'Sélectionner les colis à retourner')}</h3>
                 <div className="flex">
                   <label className="kt-input">
                     <i className="ki-filled ki-magnifier"></i>
                     <input
                       value={searchQuery}
                       onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                      placeholder="Code de suivi, destinataire, ville..."
+                      placeholder={t('changeRecipient.searchPlaceholder', 'Code de suivi, destinataire, ville...')}
                       type="text"
                     />
                   </label>
@@ -233,14 +235,14 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                             onChange={handleSelectAll}
                           />
                         </th>
-                        <th className="min-w-[150px]">Code suivi</th>
-                        <th className="min-w-[160px]">Nom du produit</th>
-                        <th className="min-w-[150px]">Date création</th>
-                        <th className="min-w-[160px]">Destinataire</th>
-                        <th className="min-w-[130px]">Téléphone</th>
-                        <th className="min-w-[140px]">Ville</th>
-                        <th className="min-w-[180px]">Adresse</th>
-                        <th className="min-w-[120px]">Prix</th>
+                        <th className="min-w-[150px]">{t('returns.colTrackingCodeShort', 'Code suivi')}</th>
+                        <th className="min-w-[160px]">{t('returns.colProductName', 'Nom du produit')}</th>
+                        <th className="min-w-[150px]">{t('returns.colCreationDateShort', 'Date création')}</th>
+                        <th className="min-w-[160px]">{t('returns.colRecipient', 'Destinataire')}</th>
+                        <th className="min-w-[130px]">{t('returns.colPhone', 'Téléphone')}</th>
+                        <th className="min-w-[140px]">{t('returns.colCity', 'Ville')}</th>
+                        <th className="min-w-[180px]">{t('returns.colAddress', 'Adresse')}</th>
+                        <th className="min-w-[120px]">{t('returns.colPrice', 'Prix')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -249,7 +251,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                       ) : paginatedColis.length === 0 ? (
                         <tr>
                           <td colSpan={9} className="text-secondary-foreground text-center py-8">
-                            Aucun colis éligible au retour.
+                            {t('returns.noEligibleParcel', 'Aucun colis éligible au retour.')}
                           </td>
                         </tr>
                       ) : (
@@ -286,7 +288,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                 {/* Footer Pagination */}
                 <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    Afficher
+                    {t('returns.show', 'Afficher')}
                     <KtSelect
                       value={String(itemsPerPage)}
                       onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
@@ -297,12 +299,12 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                         { value: '20', label: '20' },
                       ]}
                     />
-                    par page
+                    {t('returns.perPage', 'par page')}
                   </div>
 
                   <div className="flex items-center gap-4">
                     <span>
-                      Affichage de {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalColis, currentPage * itemsPerPage)} sur {totalColis} colis
+                      {t('returns.showing', 'Affichage de')} {totalColis === 0 ? 0 : Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} {t('returns.to', 'à')} {Math.min(totalColis, currentPage * itemsPerPage)} {t('returns.of', 'sur')} {totalColis} {t('changeRecipient.parcelsCount', 'colis')}
                     </span>
                     {totalPages > 1 && (
                       <div className="flex gap-1">
@@ -312,7 +314,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                           disabled={currentPage === 1}
                           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         >
-                          Précédent
+                          {t('returnSlips.previous', 'Précédent')}
                         </button>
                         <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                         <button
@@ -321,7 +323,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
                           disabled={currentPage === totalPages}
                           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         >
-                          Suivant
+                          {t('returnSlips.next', 'Suivant')}
                         </button>
                       </div>
                     )}

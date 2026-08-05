@@ -3,9 +3,11 @@ import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function LoginStaffPage({ navigate }) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState(localStorage.getItem('remembered_email') || '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remembered_email'));
@@ -18,12 +20,12 @@ export default function LoginStaffPage({ navigate }) {
   const validateForm = () => {
     const tempErrors = {};
     if (!email) {
-      tempErrors.email = "L'adresse email est requise";
+      tempErrors.email = t('auth.emailReq', "L'adresse email est requise");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      tempErrors.email = "Veuillez entrer une adresse email valide";
+      tempErrors.email = t('auth.emailInvalid', "Veuillez entrer une adresse email valide");
     }
     if (!password) {
-      tempErrors.password = "Le mot de passe est requis";
+      tempErrors.password = t('auth.passwordReq', "Le mot de passe est requis");
     }
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -54,7 +56,7 @@ export default function LoginStaffPage({ navigate }) {
         }
         sessionStorage.removeItem('user_profile');
         localStorage.removeItem('auth_token');
-        setApiSuccess('Authentification Staff réussie ! Redirection...');
+        setApiSuccess(t('auth.loginSuccess', 'Authentification Staff réussie ! Redirection...'));
         setTimeout(() => {
           if (userPayload.roles?.includes('ROLE_LIVREUR')) {
             navigate('/bon-livraison');
@@ -63,19 +65,20 @@ export default function LoginStaffPage({ navigate }) {
           }
         }, 1000);
       } else {
-        setApiError(data.message || 'Identifiants Staff invalides.');
+        setApiError(data.message || t('auth.invalidCredentials', 'Identifiants Staff invalides.'));
         setIsLoading(false);
       }
     } catch (error) {
-      setApiError(error.message || 'Identifiants Staff invalides ou erreur serveur.');
+      setApiError(error.message || t('auth.serverError', 'Identifiants Staff invalides ou erreur serveur.'));
       setIsLoading(false);
     }
   };
 
   return (
     <AuthLayout
-      rightPaneTitle="Staff Control Center"
-      rightPaneDesc="Interface d'administration LivrExpress. Gérez les livraisons, supervisez les opérations et assurez la qualité de service au quotidien."
+      docTitle={t('auth.pageTitleStaffLogin', 'Connexion Staff - LivrExpress')}
+      rightPaneTitle={t('auth.staffPortalTitle', 'LivrExpress Admin Portal')}
+      rightPaneDesc={t('auth.staffPortalDesc', 'Interface d\'administration LivrExpress. Gérez les livraisons, supervisez les opérations et assurez la qualité de service au quotidien.')}
     >
       <form onSubmit={handleLoginSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="staff_sign_in_form">
         
@@ -83,9 +86,9 @@ export default function LoginStaffPage({ navigate }) {
           <div className="flex justify-center mb-4">
             <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
           </div>
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Espace Staff</h3>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">{t('auth.staffSpace', 'Espace Administrateur & Staff')}</h3>
           <div className="flex items-center justify-center font-medium">
-            <span className="text-sm text-secondary-foreground me-1.5">Accès réservé aux administrateurs</span>
+            <span className="text-sm text-secondary-foreground me-1.5">{t('auth.staffSpaceDesc', 'Accès réservé aux administrateurs')}</span>
           </div>
         </div>
 
@@ -93,7 +96,7 @@ export default function LoginStaffPage({ navigate }) {
         <ApiAlert type="success" message={apiSuccess} />
 
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono" htmlFor="inputEmail">Adresse email</label>
+          <label className="kt-form-label font-normal text-mono" htmlFor="inputEmail">{t('auth.emailAddress', 'Adresse email')}</label>
           <input 
             type="email" 
             value={email}
@@ -105,7 +108,7 @@ export default function LoginStaffPage({ navigate }) {
             className="kt-input" 
             autoComplete="email" 
             required 
-            placeholder="email@email.com"
+            placeholder={t('auth.staffUsernamePlaceholder', 'admin ou livreur@livrexpress.ma')}
             disabled={isLoading}
           />
           {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email}</span>}
@@ -113,7 +116,7 @@ export default function LoginStaffPage({ navigate }) {
         
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-1">
-            <label className="kt-form-label font-normal text-mono" htmlFor="inputPassword">Mot de passe</label>
+            <label className="kt-form-label font-normal text-mono" htmlFor="inputPassword">{t('auth.password', 'Mot de passe')}</label>
           </div>
           
           <PasswordInput
@@ -137,16 +140,16 @@ export default function LoginStaffPage({ navigate }) {
             onChange={(e) => setRememberMe(e.target.checked)}
             disabled={isLoading}
           />
-          <span className="kt-checkbox-label">Se souvenir de moi</span>
+          <span className="kt-checkbox-label">{t('auth.rememberMe', 'Se souvenir de moi')}</span>
         </label>
         
         <button className="kt-btn kt-btn-primary flex justify-center grow" type="submit" disabled={isLoading}>
-          {isLoading ? 'Connexion en cours...' : 'Connexion'}
+          {isLoading ? t('auth.signingInBtn', 'Connexion en cours...') : t('auth.signInBtn', 'Connexion')}
         </button>
 
         <div className="flex items-center gap-2">
           <span className="border-t border-border w-full"></span>
-          <span className="text-xs text-muted-foreground font-medium uppercase">Ou</span>
+          <span className="text-xs text-muted-foreground font-medium uppercase">{t('auth.or', 'Ou')}</span>
           <span className="border-t border-border w-full"></span>
         </div>
 
@@ -158,8 +161,9 @@ export default function LoginStaffPage({ navigate }) {
             navigate('/login');
           }}
         >
-          Connexion Client
+          {t('auth.clientSpaceBtn', 'Espace Client')}
         </a>
+
       </form>
     </AuthLayout>
   );

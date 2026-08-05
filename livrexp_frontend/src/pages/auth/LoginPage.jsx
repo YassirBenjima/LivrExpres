@@ -3,9 +3,11 @@ import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function LoginPage({ navigate }) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState(localStorage.getItem('remembered_email') || '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remembered_email'));
@@ -35,24 +37,25 @@ export default function LoginPage({ navigate }) {
         }
         sessionStorage.removeItem('user_profile');
         localStorage.removeItem('auth_token');
-        setApiSuccess('Connexion réussie ! Redirection...');
+        setApiSuccess(t('auth.loginSuccess', 'Connexion réussie ! Redirection...'));
         setTimeout(() => {
           navigate(data.redirect || '/dashboard');
         }, 800);
       } else {
-        setApiError(data.message || 'Identifiants invalides.');
+        setApiError(data.message || t('auth.invalidCredentials', 'Identifiants invalides.'));
         setIsLoading(false);
       }
     } catch (error) {
-      setApiError(error.message || 'Identifiants invalides ou erreur serveur.');
+      setApiError(error.message || t('auth.serverError', 'Identifiants invalides ou erreur serveur.'));
       setIsLoading(false);
     }
   };
 
   return (
     <AuthLayout
-      rightPaneTitle="LivrExpress Portal"
-      rightPaneDesc="Votre solution complète pour la gestion logistique. Accédez à vos expéditions, suivez vos colis et optimisez vos opérations en quelques clics."
+      docTitle={t('auth.pageTitleLogin', 'Connexion - LivrExpress')}
+      rightPaneTitle={t('auth.portalTitle', 'LivrExpress Portal')}
+      rightPaneDesc={t('auth.portalDesc', 'Votre solution complète pour la gestion logistique. Accédez à vos expéditions, suivez vos colis et optimisez vos opérations en quelques clics.')}
     >
       <form onSubmit={handleLoginSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="sign_in_form">
         
@@ -60,9 +63,9 @@ export default function LoginPage({ navigate }) {
           <div className="flex justify-center mb-4">
             <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
           </div>
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Espace des clients</h3>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">{t('auth.clientSpace', 'Espace des clients')}</h3>
           <div className="flex items-center justify-center font-medium">
-            <span className="text-sm text-secondary-foreground me-1.5">Pas encore de compte ?</span>
+            <span className="text-sm text-secondary-foreground me-1.5">{t('auth.noAccountYet', 'Pas encore de compte ?')}</span>
             <a 
               className="text-sm kt-link auth-link-custom cursor-pointer" 
               href="/register"
@@ -71,7 +74,7 @@ export default function LoginPage({ navigate }) {
                 navigate('/register');
               }}
             >
-              S'inscrire
+              {t('auth.signUp', "S'inscrire")}
             </a>
           </div>
         </div>
@@ -80,7 +83,7 @@ export default function LoginPage({ navigate }) {
         <ApiAlert type="success" message={apiSuccess} />
 
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono" htmlFor="inputUsername">Adresse email</label>
+          <label className="kt-form-label font-normal text-mono" htmlFor="inputUsername">{t('auth.emailAddress', 'Adresse email')}</label>
           <input 
             type="email" 
             value={email}
@@ -89,14 +92,14 @@ export default function LoginPage({ navigate }) {
             className="kt-input" 
             autoComplete="username" 
             required 
-            placeholder="contact@votre-entreprise.com"
+            placeholder={t('auth.emailPlaceholder', 'contact@votre-entreprise.com')}
             disabled={isLoading}
           />
         </div>
         
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-1">
-            <label className="kt-form-label font-normal text-mono" htmlFor="inputPassword">Mot de passe</label>
+            <label className="kt-form-label font-normal text-mono" htmlFor="inputPassword">{t('auth.password', 'Mot de passe')}</label>
             <a 
               className="text-sm kt-link auth-link-custom shrink-0 cursor-pointer" 
               href="/forgot-password"
@@ -105,7 +108,7 @@ export default function LoginPage({ navigate }) {
                 navigate('/forgot-password');
               }}
             >
-              Mot de passe oublié ?
+              {t('auth.forgotPassword', 'Mot de passe oublié ?')}
             </a>
           </div>
           
@@ -126,16 +129,16 @@ export default function LoginPage({ navigate }) {
             onChange={(e) => setRememberMe(e.target.checked)}
             disabled={isLoading}
           />
-          <span className="kt-checkbox-label">Se souvenir de moi</span>
+          <span className="kt-checkbox-label">{t('auth.rememberMe', 'Se souvenir de moi')}</span>
         </label>
         
         <button className="kt-btn kt-btn-primary flex justify-center grow" type="submit" disabled={isLoading}>
-          {isLoading ? 'Connexion en cours...' : 'Connexion'}
+          {isLoading ? t('auth.signingInBtn', 'Connexion en cours...') : t('auth.signInBtn', 'Connexion')}
         </button>
 
         <div className="flex items-center gap-2">
           <span className="border-t border-border w-full"></span>
-          <span className="text-xs text-muted-foreground font-medium uppercase">Ou</span>
+          <span className="text-xs text-muted-foreground font-medium uppercase">{t('auth.or', 'Ou')}</span>
           <span className="border-t border-border w-full"></span>
         </div>
 
@@ -147,8 +150,9 @@ export default function LoginPage({ navigate }) {
             navigate('/login-staff');
           }}
         >
-          Connexion Staff
+          {t('auth.staffSignInBtn', 'Connexion Staff')}
         </a>
+
       </form>
     </AuthLayout>
   );

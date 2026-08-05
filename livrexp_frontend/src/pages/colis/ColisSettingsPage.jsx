@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ColisSettingsPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [fragile, setFragile] = useState(false);
   const [openColis, setOpenColis] = useState(false);
   const [uniqueOrderNumber, setUniqueOrderNumber] = useState(false);
@@ -43,14 +45,14 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
         body: JSON.stringify({ fragile, openColis, uniqueOrderNumber })
       });
       if (response.ok) {
-        const successMsg = 'Paramètres enregistrés avec succès !';
+        const successMsg = t('notifications.settingsSaved', 'Paramètres enregistrés avec succès !');
         if (showNotification) {
           showNotification('success', successMsg);
         } else {
           setMsg(successMsg);
         }
       } else {
-        const demoMsg = 'Paramètres enregistrés !';
+        const demoMsg = t('notifications.settingsSavedShort', 'Paramètres enregistrés !');
         if (showNotification) {
           showNotification('success', demoMsg);
         } else {
@@ -58,7 +60,7 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
         }
       }
     } catch (err) {
-      const demoMsg = 'Paramètres enregistrés !';
+      const demoMsg = t('notifications.settingsSavedShort', 'Paramètres enregistrés !');
       if (showNotification) {
         showNotification('success', demoMsg);
       } else {
@@ -78,10 +80,10 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Paramètres des colis
+                {t('colisPage.settingsTitle', 'Paramètres des colis')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Veuillez choisir vos configurations globales de colis
+                {t('colisPage.settingsSubtitle', 'Configurez vos préférences d\'expédition par défaut.')}
               </div>
             </div>
             <button
@@ -89,7 +91,7 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
               onClick={handleSave}
               disabled={saveLoading || loading}
             >
-              {saveLoading ? 'Enregistrement...' : 'Enregistrer'}
+              {saveLoading ? t('common.loading', 'Enregistrement...') : t('colisPage.saveSettings', 'Enregistrer')}
             </button>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
           <div className="grid grid-cols-1 gap-5 lg:gap-7.5">
             <div className="kt-card">
               <div className="kt-card-header">
-                <h3 className="kt-card-title">Options de colis</h3>
+                <h3 className="kt-card-title">{t('colisPage.settingsTitle', 'Options de colis')}</h3>
               </div>
               <div className="kt-card-content pb-7.5 px-4 sm:px-6">
 
@@ -168,9 +170,9 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
                           </div>
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-mono text-sm font-medium break-words leading-5">Colis fragile</span>
-                          <span className="text-xs text-secondary-foreground">Frais: 5 DH</span>
-                          <span className="text-xs text-secondary-foreground">Marquez vos colis comme fragiles pour une manipulation plus sûre.</span>
+                          <span className="text-mono text-sm font-medium break-words leading-5">{t('colisPage.fragile', 'Colis fragile')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.feeFiveDh', 'Frais: 5 DH')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.defaultFragile', 'Marquez vos colis comme fragiles par défaut.')}</span>
                         </div>
                       </div>
                       <button
@@ -198,9 +200,9 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
                           </div>
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-mono text-sm font-medium break-words leading-5">Ouvrir Le Colis</span>
-                          <span className="text-xs text-secondary-foreground">Gratuit</span>
-                          <span className="text-xs text-secondary-foreground">Décidez si vous souhaitez que les clients finaux ouvrent vos colis ou non.</span>
+                          <span className="text-mono text-sm font-medium break-words leading-5">{t('colisPage.packageOption', 'Ouvrir Le Colis')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.freeFee', 'Gratuit')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.defaultOpen', 'Autoriser l\'ouverture du colis à la livraison par défaut.')}</span>
                         </div>
                       </div>
                       <button
@@ -228,9 +230,9 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
                           </div>
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-mono text-sm font-medium break-words leading-5">Numéro de commande unique</span>
-                          <span className="text-xs text-secondary-foreground">Gratuit</span>
-                          <span className="text-xs text-secondary-foreground">Laissez le système vous aider à gérer votre numéro de commande unique.</span>
+                          <span className="text-mono text-sm font-medium break-words leading-5">{t('colisPage.uniqueOrderNumber', 'Exiger un numéro de commande unique')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.freeFee', 'Gratuit')}</span>
+                          <span className="text-xs text-secondary-foreground">{t('colisPage.uniqueOrderDesc', 'Laissez le système vous aider à gérer votre numéro de commande unique.')}</span>
                         </div>
                       </div>
                       <button
@@ -256,3 +258,4 @@ export default function ColisSettingsPage({ navigate, showNotification }) {
     </DashboardLayout>
   );
 }
+

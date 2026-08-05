@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import SafeAvatar from '../../components/ui/SafeAvatar';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ClientListPage({ navigate, showNotification }) {
+  const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,15 +100,15 @@ export default function ClientListPage({ navigate, showNotification }) {
       businessName: 'Electro Rabat',
       fullName: 'Omar Bennani',
       email: 'omar@electrorabat.ma',
-      phone: '0612345678',
+      phone: '0611223344',
       city: 'Rabat',
-      ice: '00448102900012',
+      ice: '00492810200012',
       colisCount: 210,
-      tarifSameCity: 28.00,
-      tarifOtherCity: 38.00,
-      tarifReturn: 10.00,
+      tarifSameCity: 25.00,
+      tarifOtherCity: 35.00,
+      tarifReturn: 12.00,
       creditLimit: 15000.00,
-      currentBalance: 4120.00,
+      currentBalance: 12400.00,
       isCreditExceeded: false,
       contractRef: 'CTR-2026-0004',
       contractStatus: 'ACTIF',
@@ -115,7 +117,7 @@ export default function ClientListPage({ navigate, showNotification }) {
     }
   ];
 
-  const loadData = useCallback(async () => {
+  const fetchClients = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -125,7 +127,6 @@ export default function ClientListPage({ navigate, showNotification }) {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
-
       if (res.ok) {
         const data = await res.json();
         if (data.clients && data.clients.length > 0) {
@@ -136,7 +137,8 @@ export default function ClientListPage({ navigate, showNotification }) {
       } else {
         setClients(DEFAULT_CLIENTS);
       }
-    } catch {
+    } catch (err) {
+      console.error('Erreur chargement clients:', err);
       setClients(DEFAULT_CLIENTS);
     } finally {
       setLoading(false);
@@ -144,68 +146,46 @@ export default function ClientListPage({ navigate, showNotification }) {
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    fetchClients();
+  }, [fetchClients]);
 
-  // Cities filter list
-  const cities = [...new Set(clients.map(c => c.city).filter(Boolean))].sort();
-  const cityOptions = [{ value: '', label: 'Toutes les villes' }, ...cities.map(c => ({ value: c, label: c }))];
-  const statutOptions = [
-    { value: '', label: 'Tous les statuts' },
-    { value: 'ACTIF', label: 'Actif' },
-    { value: 'SUSPENDU', label: 'Suspendu' },
-    { value: 'EN_ATTENTE', label: 'En attente' }
-  ];
-
-  const filtered = clients.filter(c => {
-    const q = search.toLowerCase();
-    return (!search || [c.businessName, c.fullName, c.email, c.phone, c.ice, c.city].some(v => v?.toLowerCase().includes(q)))
-      && (!filterCity || c.city === filterCity)
-      && (!filterStatut || c.status === filterStatut);
-  });
-
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
-
-  const handleReset = () => {
-    setSearch('');
-    setFilterCity('');
-    setFilterStatut('');
-    setCurrentPage(1);
-  };
-
-  const handleToggleStatus = async (client) => {
-    const newStatus = client.status === 'ACTIF' ? 'SUSPENDU' : 'ACTIF';
-    setClients(prev => prev.map(c => c.id === client.id ? { ...c, status: newStatus } : c));
+  // Handle Toggle Status (Active / Suspendu)
+  const handleToggleStatus = async (clientItem) => {
+    const newStatus = clientItem.status === 'ACTIF' ? 'INACTIF' : 'ACTIF';
+    setClients(prev => prev.map(c => c.id === clientItem.id ? { ...c, status: newStatus } : c));
 
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch(`/api/clients/${client.id}/toggle-status`, {
+      await fetch(`/api/clients/${clientItem.id}/toggle-status`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
+        },
+        body: JSON.stringify({ status: newStatus })
       });
     } catch (err) {
-      console.error('Erreur status client:', err);
+      console.error('Erreur toggle statut client:', err);
     }
 
     if (showNotification) {
-      showNotification('success', `Compte client ${client.businessName} ${newStatus === 'ACTIF' ? 'activé' : 'suspendu'} avec succès !`);
+      showNotification('success', `Statut du client "${clientItem.businessName}" mis à jour avec succès !`);
     }
   };
 
-  const handleCreateClient = (e) => {
+  // Handle Create Client Form Submit
+  const handleCreateClient = async (e) => {
     e.preventDefault();
-    const newClientObj = {
-      id: Date.now(),
-      businessName: newClientForm.businessName || 'Nouvelle Boutique',
-      fullName: newClientForm.fullName || 'Client Express',
+    const newId = clients.length + 1;
+    const newObj = {
+      id: newId,
+      businessName: newClientForm.businessName,
+      fullName: newClientForm.fullName,
       email: newClientForm.email,
-      phone: newClientForm.phone || '0600000000',
-      city: newClientForm.city || 'Casablanca',
-      ice: newClientForm.ice || '-',
+      phone: newClientForm.phone,
+      city: newClientForm.city,
+      ice: newClientForm.ice || '00000000000000',
       colisCount: 0,
       tarifSameCity: parseFloat(newClientForm.tarifSameCity) || 35.00,
       tarifOtherCity: parseFloat(newClientForm.tarifOtherCity) || 45.00,
@@ -213,389 +193,214 @@ export default function ClientListPage({ navigate, showNotification }) {
       creditLimit: parseFloat(newClientForm.creditLimit) || 5000.00,
       currentBalance: 0.00,
       isCreditExceeded: false,
-      contractRef: `CTR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      contractRef: `CTR-2026-000${newId}`,
       contractStatus: 'ACTIF',
       contractDate: new Date().toLocaleDateString('fr-FR'),
       status: 'ACTIF'
     };
 
-    setClients(prev => [newClientObj, ...prev]);
+    setClients([newObj, ...clients]);
     setIsNewClientModalOpen(false);
 
-    if (showNotification) {
-      showNotification('success', `Compte client ${newClientObj.businessName} créé avec succès !`);
+    try {
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/clients/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(newClientForm)
+      });
+    } catch (err) {
+      console.error('Erreur création client API:', err);
     }
+
+    if (showNotification) {
+      const msg = t('clients.clientCreatedSuccess', `Client "${newClientForm.businessName}" créé avec succès !`).replace('{name}', newClientForm.businessName);
+      showNotification('success', msg);
+    }
+
+    // Reset Form
+    setNewClientForm({
+      businessName: '',
+      fullName: '',
+      email: '',
+      phone: '',
+      city: 'Casablanca',
+      ice: '',
+      creditLimit: 5000,
+      tarifSameCity: 35,
+      tarifOtherCity: 45,
+      tarifReturn: 15
+    });
   };
 
-  const handlePrintContract = (client) => {
+  // Service Contract PDF Generator
+  const handlePrintContract = (c) => {
     const printWin = window.open('', '_blank', 'width=950,height=1000');
     if (!printWin) return;
 
-    const todayDate = new Date().toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
+    const isEn = language === 'en';
 
     printWin.document.write(`
       <!DOCTYPE html>
-      <html lang="fr">
+      <html>
       <head>
-        <meta charset="UTF-8">
-        <title>Contrat de Service Logistique - ${client.businessName}</title>
+        <title>${isEn ? 'Logistics Service Contract' : 'Contrat de Prestation Logistique'} - ${c.businessName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-          
-          @page {
-            size: A4;
-            margin: 15mm;
-          }
-
-          * { box-sizing: border-box; }
-          
-          body {
-            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-            color: #0f172a;
-            background: #ffffff;
-            line-height: 1.5;
-            padding: 30px;
-            margin: 0;
-            font-size: 13px;
-          }
-
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 18px;
-            margin-bottom: 24px;
-          }
-
-          .brand {
-            display: flex;
-            flex-direction: column;
-          }
-
-          .logo-text {
-            font-size: 28px;
-            font-weight: 800;
-            color: #2563eb;
-            letter-spacing: -0.5px;
-          }
-
-          .logo-text span { color: #0f172a; }
-
-          .company-sub {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 500;
-            margin-top: 2px;
-          }
-
-          .contract-badge-box {
-            text-align: right;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 10px 16px;
-            border-radius: 8px;
-          }
-
-          .contract-title-h1 {
-            font-size: 14px;
-            font-weight: 800;
-            color: #1e293b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 0 0 4px 0;
-          }
-
-          .contract-ref {
-            font-family: monospace;
-            font-size: 12px;
-            color: #2563eb;
-            font-weight: 700;
-          }
-
-          .section-title {
-            font-size: 12px;
-            font-weight: 800;
-            color: #2563eb;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-left: 3px solid #2563eb;
-            padding-left: 10px;
-            margin: 22px 0 10px 0;
-          }
-
-          .parties-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 20px;
-          }
-
-          .party-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 14px 16px;
-          }
-
-          .party-header {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 4px;
-          }
-
-          .party-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 4px;
-          }
-
-          .party-detail {
-            font-size: 12px;
-            color: #475569;
-            margin-top: 2px;
-          }
-
-          .pricing-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0 20px 0;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-          }
-
-          .pricing-table th {
-            background: #0f172a;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            text-align: left;
-            padding: 10px 14px;
-          }
-
-          .pricing-table td {
-            padding: 11px 14px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 12.5px;
-          }
-
-          .pricing-table tr:nth-child(even) {
-            background-color: #f8fafc;
-          }
-
-          .price-tag {
-            font-weight: 800;
-            color: #2563eb;
-          }
-
-          .article-text {
-            font-size: 12px;
-            color: #334155;
-            text-align: justify;
-            margin-bottom: 10px;
-          }
-
-          .highlight-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin: 16px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          }
-
-          .signatures-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 35px;
-            page-break-inside: avoid;
-          }
-
-          .signature-box {
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            padding: 16px;
-            min-height: 130px;
-            display: flex;
-            flex-direction: column;
-            justify-content: justify-between;
-            background: #fafafa;
-          }
-
-          .signature-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #475569;
-            text-transform: uppercase;
-          }
-
-          .signature-stamp-area {
-            font-size: 11px;
-            color: #94a3b8;
-            font-style: italic;
-            margin-top: 40px;
-            text-align: center;
-          }
-
-          .footer-legal {
-            margin-top: 30px;
-            padding-top: 14px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 10px;
-            color: #94a3b8;
-            text-align: center;
-            line-height: 1.4;
-          }
-
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; background-color: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ef4444; padding-bottom: 20px; margin-bottom: 30px; }
+          .brand { font-size: 28px; font-weight: 800; color: #ef4444; letter-spacing: -0.5px; }
+          .contract-title { font-size: 18px; font-weight: 700; text-align: right; color: #0f172a; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+          .meta-box h4 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #64748b; }
+          .terms { font-size: 13px; color: #334155; margin-bottom: 30px; text-align: justify; }
+          .terms h3 { font-size: 15px; color: #0f172a; margin-top: 20px; }
+          .pricing-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .pricing-table th { background: #1e293b; color: white; padding: 10px; text-align: left; font-size: 13px; }
+          .pricing-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px; }
+          .sig-box { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 20px; height: 120px; text-align: center; }
+          .sig-box strong { display: block; font-size: 14px; color: #475569; margin-bottom: 5px; }
+          .sig-box em { font-size: 12px; color: #94a3b8; }
+          .footer { margin-top: 50px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; }
         </style>
       </head>
       <body>
-
-        <!-- Header -->
         <div class="header">
-          <div class="brand">
-            <div class="logo-text">Livr<span>Express</span></div>
-            <div class="company-sub">LivrExpress S.A.R.L • Transport, Messagerie & Logistique e-Commerce</div>
-          </div>
-          <div class="contract-badge-box">
-            <div class="contract-title-h1">Contrat Cadre de Service</div>
-            <div class="contract-ref">Réf: ${client.contractRef}</div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Date d'effet : ${todayDate}</div>
-          </div>
-        </div>
-
-        <!-- Section 1: Parties -->
-        <div class="section-title">Article 1 — Identification des Parties Contracting</div>
-        <div class="parties-grid">
-          <div class="party-card">
-            <div class="party-header">Le Prestataire</div>
-            <div class="party-name">LivrExpress S.A.R.L AU</div>
-            <div class="party-detail"><strong>Siège Social:</strong> Bd d'Anfa, Casablanca, Maroc</div>
-            <div class="party-detail"><strong>RC:</strong> 482910 | <strong>ICE:</strong> 00192830100029</div>
-            <div class="party-detail"><strong>Service Client:</strong> support@livrexpress.ma | 0522-001122</div>
-          </div>
-
-          <div class="party-card">
-            <div class="party-header">Le Client (Partenaire e-Commerce)</div>
-            <div class="party-name">${client.businessName}</div>
-            <div class="party-detail"><strong>Représenté par:</strong> ${client.fullName}</div>
-            <div class="party-detail"><strong>Ville:</strong> ${client.city} | <strong>Tél:</strong> ${client.phone}</div>
-            <div class="party-detail"><strong>Email:</strong> ${client.email}</div>
-            <div class="party-detail"><strong>N° ICE / IF:</strong> ${client.ice || 'Non renseigné'}</div>
-          </div>
-        </div>
-
-        <!-- Section 2: Objet -->
-        <div class="section-title">Article 2 — Objet & Périmètre d'Intervention</div>
-        <div class="article-text">
-          Le présent contrat a pour objet de définir les conditions organisationnelles, juridiques et financières dans lesquelles la société <strong>LivrExpress S.A.R.L</strong> assure pour le compte de <strong>${client.businessName}</strong> les prestations de ramassage, d'expédition, de suivi digitalisé, de livraison au destinataire final ainsi que l'encaissement des montants en Contre-Remboursement (CRBT).
-        </div>
-
-        <!-- Section 3: Grille Tarifaire -->
-        <div class="section-title">Article 3 — Conditions Financières & Grille Tarifaire</div>
-        <table class="pricing-table">
-          <thead>
-            <tr>
-              <th>Nature de la Prestation</th>
-              <th>Couverture Géographique</th>
-              <th>Délai Garanti</th>
-              <th>Tarif Négocié HT</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Livraison Urbaine Locale</strong></td>
-              <td>Même ville (${client.city})</td>
-              <td>24 Heures</td>
-              <td class="price-tag">${client.tarifSameCity.toFixed(2)} MAD</td>
-            </tr>
-            <tr>
-              <td><strong>Livraison Nationale Inter-Villes</strong></td>
-              <td>Toutes les villes du Royaume</td>
-              <td>24h - 48h</td>
-              <td class="price-tag">${client.tarifOtherCity.toFixed(2)} MAD</td>
-            </tr>
-            <tr>
-              <td><strong>Gestion Colis Refusé / Retour</strong></td>
-              <td>Retour à l'expédition Client</td>
-              <td>72h max</td>
-              <td class="price-tag">${client.tarifReturn.toFixed(2)} MAD</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Section 4: Cash-on-Delivery -->
-        <div class="section-title">Article 4 — Reversement des Fonds (CRBT) & Réconciliation</div>
-        <div class="article-text">
-          Les fonds collectés auprès des destinataires finaux au titre des livraisons payées en espèces sont sécurisés par LivrExpress. Le reversement s'effectue hebdomadairement par virement bancaire sur le compte indiqué par le Client, déduction faite des frais de transport négociés. Un état de réconciliation comptable automatique est mis à disposition sur la plateforme.
-        </div>
-
-        <!-- Highlight Box Credit -->
-        <div class="highlight-box">
           <div>
-            <div style="font-weight: 700; color: #1e3a8a;">Plafond d'Encours & Crédit Autorisé</div>
-            <div style="font-size: 11.5px; color: #1e40af;">Conformément à la politique d'analyse des risques LivrExpress.</div>
+            <div class="brand">LivrExpress</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">${isEn ? 'National Transport & Logistics Network' : 'Réseau National de Transport & Logistique Maroc'}</div>
           </div>
-          <div style="font-size: 16px; font-weight: 800; color: #1d4ed8; font-family: monospace;">
-            ${client.creditLimit.toFixed(2)} MAD
-          </div>
-        </div>
-
-        <!-- Section 5: Durée & Signatures -->
-        <div class="section-title">Article 5 — Durée & Prise d'Effet</div>
-        <div class="article-text">
-          Le présent contrat est conclu pour une durée indéterminée à compter de sa signature. Il peut être résilié par l'une ou l'autre des parties sous réserve d'un préavis écrit de trente (30) jours.
-        </div>
-
-        <!-- Signatures -->
-        <div class="signatures-container">
-          <div class="signature-box">
-            <div class="signature-title">Pour le Client : ${client.businessName}</div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Mention manuscrite "Lu et approuvé"</div>
-            <div class="signature-stamp-area">Signature & Cachet Officiel</div>
-          </div>
-
-          <div class="signature-box" style="border-color: #93c5fd; background: #f0f9ff;">
-            <div class="signature-title" style="color: #1e40af;">Pour LivrExpress S.A.R.L :</div>
-            <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">La Direction Commerciale & Logistique</div>
-            <div class="signature-stamp-area" style="color: #2563eb;">Signature Électronique Certifiée</div>
+          <div class="contract-title">
+            ${isEn ? 'LOGISTICS SERVICE CONTRACT' : 'CONTRAT DE PRESTATION LOGISTIQUE'}
+            <div style="font-size: 13px; font-weight: 500; color: #64748b; margin-top: 4px;">${isEn ? 'Ref:' : 'Réf:'} ${c.contractRef || 'CTR-2026-0001'}</div>
           </div>
         </div>
 
-        <!-- Footer Legal -->
-        <div class="footer-legal">
-          LivrExpress S.A.R.L AU — Capitale Social: 1.000.000 DH — Registre de Commerce: N° 482910 Casablanca — ICE: 00192830100029<br/>
-          Ce document constitue une convention légale régie par le droit commercial marocain.
+        <div class="meta-grid">
+          <div class="meta-box">
+            <h4>${isEn ? 'PARTNER CLIENT (STORE)' : 'CLIENT PARTENAIRE (BOUTIQUE)'}</h4>
+            <div><strong>Raison Sociale :</strong> ${c.businessName}</div>
+            <div><strong>Représentant :</strong> ${c.fullName}</div>
+            <div><strong>Email :</strong> ${c.email}</div>
+            <div><strong>Téléphone :</strong> ${c.phone}</div>
+            <div><strong>Ville :</strong> ${c.city}</div>
+            <div><strong>ICE :</strong> ${c.ice || '00000000000000'}</div>
+          </div>
+          <div class="meta-box">
+            <h4>${isEn ? 'CARRIER PROVIDER' : 'PRESTATAIRE TRANSPORTEUR'}</h4>
+            <div><strong>Société :</strong> LivrExpress S.A.R.L</div>
+            <div><strong>Siège Social :</strong> Bd Zerktouni, Casablanca</div>
+            <div><strong>ICE :</strong> 002948102000049</div>
+            <div><strong>RC :</strong> 49201 Casablanca</div>
+            <div><strong>Date de Contrat :</strong> ${c.contractDate || '10/01/2026'}</div>
+            <div><strong>Statut :</strong> <span style="color: #16a34a; font-weight: bold;">${c.contractStatus || 'ACTIF'}</span></div>
+          </div>
+        </div>
+
+        <div class="terms">
+          <h3>${isEn ? 'Article 1 — Purpose of the Contract' : 'Article 1 — Objet du contrat'}</h3>
+          <p>${isEn ? 'This contract defines the technical, operational and financial conditions under which LivrExpress carries out parcel collection, dispatch, delivery and cash-on-delivery (COD) collection services on behalf of the client store.' : 'Le présent contrat a pour objet de définir les conditions techniques, opérationnelles et financières selon lesquelles la société LivrExpress assure la collecte, le dispatching, la livraison et le recouvrement des montants CRBT des colis pour le compte de la boutique cliente.'}</p>
+
+          <h3>${isEn ? 'Article 2 — Tariff Terms & Delivery Conditions' : 'Article 2 — Grille Tarifaire & Conditions de Livraison'}</h3>
+          <table class="pricing-table">
+            <thead>
+              <tr>
+                <th>${isEn ? 'Service Type' : 'Type de Prestation'}</th>
+                <th>${isEn ? 'Geographic Coverage' : 'Zone Géographique'}</th>
+                <th>${isEn ? 'Unit Rate (Excl. Tax)' : 'Tarif Unitaire (HT)'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${isEn ? 'Same City Delivery' : 'Livraison Urbaine (Même ville)'}</td>
+                <td>${c.city}</td>
+                <td><strong>${(c.tarifSameCity || 35.00).toFixed(2)} MAD</strong></td>
+              </tr>
+              <tr>
+                <td>${isEn ? 'Inter-city National Delivery' : 'Livraison Inter-villes (National)'}</td>
+                <td>${isEn ? 'All Morocco Cities' : 'Toutes villes du Maroc'}</td>
+                <td><strong>${(c.tarifOtherCity || 45.00).toFixed(2)} MAD</strong></td>
+              </tr>
+              <tr>
+                <td>${isEn ? 'Returned Parcel Processing' : 'Traitement Colis Retourné'}</td>
+                <td>${isEn ? 'National Network' : 'Réseau National'}</td>
+                <td><strong>${(c.tarifReturn || 15.00).toFixed(2)} MAD</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>${isEn ? 'Article 3 — Credit Limit & Payment Conditions' : 'Article 3 — Plafond de Crédit & Délais de Virement'}</h3>
+          <p>${isEn ? 'A maximum credit limit of' : 'Un plafond de crédit maximal de'} <strong>${(c.creditLimit || 5000.00).toFixed(2)} MAD</strong> ${isEn ? 'is granted to the merchant. Cash on delivery funds (COD) are transferred to the client account via bank transfer twice weekly after delivery validation.' : 'est accordé au commerçant. Les montants des encaissés (CRBT) sont reversés au compte client par virement bancaire 2 fois par semaine après validation de la livraison.'}</p>
+        </div>
+
+        <div class="signatures">
+          <div class="sig-box">
+            <strong>${isEn ? 'For LivrExpress SARL' : 'Pour la Société LivrExpress SARL'}</strong>
+            <em>${isEn ? 'Signature & Commercial Stamp' : 'Signature & Cachet Commercial'}</em>
+          </div>
+          <div class="sig-box">
+            <strong>${isEn ? 'For Client Store' : 'Pour la Boutique Cliente'} ${c.businessName}</strong>
+            <em>${isEn ? 'Signature & Approval "Read and Approved"' : 'Signature & Mention « Lu et Approuvé »'}</em>
+          </div>
+        </div>
+
+        <div class="footer">
+          LivrExpress S.A.R.L - Capital: 100.000 MAD - RC 49201 Casablanca - IF 4920192 - ICE 002948102000049
         </div>
 
         <script>
           window.onload = function() {
-            setTimeout(function() { window.print(); }, 400);
+            setTimeout(function() { window.print(); }, 300);
           };
         </script>
       </body>
       </html>
     `);
     printWin.document.close();
+  };
+
+  // Filter Logic
+  const filtered = clients.filter(c => {
+    const matchesSearch = search === '' ||
+      (c.businessName && c.businessName.toLowerCase().includes(search.toLowerCase())) ||
+      (c.fullName && c.fullName.toLowerCase().includes(search.toLowerCase())) ||
+      (c.phone && c.phone.includes(search)) ||
+      (c.city && c.city.toLowerCase().includes(search.toLowerCase()));
+
+    const matchesCity = filterCity === '' || c.city === filterCity;
+    const matchesStatut = filterStatut === '' || c.status === filterStatut;
+
+    return matchesSearch && matchesCity && matchesStatut;
+  });
+
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  const cityOptions = [
+    { value: '', label: t('clients.allCities', 'Toutes les villes') },
+    { value: 'Casablanca', label: 'Casablanca' },
+    { value: 'Rabat', label: 'Rabat' },
+    { value: 'Marrakech', label: 'Marrakech' },
+    { value: 'Tanger', label: 'Tanger' },
+    { value: 'Agadir', label: 'Agadir' },
+    { value: 'Fès', label: 'Fès' }
+  ];
+
+  const statutOptions = [
+    { value: '', label: t('clients.allStatuses', 'Tous les statuts') },
+    { value: 'ACTIF', label: t('clients.statusActive', 'Actif') },
+    { value: 'INACTIF', label: t('clients.statusSuspended', 'Suspendu') }
+  ];
+
+  const handleReset = () => {
+    setSearch('');
+    setFilterCity('');
+    setFilterStatut('');
+    setCurrentPage(1);
   };
 
   const handleExportCsv = () => {
@@ -612,7 +417,7 @@ export default function ClientListPage({ navigate, showNotification }) {
     document.body.removeChild(link);
 
     if (showNotification) {
-      showNotification('success', 'Export des clients CSV téléchargé avec succès !');
+      showNotification('success', t('clients.exportSuccess', 'Export des clients CSV téléchargé avec succès !'));
     }
   };
 
@@ -636,15 +441,15 @@ export default function ClientListPage({ navigate, showNotification }) {
     <DashboardLayout activeMenu="clients">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
-        {/* Page Header (Matching App Design) */}
+        {/* Page Header */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Gestion des Clients</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('clients.title', 'Gestion des Clients')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total:</span>
-                <span className="text-base text-foreground font-medium me-2">{filtered.length} client{filtered.length !== 1 ? 's' : ''}</span>
-                <span className="text-base text-secondary-foreground">Actifs:</span>
+                <span className="text-base text-secondary-foreground">{t('clients.total', 'Total :')}</span>
+                <span className="text-base text-foreground font-medium me-2">{filtered.length} {t('clients.clients', 'clients')}</span>
+                <span className="text-base text-secondary-foreground">{t('clients.activeCount', 'Actifs :')}</span>
                 <span className="text-base text-foreground font-medium me-2">{clients.filter(c => c.status === 'ACTIF').length}</span>
               </div>
             </div>
@@ -655,20 +460,20 @@ export default function ClientListPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-outline cursor-pointer"
                 onClick={handleExportCsv}
               >
-                <i className="ki-filled ki-file-down text-base me-1" /> Export CSV
+                <i className="ki-filled ki-file-down text-base me-1" /> {t('clients.exportCsv', 'Export CSV')}
               </button>
               <button
                 type="button"
                 className="kt-btn kt-btn-primary cursor-pointer"
                 onClick={() => setIsNewClientModalOpen(true)}
               >
-                Ajouter un client
+                {t('clients.addClient', 'Ajouter un client')}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Table Container (Matching App Design) */}
+        {/* Table Container */}
         <div className="kt-container-fixed">
           <div className="grid gap-5 lg:gap-7.5">
             <div className="kt-card kt-card-grid min-w-full">
@@ -676,7 +481,7 @@ export default function ClientListPage({ navigate, showNotification }) {
               {/* Card Header & Filters */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {filtered.length} client{filtered.length !== 1 ? 's' : ''}
+                  {t('clients.showingCount', 'Affichage de')} {filtered.length} {t('clients.clientsCount', 'client(s)')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -685,7 +490,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                       <input
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        placeholder="Rechercher un client ou boutique"
+                        placeholder={t('clients.searchPlaceholder', 'Rechercher un client ou boutique...')}
                         type="text"
                       />
                     </label>
@@ -694,19 +499,19 @@ export default function ClientListPage({ navigate, showNotification }) {
                     <KtSelect
                       value={filterCity}
                       onChange={(val) => { setFilterCity(val); setCurrentPage(1); }}
-                      placeholder="Ville"
+                      placeholder={t('clients.allCities', 'Toutes les villes')}
                       className="w-40"
                       options={cityOptions}
                     />
                     <KtSelect
                       value={filterStatut}
                       onChange={(val) => { setFilterStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
+                      placeholder={t('clients.allStatuses', 'Tous les statuts')}
                       className="w-40"
                       options={statutOptions}
                     />
                     <button className="kt-btn kt-btn-outline" onClick={handleReset}>
-                      Réinitialiser
+                      {t('clients.resetBtn', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -720,25 +525,25 @@ export default function ClientListPage({ navigate, showNotification }) {
                       <thead>
                         <tr>
                           <th className="min-w-[200px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Boutique / Client</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colStoreClient', 'Boutique / Client')}</span></span>
                           </th>
                           <th className="min-w-[130px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Ville</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colCity', 'Ville')}</span></span>
                           </th>
                           <th className="min-w-[150px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Tarif Livraison</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colRate', 'Tarif Livraison')}</span></span>
                           </th>
                           <th className="min-w-[150px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Solde & Crédit</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colBalanceCredit', 'Solde & Crédit')}</span></span>
                           </th>
                           <th className="min-w-[120px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Contrat</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colContract', 'Contrat')}</span></span>
                           </th>
                           <th className="min-w-[110px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Statut</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colStatus', 'Statut')}</span></span>
                           </th>
                           <th className="min-w-[160px] text-right">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Actions</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('clients.colActions', 'Actions')}</span></span>
                           </th>
                         </tr>
                       </thead>
@@ -778,20 +583,20 @@ export default function ClientListPage({ navigate, showNotification }) {
                                 {/* Tarif Livraison */}
                                 <td>
                                   <div className="flex flex-col text-xs">
-                                    <span className="font-semibold text-primary">Même ville: {c.tarifSameCity.toFixed(2)} MAD</span>
-                                    <span className="text-secondary-foreground">National: {c.tarifOtherCity.toFixed(2)} MAD</span>
+                                    <span className="font-semibold text-primary">{t('clients.sameCity', 'Même ville :')} {c.tarifSameCity.toFixed(2)} MAD</span>
+                                    <span className="text-secondary-foreground">{t('clients.national', 'National :')} {c.tarifOtherCity.toFixed(2)} MAD</span>
                                   </div>
                                 </td>
 
                                 {/* Solde & Crédit */}
                                 <td>
                                   <div className="flex flex-col text-xs">
-                                    <span className="font-bold text-foreground">Solde: {c.currentBalance.toFixed(2)} MAD</span>
-                                    <span className="text-secondary-foreground">Plafond: {c.creditLimit.toFixed(2)} MAD</span>
+                                    <span className="font-bold text-foreground">{t('clients.balance', 'Solde :')} {c.currentBalance.toFixed(2)} MAD</span>
+                                    <span className="text-secondary-foreground">{t('clients.limit', 'Plafond :')} {c.creditLimit.toFixed(2)} MAD</span>
                                     {isExceeded && (
                                       <span className="text-[10px] font-bold text-destructive mt-0.5 flex items-center gap-1">
                                         <i className="ki-solid ki-shield-cross text-xs" />
-                                        Crédit Dépassé
+                                        {t('clients.creditExceeded', 'Crédit Dépassé')}
                                       </span>
                                     )}
                                   </div>
@@ -801,7 +606,9 @@ export default function ClientListPage({ navigate, showNotification }) {
                                 <td>
                                   <div className="flex flex-col text-xs">
                                     <span className="font-mono text-foreground font-medium">{c.contractRef}</span>
-                                    <span className={`font-medium ${c.contractStatus === 'ACTIF' ? 'text-success' : 'text-warning'}`}>{c.contractStatus}</span>
+                                    <span className={`font-medium ${c.contractStatus === 'ACTIF' ? 'text-success' : 'text-warning'}`}>
+                                      {c.contractStatus === 'ACTIF' ? t('clients.contractStatusActive', 'ACTIF') : c.contractStatus === 'NEGOCIATION' ? t('clients.contractStatusNegotiation', 'NÉGOCIATION') : (c.contractStatus || t('clients.contractStatusUnspecified', 'NON SPÉCIFIÉ'))}
+                                    </span>
                                   </div>
                                 </td>
 
@@ -809,7 +616,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                                 <td>
                                   <span className={`kt-badge ${c.status === 'ACTIF' ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline rounded-[30px]`}>
                                     <span className="kt-badge-dot size-1.5" />
-                                    {c.status === 'ACTIF' ? 'Actif' : 'Suspendu'}
+                                    {c.status === 'ACTIF' ? t('clients.statusActive', 'Actif') : t('clients.statusSuspended', 'Suspendu')}
                                   </span>
                                 </td>
 
@@ -820,10 +627,10 @@ export default function ClientListPage({ navigate, showNotification }) {
                                       type="button"
                                       onClick={() => handlePrintContract(c)}
                                       className="kt-btn kt-btn-xs kt-btn-outline cursor-pointer"
-                                      title="Contrat de service PDF"
+                                      title={t('clients.contractPdf', 'Contrat')}
                                     >
                                       <i className="ki-filled ki-document text-xs me-1" />
-                                      Contrat
+                                      {t('clients.contractPdf', 'Contrat')}
                                     </button>
 
                                     <button
@@ -831,7 +638,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                                       onClick={() => handleToggleStatus(c)}
                                       className={`kt-btn kt-btn-xs ${c.status === 'ACTIF' ? 'kt-btn-outline' : 'kt-btn-primary'} cursor-pointer`}
                                     >
-                                      {c.status === 'ACTIF' ? 'Désactiver' : 'Activer'}
+                                      {c.status === 'ACTIF' ? t('clients.deactivate', 'Désactiver') : t('clients.activate', 'Activer')}
                                     </button>
                                   </div>
                                 </td>
@@ -841,7 +648,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                         ) : (
                           <tr>
                             <td colSpan={7} className="py-8 text-center text-secondary-foreground">
-                              Aucun client correspondant
+                              {t('clients.noClientFound', 'Aucun client correspondant')}
                             </td>
                           </tr>
                         )}
@@ -852,24 +659,24 @@ export default function ClientListPage({ navigate, showNotification }) {
                   {/* Pagination Footer */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('clients.show', 'Afficher')}
                       <KtSelect
                         value={String(perPage)}
                         onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                         className="w-16"
                         options={[{ value: '5', label: '5' }, { value: '10', label: '10' }, { value: '20', label: '20' }]}
                       />
-                      par page
+                      {t('clients.perPage', 'par page')}
                     </div>
                     <div className="flex items-center gap-4 order-1 md:order-2">
                       <span>
-                        Affichage de {Math.min(filtered.length, (currentPage - 1) * perPage + 1)} à {Math.min(filtered.length, currentPage * perPage)} sur {filtered.length} clients
+                        {t('clients.showing', 'Affichage de')} {filtered.length === 0 ? 0 : Math.min(filtered.length, (currentPage - 1) * perPage + 1)} {t('clients.to', 'à')} {Math.min(filtered.length, currentPage * perPage)} {t('clients.of', 'sur')} {filtered.length} {t('clients.clients', 'clients')}
                       </span>
                       {totalPages > 1 && (
                         <div className="flex gap-1">
-                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}>Précédent</button>
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}>{t('clients.previous', 'Précédent')}</button>
                           <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
-                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}>Suivant</button>
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}>{t('clients.next', 'Suivant')}</button>
                         </div>
                       )}
                     </div>
@@ -906,7 +713,7 @@ export default function ClientListPage({ navigate, showNotification }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="kt-modal-header">
-                <h3 className="kt-modal-title">Nouveau client</h3>
+                <h3 className="kt-modal-title">{t('clients.newClientModalTitle', 'Nouveau client')}</h3>
                 <button
                   className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0"
                   onClick={() => setIsNewClientModalOpen(false)}
@@ -920,33 +727,35 @@ export default function ClientListPage({ navigate, showNotification }) {
                 <form onSubmit={handleCreateClient} className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Raison Sociale / Boutique</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('clients.businessNameLabel', 'Raison Sociale / Boutique')}</label>
                       <input
                         type="text"
                         required
-                        placeholder="Ex: Casa Chic SARL"
+                        placeholder={t('clients.businessNamePlaceholder', 'Ex: Casa Chic SARL')}
                         className="kt-input"
                         value={newClientForm.businessName}
                         onChange={(e) => setNewClientForm({ ...newClientForm, businessName: e.target.value })}
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Représentant Légal</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ex: Yassine El Amrani"
-                        className="kt-input"
-                        value={newClientForm.fullName}
-                        onChange={(e) => setNewClientForm({ ...newClientForm, fullName: e.target.value })}
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-1.5">
+                        <label className="text-sm font-medium text-mono text-foreground">{t('clients.fullNameLabel', 'Représentant Légal')}</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder={t('clients.fullNamePlaceholder', 'Ex: Yassine El Amrani')}
+                          className="kt-input"
+                          value={newClientForm.fullName}
+                          onChange={(e) => setNewClientForm({ ...newClientForm, fullName: e.target.value })}
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Email Professionnel</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('clients.emailLabel', 'Email Professionnel')}</label>
                       <input
                         type="email"
                         required
@@ -958,7 +767,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                     </div>
 
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Téléphone</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('clients.phoneLabel', 'Téléphone')}</label>
                       <input
                         type="text"
                         required
@@ -972,7 +781,7 @@ export default function ClientListPage({ navigate, showNotification }) {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Ville</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('clients.city', 'Ville')}</label>
                       <select
                         className="kt-input"
                         value={newClientForm.city}
@@ -988,7 +797,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                     </div>
 
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Numéro ICE</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('clients.iceLabel', 'Numéro ICE')}</label>
                       <input
                         type="text"
                         placeholder="00298102000099"
@@ -1000,11 +809,11 @@ export default function ClientListPage({ navigate, showNotification }) {
                   </div>
 
                   <div className="pt-3 border-t border-border mt-1">
-                    <h4 className="text-xs font-bold uppercase text-primary mb-3 me-1">Tarification & Plafond Crédit</h4>
+                    <h4 className="text-xs font-bold uppercase text-primary mb-3 me-1">{t('clients.rateSectionTitle', 'Tarification & Plafond Crédit')}</h4>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="grid grid-cols-1 gap-1.5">
-                        <label className="text-xs font-medium text-mono text-foreground">Même Ville (MAD)</label>
+                        <label className="text-xs font-medium text-mono text-foreground">{t('clients.sameCityRate', 'Même Ville (MAD)')}</label>
                         <input
                           type="number"
                           step="0.5"
@@ -1015,7 +824,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                       </div>
 
                       <div className="grid grid-cols-1 gap-1.5">
-                        <label className="text-xs font-medium text-mono text-foreground">National (MAD)</label>
+                        <label className="text-xs font-medium text-mono text-foreground">{t('clients.nationalRate', 'National (MAD)')}</label>
                         <input
                           type="number"
                           step="0.5"
@@ -1026,7 +835,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                       </div>
 
                       <div className="grid grid-cols-1 gap-1.5">
-                        <label className="text-xs font-medium text-mono text-foreground">Crédit Max (MAD)</label>
+                        <label className="text-xs font-medium text-mono text-foreground">{t('clients.maxCredit', 'Crédit Max (MAD)')}</label>
                         <input
                           type="number"
                           step="500"
@@ -1046,7 +855,7 @@ export default function ClientListPage({ navigate, showNotification }) {
                       style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
                     >
                       <i className="ki-filled ki-magic-wand text-xs me-1" />
-                      Remplir (Test)
+                      {t('clients.fillTest', 'Remplir (Test)')}
                     </button>
 
                     <div className="flex items-center gap-2.5">
@@ -1055,13 +864,13 @@ export default function ClientListPage({ navigate, showNotification }) {
                         onClick={() => setIsNewClientModalOpen(false)}
                         className="kt-btn kt-btn-outline cursor-pointer"
                       >
-                        Annuler
+                        {t('clients.cancel', 'Annuler')}
                       </button>
                       <button
                         type="submit"
                         className="kt-btn kt-btn-primary cursor-pointer"
                       >
-                        Créer le client
+                        {t('clients.createClient', 'Créer le client')}
                       </button>
                     </div>
                   </div>

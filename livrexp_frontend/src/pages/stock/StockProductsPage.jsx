@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function StockProductsPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [products, setProducts]         = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -103,11 +105,11 @@ export default function StockProductsPage({ navigate, showNotification }) {
         }
       });
       if (res.ok) {
-        showNotification('success', 'Produit supprimé avec succès.');
+        showNotification('success', t('stockPage.deleteSuccess', 'Produit supprimé avec succès.'));
         setDeleteProduct(null);
         fetchProducts();
       } else {
-        let errMsg = 'Erreur lors de la suppression.';
+        let errMsg = t('stockPage.deleteError', 'Erreur lors de la suppression.');
         try {
           const err = await res.json();
           errMsg = err.message || errMsg;
@@ -117,7 +119,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
         showNotification('error', errMsg);
       }
     } catch (err) {
-      showNotification('error', 'Erreur de connexion avec le serveur.');
+      showNotification('error', t('stockPage.connectionError', 'Erreur de connexion avec le serveur.'));
     } finally {
       setDeleteLoading(false);
     }
@@ -147,7 +149,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
         })
       });
       if (res.ok) {
-        showNotification('success', 'Demande de ramassage enregistrée avec succès.');
+        showNotification('success', t('stockPage.pickupSuccess', 'Demande de ramassage enregistrée avec succès.'));
         setPickupProduct(null);
         setPickupForm(prev => ({
           ...prev,
@@ -159,10 +161,10 @@ export default function StockProductsPage({ navigate, showNotification }) {
         fetchProducts();
       } else {
         const err = await res.json();
-        showNotification('error', err.message || 'Erreur lors de la demande de ramassage.');
+        showNotification('error', err.message || t('stockPage.pickupError', 'Erreur lors de la demande de ramassage.'));
       }
     } catch (err) {
-      showNotification('error', 'Erreur de connexion avec le serveur.');
+      showNotification('error', t('stockPage.connectionError', 'Erreur de connexion avec le serveur.'));
     } finally {
       setPickupLoading(false);
     }
@@ -217,17 +219,17 @@ export default function StockProductsPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Liste des produits</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('stockPage.productListTitle', 'Liste des produits')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total produits:</span>
+                <span className="text-base text-secondary-foreground">{t('stockPage.totalProducts', 'Total produits')}:</span>
                 <span className="text-base text-foreground font-medium me-2">{totalProducts}</span>
-                <span className="text-base text-secondary-foreground">Quantité totale:</span>
+                <span className="text-base text-secondary-foreground">{t('stockPage.totalQty', 'Quantité totale')}:</span>
                 <span className="text-base text-foreground font-medium">{totalQty}</span>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
               <button className="kt-btn kt-btn-primary" onClick={() => navigate('/stock/produits/new')}>
-                Ajouter un produit
+                {t('stockPage.addProduct', 'Ajouter un produit')}
               </button>
             </div>
           </div>
@@ -238,7 +240,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
           <div className="grid gap-5 lg:gap-7.5">
             <div className="kt-card kt-card-grid min-w-full">
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm">Affichage de {filtered.length} produit(s)</h3>
+                <h3 className="kt-card-title text-sm">{t('stockPage.showingProducts', 'Affichage de')} {filtered.length} {t('stockPage.productsCount', 'produit(s)')}</h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
                     <label className="kt-input">
@@ -246,14 +248,14 @@ export default function StockProductsPage({ navigate, showNotification }) {
                       <input
                         value={searchQuery}
                         onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder="Rechercher un produit"
+                        placeholder={t('stockPage.searchProduct', 'Rechercher un produit')}
                         type="text"
                       />
                     </label>
                   </div>
                   <div className="flex flex-wrap gap-2.5">
                     <button className="kt-btn kt-btn-outline" onClick={() => { setSearchQuery(''); setCurrentPage(1); }}>
-                      Réinitialiser
+                      {t('stockPage.reset', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -265,19 +267,19 @@ export default function StockProductsPage({ navigate, showNotification }) {
                     <table className="kt-table table-auto kt-table-border">
                       <thead>
                         <tr>
-                          <th className="min-w-[90px]"><span className="kt-table-col"><span className="kt-table-col-label">Photo</span></span></th>
-                          <th className="min-w-[220px]"><span className="kt-table-col"><span className="kt-table-col-label">Nom</span></span></th>
-                          <th className="min-w-[160px]"><span className="kt-table-col"><span className="kt-table-col-label">Code-barres</span></span></th>
-                          <th className="min-w-[120px]"><span className="kt-table-col"><span className="kt-table-col-label">Quantité</span></span></th>
-                          <th className="min-w-[160px]"><span className="kt-table-col"><span className="kt-table-col-label">Dernière mise à jour</span></span></th>
-                          <th className="w-[90px] text-center"><span className="kt-table-col"><span className="kt-table-col-label">Actions</span></span></th>
+                          <th className="min-w-[90px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colPhoto', 'Photo')}</span></span></th>
+                          <th className="min-w-[220px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colName', 'Nom')}</span></span></th>
+                          <th className="min-w-[160px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colBarcode', 'Code-barres')}</span></span></th>
+                          <th className="min-w-[120px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colQty', 'Quantité')}</span></span></th>
+                          <th className="min-w-[160px]"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colLastUpdate', 'Dernière mise à jour')}</span></span></th>
+                          <th className="w-[90px] text-center"><span className="kt-table-col"><span className="kt-table-col-label">{t('stockPage.colActions', 'Actions')}</span></span></th>
                         </tr>
                       </thead>
                       <tbody>
                         {loading
                           ? [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
                           : paginated.length === 0
-                            ? <tr><td colSpan={6} className="text-secondary-foreground text-center py-8">Aucun produit trouvé.</td></tr>
+                            ? <tr><td colSpan={6} className="text-secondary-foreground text-center py-8">{t('stockPage.noProductFound', 'Aucun produit trouvé.')}</td></tr>
                             : paginated.map(p => (
                               <tr key={p.id}>
                                 <td>
@@ -360,7 +362,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                             <span className="kt-menu-icon">
                                               <i className="ki-filled ki-pencil"></i>
                                             </span>
-                                            <span className="kt-menu-title">Modifier</span>
+                                            <span className="kt-menu-title">{t('stockPage.actionEdit', 'Modifier')}</span>
                                           </button>
                                         </div>
                                         <div className="kt-menu-item">
@@ -375,7 +377,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                             <span className="kt-menu-icon text-destructive">
                                               <i className="ki-filled ki-trash"></i>
                                             </span>
-                                            <span className="kt-menu-title text-destructive">Supprimer</span>
+                                            <span className="kt-menu-title text-destructive">{t('stockPage.actionDelete', 'Supprimer')}</span>
                                           </button>
                                         </div>
                                         
@@ -389,7 +391,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-delivery-3"></i>
                                               </span>
-                                              <span className="kt-menu-title">Ramassage demandé</span>
+                                              <span className="kt-menu-title">{t('stockPage.actionPickupRequested', 'Ramassage demandé')}</span>
                                             </button>
                                           ) : (
                                             <button
@@ -403,7 +405,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-delivery-3"></i>
                                               </span>
-                                              <span className="kt-menu-title">Ramassage</span>
+                                              <span className="kt-menu-title">{t('stockPage.actionPickup', 'Ramassage')}</span>
                                             </button>
                                           )}
                                         </div>
@@ -413,38 +415,44 @@ export default function StockProductsPage({ navigate, showNotification }) {
                                         <div className="kt-menu-item flex flex-col items-stretch">
                                           {p.variants && p.variants.length > 0 ? (
                                             <>
-                                              <div className="px-2 py-1 text-xs text-secondary-foreground text-left font-medium">Imprimer sticker</div>
+                                              <div className="px-2 py-1 text-xs text-secondary-foreground text-left font-medium">{t('stockPage.actionPrintSticker', 'Imprimer sticker')}</div>
                                               {p.variants.map(v => (
-                                                <a 
+                                                <button 
                                                   key={v.id}
-                                                  href={`/stock/produits/variant/${v.id}/sticker`} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer"
-                                                  className="kt-menu-link w-full"
+                                                  type="button"
+                                                  className="kt-menu-link w-full text-start"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveDropdownId(null);
+                                                    navigate(`/stock/produits/variant/${v.id}/sticker`);
+                                                  }}
                                                 >
                                                   <span className="kt-menu-icon">
                                                     <i className="ki-filled ki-printer"></i>
                                                   </span>
                                                   <span className="kt-menu-title">
-                                                    {v.barcode || v.name || 'Variante'}
+                                                    {v.barcode || v.name || t('stockPage.variant', 'Variante')}
                                                   </span>
-                                                </a>
+                                                </button>
                                               ))}
                                             </>
                                           ) : (
-                                            <a 
-                                              href={`/stock/produits/${p.id}/sticker`} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="kt-menu-link w-full"
+                                            <button 
+                                              type="button"
+                                              className="kt-menu-link w-full text-start"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveDropdownId(null);
+                                                navigate(`/stock/produits/${p.id}/sticker`);
+                                              }}
                                             >
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-printer"></i>
                                               </span>
                                               <span className="kt-menu-title">
-                                                Imprimer sticker
+                                                {t('stockPage.actionPrintSticker', 'Imprimer sticker')}
                                               </span>
-                                            </a>
+                                            </button>
                                           )}
                                         </div>
                                       </div>
@@ -461,7 +469,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                   {/* Pagination */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('stockPage.show', 'Afficher')}
                       <KtSelect
                         value={String(itemsPerPage)}
                         onChange={v => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
@@ -472,10 +480,10 @@ export default function StockProductsPage({ navigate, showNotification }) {
                         ]}
                         className="w-16"
                       />
-                      par page
+                      {t('stockPage.perPage', 'par page')}
                     </div>
                     <div className="flex items-center gap-4 order-1 md:order-2">
-                      <span>{filtered.length === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filtered.length)} sur ${filtered.length}`}</span>
+                      <span>{filtered.length === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filtered.length)} ${t('colisPage.of', 'sur')} ${filtered.length}`}</span>
                       <div className="flex gap-1">
                         <button className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
                           <i className="ki-filled ki-left text-xs"></i>
@@ -524,7 +532,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
               className="flex items-center justify-between px-5 py-4 border-b"
               style={{ borderColor: 'var(--border)' }}
             >
-              <h3 className="text-base font-semibold text-foreground">Supprimer le produit</h3>
+              <h3 className="text-base font-semibold text-foreground">{t('stockPage.deleteProductTitle', 'Supprimer le produit')}</h3>
               <button 
                 type="button"
                 onClick={() => setDeleteProduct(null)}
@@ -546,7 +554,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
               >
                 <i className="ki-filled ki-information-2 text-red-600 text-xl shrink-0 mt-0.5"></i>
                 <div className="text-sm text-foreground leading-relaxed">
-                  Vous êtes sur le point de supprimer le produit <strong className="font-semibold text-foreground">{deleteProduct.name}</strong>. Cette action est irréversible et supprimera toutes ses variantes de stock.
+                  {t('stockPage.deleteProductConfirm', 'Vous êtes sur le point de supprimer le produit')} <strong className="font-semibold text-foreground">{deleteProduct.name}</strong>{t('stockPage.deleteProductIrreversible', '. Cette action est irréversible et supprimera toutes ses variantes de stock.')}
                 </div>
               </div>
 
@@ -557,14 +565,14 @@ export default function StockProductsPage({ navigate, showNotification }) {
                   className="kt-btn kt-btn-outline"
                   disabled={deleteLoading}
                 >
-                  Annuler
+                  {t('stockPage.cancel', 'Annuler')}
                 </button>
                 <button 
                   type="submit" 
                   className="kt-btn kt-btn-destructive"
                   disabled={deleteLoading}
                 >
-                  {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                  {deleteLoading ? t('stockPage.deleting', 'Suppression...') : t('stockPage.actionDelete', 'Supprimer')}
                 </button>
               </div>
             </form>
@@ -595,7 +603,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
           <div className="kt-modal-content w-full max-w-2xl" id="pickup_request_modal">
             <div className="kt-modal-header">
               <h3 className="kt-modal-title">
-                Nouvelle demande de ramassage
+                {t('stockPage.pickupModalTitle', 'Nouvelle demande de ramassage')}
               </h3>
               <button 
                 className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" 
@@ -611,7 +619,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
                 <div className="grid grid-cols-1 gap-4">
                   
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Produit</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupProductLabel', 'Produit')}</label>
                     <label className="kt-input">
                       <input 
                         type="text" 
@@ -625,12 +633,12 @@ export default function StockProductsPage({ navigate, showNotification }) {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Ville</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupCityLabel', 'Ville')}</label>
                       <KtSelect
                         value={pickupForm.city}
                         onChange={val => setPickupForm(prev => ({ ...prev, city: val }))}
                         options={[
-                          { value: '', label: 'Choisir une ville' },
+                          { value: '', label: t('stockPage.pickupCityPlaceholder', 'Choisir une ville') },
                           ...cities.map(c => {
                             const val = (typeof c === 'object' && c !== null) ? (c.name || c.label || c.value || '') : c;
                             return { value: val, label: val };
@@ -638,16 +646,16 @@ export default function StockProductsPage({ navigate, showNotification }) {
                         ]}
                         className="w-full"
                         enableSearch={true}
-                        searchPlaceholder="Rechercher une ville..."
+                        searchPlaceholder={t('stockPage.pickupCitySearch', 'Rechercher une ville...')}
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Quartier</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupNeighborhoodLabel', 'Quartier')}</label>
                       <label className="kt-input">
                         <input 
                           type="text" 
                           required 
-                          placeholder="Quartier"
+                          placeholder={t('stockPage.pickupNeighborhoodPlaceholder', 'Quartier')}
                           value={pickupForm.neighborhood}
                           onChange={e => setPickupForm(prev => ({ ...prev, neighborhood: e.target.value }))}
                           className="bg-transparent border-0 outline-none w-full"
@@ -657,12 +665,12 @@ export default function StockProductsPage({ navigate, showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Adresse</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupAddressLabel', 'Adresse')}</label>
                     <label className="kt-input">
                       <input 
                         type="text" 
                         required 
-                        placeholder="Adresse"
+                        placeholder={t('stockPage.pickupAddressPlaceholder', 'Adresse')}
                         value={pickupForm.address}
                         onChange={e => setPickupForm(prev => ({ ...prev, address: e.target.value }))}
                         className="bg-transparent border-0 outline-none w-full"
@@ -672,12 +680,12 @@ export default function StockProductsPage({ navigate, showNotification }) {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Téléphone</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupPhoneLabel', 'Téléphone')}</label>
                       <label className="kt-input">
                         <input 
                           type="text" 
                           required 
-                          placeholder="Téléphone"
+                          placeholder={t('stockPage.pickupPhonePlaceholder', 'Téléphone')}
                           value={pickupForm.phone}
                           onChange={e => setPickupForm(prev => ({ ...prev, phone: e.target.value }))}
                           className="bg-transparent border-0 outline-none w-full"
@@ -685,11 +693,11 @@ export default function StockProductsPage({ navigate, showNotification }) {
                       </label>
                     </div>
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Téléphone (Fournisseur)</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupSupplierPhoneLabel', 'Téléphone (Fournisseur)')}</label>
                       <label className="kt-input">
                         <input 
                           type="text" 
-                          placeholder="Téléphone (Fournisseur)"
+                          placeholder={t('stockPage.pickupSupplierPhonePlaceholder', 'Téléphone (Fournisseur)')}
                           value={pickupForm.supplierPhone}
                           onChange={e => setPickupForm(prev => ({ ...prev, supplierPhone: e.target.value }))}
                           className="bg-transparent border-0 outline-none w-full"
@@ -699,11 +707,11 @@ export default function StockProductsPage({ navigate, showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Note &amp; Remarque</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupNoteLabel', 'Note & Remarque')}</label>
                     <label className="kt-input">
                       <input 
                         type="text" 
-                        placeholder="Note & Remarque"
+                        placeholder={t('stockPage.pickupNotePlaceholder', 'Note & Remarque')}
                         value={pickupForm.note}
                         onChange={e => setPickupForm(prev => ({ ...prev, note: e.target.value }))}
                         className="bg-transparent border-0 outline-none w-full"
@@ -712,13 +720,13 @@ export default function StockProductsPage({ navigate, showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Vous avez les étiquettes</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupHasLabelsLabel', 'Vous avez les étiquettes')}</label>
                     <KtSelect
                       value={pickupForm.hasLabels ? 'yes' : 'no'}
                       onChange={val => setPickupForm(prev => ({ ...prev, hasLabels: val === 'yes' }))}
                       options={[
-                        { value: 'yes', label: 'Oui' },
-                        { value: 'no', label: 'Non' }
+                        { value: 'yes', label: t('stockPage.pickupYes', 'Oui') },
+                        { value: 'no', label: t('stockPage.pickupNo', 'Non') }
                       ]}
                       className="w-full"
                     />
@@ -731,14 +739,14 @@ export default function StockProductsPage({ navigate, showNotification }) {
                       type="button"
                       disabled={pickupLoading}
                     >
-                      Annuler
+                      {t('stockPage.cancel', 'Annuler')}
                     </button>
                     <button 
                       className="kt-btn kt-btn-primary" 
                       type="submit"
                       disabled={pickupLoading}
                     >
-                      {pickupLoading ? 'Enregistrement...' : 'Enregistrer'}
+                      {pickupLoading ? t('stockPage.pickupSaving', 'Enregistrement...') : t('stockPage.pickupSave', 'Enregistrer')}
                     </button>
                   </div>
 

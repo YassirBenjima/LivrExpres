@@ -1,10 +1,15 @@
 import React from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function PasswordChangedPage({ navigate }) {
+  const { t } = useLanguage();
   return (
-    <AuthLayout cardMaxWidthClass="max-w-[440px]">
+    <AuthLayout
+      docTitle={t('auth.pageTitlePasswordChanged', 'Mot de Passe Modifié - LivrExpress')}
+      cardMaxWidthClass="max-w-[440px]"
+    >
       <div className="kt-card-content p-10">
         <div className="flex justify-center mb-3">
           <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
@@ -23,13 +28,11 @@ export default function PasswordChangedPage({ navigate }) {
         </div>
         
         <h3 className="text-lg font-medium text-mono text-center mb-4">
-          Votre mot de passe est modifié
+          {t('auth.passwordChangedTitle', 'Mot de passe modifié !')}
         </h3>
         
         <div className="text-sm text-center text-secondary-foreground mb-7.5">
-          Votre mot de passe a été mis à jour avec succès. 
-          <br/>
-          La sécurité de votre compte est notre priorité.
+          {t('auth.passwordChangedDesc', 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter avec vos nouveaux identifiants.')}
         </div>
 
         <div className="flex justify-center">
@@ -41,7 +44,7 @@ export default function PasswordChangedPage({ navigate }) {
               navigate('/login');
             }}
           >
-            Se connecter
+            {t('auth.goToLoginBtn', 'Se connecter')}
           </a>
         </div>
       </div>

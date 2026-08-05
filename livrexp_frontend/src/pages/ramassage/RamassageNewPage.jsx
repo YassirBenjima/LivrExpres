@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RamassageNewPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [cities, setCities] = useState([]);
   const [loadingCities, setLoadingCities] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -88,23 +90,23 @@ export default function RamassageNewPage({ navigate, showNotification }) {
     e.preventDefault();
 
     if (!form.phone) {
-      if (showNotification) showNotification('error', 'Le numéro de téléphone est obligatoire.');
+      if (showNotification) showNotification('error', t('colisPage.ramassageNewPhoneRequired', 'Le numéro de téléphone est obligatoire.'));
       return;
     }
     if (!form.city) {
-      if (showNotification) showNotification('error', 'La ville est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifCityRequired', 'La ville est obligatoire.'));
       return;
     }
     if (!form.neighborhood) {
-      if (showNotification) showNotification('error', 'Le quartier est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifNeighborhoodRequired', 'Le quartier est obligatoire.'));
       return;
     }
     if (!form.address) {
-      if (showNotification) showNotification('error', 'L’adresse est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifAddressRequired', 'L\'adresse est obligatoire.'));
       return;
     }
     if (!form.product_name) {
-      if (showNotification) showNotification('error', 'La nature du produit est obligatoire.');
+      if (showNotification) showNotification('error', t('colisPage.ramassageNewProductNatureRequired', 'La nature du produit est obligatoire.'));
       return;
     }
 
@@ -121,11 +123,10 @@ export default function RamassageNewPage({ navigate, showNotification }) {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        if (showNotification) showNotification('success', data.message || 'Demande de ramassage créée avec succès.');
+        if (showNotification) showNotification('success', t('colisPage.ramassageNewCreatedSuccess', 'Demande de ramassage créée avec succès.'));
         navigate('/ramassage');
       } else {
-        let msg = 'Erreur lors de la création de la demande.';
+        let msg = t('colisPage.ramassageNewCreateError', 'Erreur lors de la création de la demande.');
         try {
           const errData = await res.json();
           if (errData.message) msg = errData.message;
@@ -134,7 +135,7 @@ export default function RamassageNewPage({ navigate, showNotification }) {
       }
     } catch (err) {
       console.error(err);
-      if (showNotification) showNotification('error', 'Erreur réseau.');
+      if (showNotification) showNotification('error', t('stockPage.notifNetworkError', 'Erreur réseau.'));
     } finally {
       setSubmitting(false);
     }
@@ -149,10 +150,10 @@ export default function RamassageNewPage({ navigate, showNotification }) {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Nouvelle demande de ramassage
+                {t('colisPage.ramassageNewTitle', 'Nouvelle demande de ramassage')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Remplissez les informations pour planifier un ramassage
+                {t('colisPage.ramassageNewSubtitle', 'Remplissez les informations pour planifier un ramassage')}
               </div>
             </div>
             <div className="flex flex-col items-end gap-2.5">
@@ -163,14 +164,14 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                   onClick={handleFillTestFields}
                   style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
                 >
-                  Remplir (Test)
+                  {t('colisPage.ramassageNewFillTest', 'Remplir (Test)')}
                 </button>
                 <button
                   type="button"
                   className="kt-btn kt-btn-outline"
                   onClick={() => navigate('/ramassage')}
                 >
-                  Retour à la liste
+                  {t('stockPage.backToList', 'Retour à la liste')}
                 </button>
                 <button
                   type="submit"
@@ -178,7 +179,7 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                   className="kt-btn kt-btn-primary"
                   disabled={submitting}
                 >
-                  {submitting ? 'Envoi...' : 'Soumettre la demande'}
+                  {submitting ? t('colisPage.ramassageNewSending', 'Envoi...') : t('colisPage.ramassageNewSubmitBtn', 'Soumettre la demande')}
                 </button>
               </div>
             </div>
@@ -196,18 +197,22 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                   <div className="col-span-1">
                     <div className="kt-card min-w-full">
                       <div className="kt-card-header">
-                        <h3 className="kt-card-title">Informations du ramassage</h3>
+                        <h3 className="kt-card-title">
+                          {t('colisPage.ramassageNewPickupInfoTitle', 'Informations du ramassage')}
+                        </h3>
                       </div>
                       <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
                         <table className="kt-table align-middle text-sm text-muted-foreground">
                           <tbody>
                             <tr>
-                              <td className="py-2 min-w-36 text-secondary-foreground font-normal">Téléphone *</td>
+                              <td className="py-2 min-w-36 text-secondary-foreground font-normal">
+                                {t('colisPage.phone', 'Téléphone')} *
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Numéro de téléphone"
+                                  placeholder={t('colisForm.phonePlaceholder', 'Numéro de téléphone')}
                                   value={form.phone}
                                   onChange={e => handleChange('phone', e.target.value)}
                                   required
@@ -215,26 +220,30 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Téléphone fournisseur</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('stockPage.pickupSupplierPhoneLabel', 'Téléphone fournisseur')}
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Téléphone du fournisseur (optionnel)"
+                                  placeholder={t('stockPage.pickupSupplierPhonePlaceholder', 'Téléphone du fournisseur (optionnel)')}
                                   value={form.supplier_phone}
                                   onChange={e => handleChange('supplier_phone', e.target.value)}
                                 />
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Ville *</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('colisPage.city', 'Ville')} *
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <KtSelect
                                   value={form.city}
                                   onChange={val => handleChange('city', val)}
-                                  placeholder={loadingCities ? 'Chargement...' : 'Choisir une ville'}
+                                  placeholder={loadingCities ? t('common.loading', 'Chargement...') : t('stockPage.pickupCityPlaceholder', 'Choisir une ville')}
                                   enableSearch={true}
-                                  searchPlaceholder="Rechercher une ville..."
+                                  searchPlaceholder={t('stockPage.pickupCitySearch', 'Rechercher une ville...')}
                                   options={cities.map(c => {
                                     const val = typeof c === 'object' && c !== null ? (c.name || c.label || c.value || '') : c;
                                     return { value: val, label: val };
@@ -243,12 +252,14 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Quartier *</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('colisPage.neighborhood', 'Quartier')} *
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Quartier"
+                                  placeholder={t('colisPage.neighborhood', 'Quartier')}
                                   value={form.neighborhood}
                                   onChange={e => handleChange('neighborhood', e.target.value)}
                                   required
@@ -256,12 +267,14 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Adresse *</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('colisPage.address', 'Adresse')} *
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Adresse complète"
+                                  placeholder={t('colisPage.address', 'Adresse complète')}
                                   value={form.address}
                                   onChange={e => handleChange('address', e.target.value)}
                                   required
@@ -278,18 +291,22 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                   <div className="col-span-1">
                     <div className="kt-card min-w-full">
                       <div className="kt-card-header">
-                        <h3 className="kt-card-title">Informations complémentaires</h3>
+                        <h3 className="kt-card-title">
+                          {t('colisForm.additionalInfo', 'Informations complémentaires')}
+                        </h3>
                       </div>
                       <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
                         <table className="kt-table align-middle text-sm text-muted-foreground">
                           <tbody>
                             <tr>
-                              <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nature du produit *</td>
+                              <td className="py-2 min-w-36 text-secondary-foreground font-normal">
+                                {t('colisPage.productNature', 'Nature du produit')} *
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Description du produit à ramasser"
+                                  placeholder={t('colisPage.ramassageNewProductNaturePlaceholder', 'Description du produit à ramasser')}
                                   value={form.product_name}
                                   onChange={e => handleChange('product_name', e.target.value)}
                                   required
@@ -297,33 +314,39 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Type</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('colisForm.typeLabel', 'Type')}
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <KtSelect
                                   value={form.type}
                                   onChange={val => handleChange('type', val)}
-                                  placeholder="Choisir un type"
+                                  placeholder={t('colisForm.chooseType', 'Choisir un type')}
                                   options={[
-                                    { value: 'simple', label: 'Simple' },
-                                    { value: 'stock', label: 'Stock' }
+                                    { value: 'simple', label: t('colisForm.standardParcel', 'Simple') },
+                                    { value: 'stock', label: t('colisForm.stockParcel', 'Stock') }
                                   ]}
                                 />
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Note</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('stockPage.pickupNoteLabel', 'Note')}
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm w-full"
                                   type="text"
-                                  placeholder="Instructions spéciales (optionnel)"
+                                  placeholder={t('colisPage.ramassageNewNotePlaceholder', 'Instructions spéciales (optionnel)')}
                                   value={form.note}
                                   onChange={e => handleChange('note', e.target.value)}
                                 />
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Étiquettes</td>
+                              <td className="py-2 text-secondary-foreground font-normal">
+                                {t('colisPage.ramassageNewLabelsLabel', 'Étiquettes')}
+                              </td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <div className="flex items-center gap-2.5">
                                   <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -360,7 +383,9 @@ export default function RamassageNewPage({ navigate, showNotification }) {
                                       />
                                     </div>
                                   </label>
-                                  <span className="text-xs text-secondary-foreground font-normal">J'ai les étiquettes</span>
+                                  <span className="text-xs text-secondary-foreground font-normal">
+                                    {t('stockPage.pickupHasLabelsLabel', 'J\'ai les étiquettes')}
+                                  </span>
                                 </div>
                               </td>
                             </tr>

@@ -408,7 +408,8 @@ final class RetourFacturationApiController extends AbstractController
     #[Route('/api/retour/bons/{id}/download', name: 'api_retour_bons_download', methods: ['GET'])]
     public function downloadBonRetour(
         ReturnRequest $demande,
-        \App\Service\BonRetourPdfGenerator $pdfGenerator
+        \App\Service\BonRetourPdfGenerator $pdfGenerator,
+        \Symfony\Component\HttpFoundation\Request $request
     ): \Symfony\Component\HttpFoundation\Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -426,7 +427,8 @@ final class RetourFacturationApiController extends AbstractController
         }
 
         try {
-            return $pdfGenerator->generateDownloadResponse($demande);
+            $lang = (string) $request->query->get('lang', 'fr');
+            return $pdfGenerator->generateDownloadResponse($demande, $lang);
         } catch (\Throwable $e) {
             return $this->json(['message' => 'Document non disponible.'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }

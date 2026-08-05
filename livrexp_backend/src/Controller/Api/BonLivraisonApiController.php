@@ -21,14 +21,15 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class BonLivraisonApiController extends AbstractController
 {
     #[Route('/{id}/download', name: 'api_bon_livraison_download', methods: ['GET'])]
-    public function download(BonLivraison $bon, BonLivraisonPdfGenerator $pdfGenerator): Response
+    public function download(Request $request, BonLivraison $bon, BonLivraisonPdfGenerator $pdfGenerator): Response
     {
+        $lang = (string) $request->query->get('lang', 'fr');
         if (trim((string) $bon->getReference()) === '') {
             return $this->json(['message' => 'Document non disponible'], Response::HTTP_NOT_FOUND);
         }
 
         try {
-            return $pdfGenerator->generateDownloadResponse($bon);
+            return $pdfGenerator->generateDownloadResponse($bon, $lang);
         } catch (\Throwable $e) {
             return $this->json(['message' => 'Erreur lors de la génération du document PDF.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -256,9 +257,10 @@ final class BonLivraisonApiController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'api_bon_livraison_delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'api_bon_livraison_delete', methods: ['DELETE', 'POST'])]
     public function delete(BonLivraison $bon, EntityManagerInterface $entityManager): JsonResponse
     {
+        $bon->clearColis();
         $entityManager->remove($bon);
         $entityManager->flush();
 

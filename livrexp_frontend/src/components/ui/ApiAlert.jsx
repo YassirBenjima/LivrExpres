@@ -93,7 +93,12 @@ function ToastContainer() {
       <div className="auth-toast-container">
         {toasts.map(({ id, type, message }) => {
           const iconClass = type === 'success' ? 'ki-check' : type === 'info' ? 'ki-information-2' : 'ki-cross-circle';
-          const title = type === 'success' ? 'Succès' : type === 'info' ? 'Information' : 'Erreur';
+          const lang = localStorage.getItem('language') || 'fr';
+          const titles = {
+            fr: { success: 'Succès', info: 'Information', error: 'Erreur', danger: 'Erreur' },
+            en: { success: 'Success', info: 'Information', error: 'Error', danger: 'Error' },
+          };
+          const title = (titles[lang] || titles.fr)[type] || (titles.fr)[type] || 'Notification';
           return (
             <div key={id} className={`auth-toast ${type}`}>
               <div className={`auth-toast-icon ${type}`}>

@@ -1,9 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
 import { getUserRoles } from '../../hooks/useAuth';
 import SuperAdminAIChatbot from '../ai/SuperAdminAIChatbot';
 import LivreurAIChatbotWidget from '../ai/LivreurAIChatbotWidget';
+import { useLanguage } from '../../context/LanguageContext';
+
+
+class MenuErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("User Menu Error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '12px', background: '#fef2f2', color: '#991b1b', border: '1px solid #f87171', borderRadius: '8px', zIndex: 9999, position: 'absolute', right: 0, top: '100%', width: '320px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+          <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px' }}>⚠️ Erreur dans le menu utilisateur :</strong>
+          <div style={{ fontSize: '11px', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+            {String(this.state.error?.message || this.state.error)}
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function DashboardLayout({ children, activeMenu, activeItem }) {
+
   const currentActive = activeMenu || activeItem || 'dashboard';
   // ── Role-based access control ────────────────────────────────────────────
   const userRoles = getUserRoles();
@@ -19,8 +49,16 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('Français');
-  const [selectedLangFlag, setSelectedLangFlag] = useState('/assets/media/flags/france.svg');
+  const { language, setLanguage, t } = useLanguage();
+
+  const langOptions = [
+    { code: 'fr', label: 'Français', flag: '/assets/media/flags/france.svg' },
+    { code: 'en', label: 'English', flag: '/assets/media/flags/united-states.svg' },
+  ];
+
+  const currentLangObj = langOptions.find(o => o.code === language) || langOptions[0] || { label: 'Français', flag: '/assets/media/flags/france.svg' };
+
+
   const [isColisMenuOpen, setIsColisMenuOpen] = useState(currentActive.startsWith('colis'));
   const [isStockMenuOpen, setIsStockMenuOpen] = useState(currentActive.startsWith('stock'));
   const [isRamassageMenuOpen, setIsRamassageMenuOpen] = useState(currentActive.startsWith('ramassage'));
@@ -34,8 +72,26 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const [isNotifMenuOpen, setIsNotifMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const userMenuRef = useRef(null);
+
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+        setIsLangMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
+
+  useEffect(() => {
+
     const fetchNotifications = async () => {
       let rawNotifs = [];
       let rawUnread = 0;
@@ -175,7 +231,30 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
       .catch(() => {});
   }, []);
 
+  const getUserInitials = (u) => {
+
+    if (u && typeof u.name === 'string' && u.name.trim()) {
+      return u.name.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    }
+    if (u && typeof u.email === 'string' && u.email.trim()) {
+      return u.email.trim().slice(0, 2).toUpperCase();
+    }
+    return 'LE';
+  };
+
+  const getUserDisplayName = (u) => {
+    if (u && typeof u.name === 'string' && u.name.trim()) return u.name;
+    if (u && typeof u.email === 'string' && u.email.trim()) return u.email.split('@')[0];
+    return 'Utilisateur';
+  };
+
+  const getUserDisplayEmail = (u) => {
+    if (u && typeof u.email === 'string' && u.email.trim()) return u.email;
+    return 'demo@livrexpress.ma';
+  };
+
   useEffect(() => {
+
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     
@@ -188,6 +267,48 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
     root.setAttribute('data-kt-theme-mode', themeMode);
     localStorage.setItem('kt-theme', themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    const titles = {
+      dashboard: t('nav.dashboard', 'Tableau de Bord'),
+      colis_list: t('nav.parcelsList', 'Liste des colis'),
+      colis_new: t('nav.addParcel', 'Nouveau Colis'),
+      colis_pickup: t('nav.pickupParcels', 'Colis pour ramassage'),
+      colis_import: t('nav.importParcels', 'Importer Colis'),
+      colis_settings: t('nav.parcelSettings', 'Paramètres des colis'),
+      stock_products: t('nav.productList', 'Liste des produits'),
+      stock_products_new: t('nav.addProduct', 'Ajouter un produit'),
+      stock_colis: t('nav.stockParcels', 'Colis du stock'),
+      stock_entry: t('nav.stockEntry', 'Stock Entrée'),
+      ramassage_list: t('nav.pickupList', 'Liste des ramassages'),
+      ramassage_new: t('nav.newPickupRequest', 'Nouvelle demande'),
+      ramassage_planning: t('nav.planning', 'Planification'),
+      bon_livraison_list: t('nav.deliverySlipList', 'Liste bons de livraison'),
+      bon_livraison_new: t('nav.addDeliverySlip', 'Ajouter Bon de Livraison'),
+      suivi_changement_destinataire: t('nav.changeRecipient', 'Changement destinataire'),
+      suivi_whatsapp_template: t('nav.whatsappTracking', 'Suivi par Whatsapp'),
+      dispatch_map: t('nav.gpsTrackingMap', 'Carte Suivi GPS'),
+      retour_demandes: t('nav.returnRequest', 'Demande de retour'),
+      retour_bons: t('nav.returnSlips', 'Bons de retour'),
+      facturation_crbt: t('nav.crbtList', 'Liste CRBT'),
+      clients: t('clients.title', 'Gestion des Clients'),
+      livreurs: t('drivers.title', 'Gestion des Livreurs'),
+      livreurs_list: t('drivers.title', 'Gestion des Livreurs'),
+      livreurs_new: t('drivers.addDriverTitle', 'Ajouter un livreur'),
+      livreurs_fiche: t('drivers.ficheTitle', 'Fiche Livreur'),
+      livreurs_auto_assign: t('drivers.autoAssignTitle', 'Attribution des Colis'),
+      affiliate: t('affiliate.title', "Programme d'Affiliation"),
+      api_docs: t('apiDocs.title', 'Documentation API'),
+      profile: t('nav.myProfile', 'Mon Profil'),
+      ai_predictions: t('nav.aiPredictions', 'Prédiction des retours'),
+      ai_anomalies: t('nav.aiAnomalies', 'Détection des anomalies'),
+      ai_tournees: t('nav.aiOptimization', 'Optimisation de tournées'),
+    };
+    const pageName = titles[activeMenu] || t('nav.dashboard', 'Tableau de Bord');
+    const brand = activeMenu && activeMenu.startsWith('ai') ? 'LivrExpress PRO' : 'LivrExpress';
+    document.title = `${pageName} - ${brand}`;
+  }, [activeMenu, language, t]);
+
 
   const handleLogout = async () => {
     try {
@@ -263,7 +384,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-element-11 text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Dashboard
+                    {t('nav.dashboard', 'Dashboard')}
                   </span>
                 </a>
               </div>
@@ -271,7 +392,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
               {/* User Section Heading */}
               <div className="kt-menu-item pt-2.25 pb-px">
                 <span className="kt-menu-heading uppercase text-xs font-medium text-muted-foreground ps-[10px] pe-[10px]">
-                  {isLivreur ? 'Mes Livraisons' : 'Gestion Logistique'}
+                  {isLivreur ? t('nav.myDeliveries', 'Mes Livraisons') : t('nav.logisticsManagement', 'Gestion Logistique')}
                 </span>
               </div>
 
@@ -285,7 +406,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-delivery-3 text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Colis
+                    {t('nav.parcels', 'Colis')}
                   </span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isColisMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
@@ -299,7 +420,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
-                          Liste des colis
+                          {t('nav.parcelsList', 'Liste des colis')}
                         </span>
                       </a>
                     </div>
@@ -308,7 +429,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/colis/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
-                          Ajouter un colis
+                          {t('nav.addParcel', 'Ajouter un colis')}
                         </span>
                       </a>
                     </div>
@@ -317,7 +438,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/colis/pickup'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
-                          Colis pour ramassage
+                          {t('nav.pickupParcels', 'Colis pour ramassage')}
                         </span>
                       </a>
                     </div>
@@ -326,7 +447,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/colis/import'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
-                          Importer Colis
+                          {t('nav.importParcels', 'Importer Colis')}
                         </span>
                       </a>
                     </div>
@@ -335,7 +456,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/colis/settings'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
                         <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">
-                          Paramètres des colis
+                          {t('nav.parcelSettings', 'Paramètres des colis')}
                         </span>
                       </a>
                     </div>
@@ -352,7 +473,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-archive text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Stock</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.stock', 'Stock')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isStockMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -363,28 +484,28 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/produits"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/produits'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste des produits</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.productList', 'Liste des produits')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'stock_products_new' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/produits/new"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/produits/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Ajouter un produit</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.addProduct', 'Ajouter un produit')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'stock_colis' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/colis"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Colis du stock</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.stockParcels', 'Colis du stock')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'stock_entry' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/stock/entree"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/stock/entree'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Stock Entrée</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.stockEntry', 'Stock Entrée')}</span>
                       </a>
                     </div>
                   </div>
@@ -400,7 +521,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-delivery text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Ramassage</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.pickup', 'Ramassage')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isRamassageMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -411,21 +532,21 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste des ramassages</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.pickupList', 'Liste des ramassages')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'ramassage_new' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage/new"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Nouvelle demande</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.newPickupRequest', 'Nouvelle demande')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'ramassage_planning' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ramassage/planning"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ramassage/planning'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Planification</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.planning', 'Planification')}</span>
                       </a>
                     </div>
                   </div>
@@ -441,7 +562,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-directbox-default text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Bon de Livraison</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.deliverySlip', 'Bon de Livraison')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isBonLivraisonMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -452,14 +573,14 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/bon-livraison"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/bon-livraison'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste bons de livraison</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.deliverySlipList', 'Liste bons de livraison')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'bon_livraison_new' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/bon-livraison/new"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/bon-livraison/new'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Ajouter Bon de Livraison</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.addDeliverySlip', 'Ajouter Bon de Livraison')}</span>
                       </a>
                     </div>
                   </div>
@@ -475,7 +596,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-route text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Suivi</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.tracking', 'Suivi')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isSuiviMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -486,21 +607,21 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/suivi/changement-destinataire"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/suivi/changement-destinataire'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Changement destinataire</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.changeRecipient', 'Changement destinataire')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${currentActive === 'suivi_whatsapp_template' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/suivi/modele-whatsapp"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/suivi/modele-whatsapp'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Suivi par Whatsapp</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.whatsappTracking', 'Suivi par Whatsapp')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${currentActive === 'dispatch-map' || currentActive === 'suivi_carte' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/dispatch-map"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/dispatch-map'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Carte Suivi GPS</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.gpsTrackingMap', 'Carte Suivi GPS')}</span>
                       </a>
                     </div>
                   </div>
@@ -516,7 +637,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-delivery-time text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Retour</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.returns', 'Retour')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isRetourMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -527,14 +648,14 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/retour/demandes"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/retour/demandes'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Demande de retour</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.returnRequest', 'Demande de retour')}</span>
                       </a>
                     </div>
                     <div className={`kt-menu-item ${activeMenu === 'retour_bons' ? 'active' : ''}`}>
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/retour/bons"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/retour/bons'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Bons de retour</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.returnSlips', 'Bons de retour')}</span>
                       </a>
                     </div>
                   </div>
@@ -550,7 +671,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-bill text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Facturation</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.finances', 'Facturation')}</span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                     <i className={`ki-filled ${isFacturationMenuOpen ? 'ki-minus' : 'ki-plus'} text-[11px]`}></i>
                   </span>
@@ -561,7 +682,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/facturation/crbt"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/facturation/crbt'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Liste CRBT</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.crbtList', 'Liste CRBT')}</span>
                       </a>
                     </div>
                   </div>
@@ -577,7 +698,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-users text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Gestion Clients</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.clients', 'Gestion des Clients')}</span>
                 </div>
               </div>}
 
@@ -590,7 +711,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   <span className="kt-menu-icon items-start text-muted-foreground w-[20px]">
                     <i className="ki-filled ki-user text-lg"></i>
                   </span>
-                  <span className="kt-menu-title text-sm font-medium text-foreground">Livreurs</span>
+                  <span className="kt-menu-title text-sm font-medium text-foreground">{t('nav.livreurs', 'Livreurs')}</span>
                 </div>
               </div>}
 
@@ -602,7 +723,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-share text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">
-                    Affiliate
+                    {t('nav.affiliate', 'Affiliation')}
                   </span>
                 </a>
               </div>}
@@ -615,7 +736,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-code text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-medium text-foreground">
-                    API
+                    {t('nav.apiDocs', 'API')}
                   </span>
                 </a>
               </div>}
@@ -630,7 +751,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <i className="ki-filled ki-technology-4 text-lg"></i>
                   </span>
                   <span className="kt-menu-title text-sm font-semibold text-foreground">
-                    LivrExpress PRO
+                    {t('nav.proSection', 'LivrExpress PRO')}
                     <span className="kt-badge kt-badge-primary kt-badge-outline text-[10px] px-1 py-0.2 rounded font-bold ms-1.5">PRO</span>
                   </span>
                   <span className="kt-menu-arrow text-muted-foreground w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
@@ -644,7 +765,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/prediction-retours"
                           onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/prediction-retours'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                           <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Prédiction des retours</span>
+                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.aiPredictions', 'Prédiction des retours')}</span>
                         </a>
                       </div>
                     )}
@@ -653,7 +774,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/anomalies"
                           onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/anomalies'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                           <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Détection des anomalies</span>
+                          <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.aiAnomalies', 'Détection des anomalies')}</span>
                         </a>
                       </div>
                     )}
@@ -661,12 +782,13 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <a className="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 dark:menu-item-active:border-border kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]" href="/ai/tournees-optimisees"
                         onClick={e => { e.preventDefault(); window.history.pushState({}, '', '/ai/tournees-optimisees'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
                         <span className="kt-menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 kt-menu-item-active:before:bg-primary kt-menu-item-hover:before:bg-primary"></span>
-                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">Optimisation de tournées</span>
+                        <span className="kt-menu-title text-2sm font-normal text-foreground kt-menu-item-active:text-primary kt-menu-item-active:font-semibold kt-menu-link-hover:!text-primary">{t('nav.aiOptimization', 'Optimisation de tournées')}</span>
                       </a>
                     </div>
 
                   </div>
                 )}
+
               </div>
 
             </div>
@@ -711,7 +833,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                   window.dispatchEvent(new PopStateEvent('popstate'));
                 }}
               >
-                Accueil
+                {t('nav.home', 'Accueil')}
               </a>
               <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
               {activeMenu.startsWith('colis_') && (
@@ -725,7 +847,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    Colis
+                    {t('nav.parcels', 'Colis')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
@@ -741,7 +863,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    Stock
+                    {t('nav.stock', 'Stock')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                   {['stock_products_new', 'stock_products_edit'].includes(activeMenu) && (
@@ -755,7 +877,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           window.dispatchEvent(new PopStateEvent('popstate'));
                         }}
                       >
-                        Liste des produits
+                        {t('nav.productList', 'Liste des produits')}
                       </a>
                       <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                     </>
@@ -773,7 +895,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    Ramassage
+                    {t('nav.pickup', 'Ramassage')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
@@ -789,7 +911,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    Bon de Livraison
+                    {t('nav.deliverySlip', 'Bon de Livraison')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
@@ -805,7 +927,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    Livreurs
+                    {t('nav.livreurs', 'Livreurs')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
@@ -821,47 +943,101 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       window.dispatchEvent(new PopStateEvent('popstate'));
                     }}
                   >
-                    LivrExpress PRO
+                    {t('nav.proSection', 'LivrExpress PRO')}
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
+              {(activeMenu.startsWith('suivi') || activeMenu === 'dispatch-map') && (
+                <>
+                  <a 
+                    href="/suivi/changement-destinataire" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/suivi/changement-destinataire');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    {t('nav.tracking', 'Suivi')}
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
+              {activeMenu.startsWith('retour') && (
+                <>
+                  <a 
+                    href="/retour/demandes" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/retour/demandes');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    {t('nav.returns', 'Retour')}
+                  </a>
+                  <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
+                </>
+              )}
+              {activeMenu.startsWith('facturation') && (
+                <>
+                  <a 
+                    href="/facturation/crbt" 
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', '/facturation/crbt');
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                  >
+                    {t('nav.finances', 'Facturation')}
                   </a>
                   <i className="ki-filled ki-right text-xs text-muted-foreground"></i>
                 </>
               )}
               <span className="text-sm font-semibold text-foreground">
-                {activeMenu === 'dashboard' ? 'Tableau de bord'
-                  : activeMenu === 'colis_list' ? 'Liste des colis'
-                  : activeMenu === 'colis_new' ? 'Ajouter un colis'
-                  : activeMenu === 'colis_pickup' ? 'Colis pour ramassage'
-                  : activeMenu === 'colis_import' ? 'Importer Colis'
-                  : activeMenu === 'colis_settings' ? 'Paramètres des colis'
-                  : activeMenu === 'stock' ? 'Stock'
-                  : activeMenu === 'stock_products' ? 'Liste des produits'
-                  : activeMenu === 'stock_products_new' ? 'Ajouter un produit'
-                  : activeMenu === 'stock_products_edit' ? 'Modifier le produit'
-                  : activeMenu === 'stock_entry' ? 'Stock Entrée'
-                  : activeMenu === 'stock_colis' ? 'Colis du stock'
-                  : activeMenu === 'ramassage_list' ? 'Liste des ramassages'
-                  : activeMenu === 'ramassage_new' ? 'Nouvelle demande de ramassage'
-                  : activeMenu === 'ramassage_planning' ? 'Planification des ramassages'
-                  : activeMenu === 'ramassage' ? 'Ramassage'
-                  : activeMenu === 'bon_livraison_list' || activeMenu === 'bon_livraison' ? 'Liste bons de livraison'
-                  : activeMenu === 'bon_livraison_new' ? 'Ajouter Bon de Livraison'
-                  : activeMenu === 'livreurs_list' || activeMenu === 'livreurs' ? 'Livreurs'
-                  : activeMenu === 'livreurs_new' ? 'Ajouter un livreur'
-                  : activeMenu === 'livreurs_fiche' ? 'Fiche livreur'
-                  : activeMenu === 'livreurs_auto_assign' ? 'Attribution automatique'
-                  : activeMenu === 'suivi' ? 'Suivi'
-                  : activeMenu === 'retour' ? 'Retour'
-                  : activeMenu === 'facturation' ? 'Facturation'
-                  : activeMenu === 'facturation_crbt' ? 'Liste CRBT'
-                  : activeMenu === 'affiliate' ? 'Affiliate'
-                  : activeMenu === 'api_docs' ? 'Documentation API'
-                  : activeMenu === 'profile' ? 'Profil'
-                  : activeMenu === 'ai_predictions' ? 'Prédiction des retours'
-                  : activeMenu === 'ai_anomalies' ? 'Détection des anomalies'
-                  : activeMenu === 'ai_tournees' ? 'Optimisation de tournées'
-                  : activeMenu === 'ai_chatbot' ? 'Chatbot Livreur'
-                  : activeMenu.startsWith('ai') ? 'LivrExpress PRO'
-                  : 'Tableau de bord'}
+                {activeMenu === 'dashboard' ? t('nav.dashboard', 'Tableau de bord')
+                  : activeMenu === 'colis_list' ? t('nav.parcelsList', 'Liste des colis')
+                  : activeMenu === 'colis_new' ? t('nav.addParcel', 'Ajouter un colis')
+                  : activeMenu === 'colis_pickup' ? t('nav.pickupParcels', 'Colis pour ramassage')
+                  : activeMenu === 'colis_import' ? t('nav.importParcels', 'Importer Colis')
+                  : activeMenu === 'colis_settings' ? t('nav.parcelSettings', 'Paramètres des colis')
+                  : activeMenu === 'stock' ? t('nav.stock', 'Stock')
+                  : activeMenu === 'stock_products' ? t('nav.productList', 'Liste des produits')
+                  : activeMenu === 'stock_products_new' ? t('nav.addProduct', 'Ajouter un produit')
+                  : activeMenu === 'stock_products_edit' ? t('common.edit', 'Modifier le produit')
+                  : activeMenu === 'stock_entry' ? t('nav.stockEntry', 'Stock Entrée')
+                  : activeMenu === 'stock_colis' ? t('nav.stockParcels', 'Colis du stock')
+                  : activeMenu === 'ramassage_list' ? t('nav.pickupList', 'Liste des ramassages')
+                  : activeMenu === 'ramassage_new' ? t('nav.newPickupRequest', 'Nouvelle demande de ramassage')
+                  : activeMenu === 'ramassage_planning' ? t('nav.planning', 'Planification des ramassages')
+                  : activeMenu === 'ramassage' ? t('nav.pickup', 'Ramassage')
+                  : activeMenu === 'bon_livraison_list' || activeMenu === 'bon_livraison' ? t('nav.deliverySlipList', 'Liste bons de livraison')
+                  : activeMenu === 'bon_livraison_new' ? t('nav.addDeliverySlip', 'Ajouter Bon de Livraison')
+                  : activeMenu === 'livreurs_list' || activeMenu === 'livreurs' ? t('drivers.title', 'Gestion des Livreurs')
+                  : activeMenu === 'livreurs_new' ? t('drivers.addDriverTitle', 'Ajouter un livreur')
+                  : activeMenu === 'livreurs_fiche' ? t('drivers.ficheTitle', 'Fiche Livreur')
+                  : activeMenu === 'livreurs_auto_assign' ? t('drivers.autoAssignTitle', 'Attribution des Colis')
+                  : activeMenu === 'suivi_changement_destinataire' ? t('nav.changeRecipient', 'Changement destinataire')
+                  : activeMenu === 'suivi_whatsapp_template' ? t('nav.whatsappTracking', 'Suivi par Whatsapp')
+                  : activeMenu === 'dispatch-map' || activeMenu === 'suivi_carte' ? t('nav.gpsTrackingMap', 'Carte Suivi GPS')
+                  : activeMenu === 'retour_demandes' ? t('nav.returnRequest', 'Demande de retour')
+                  : activeMenu === 'retour_bons' ? t('nav.returnSlips', 'Liste des bons de retour')
+                  : activeMenu === 'suivi' ? t('nav.tracking', 'Suivi')
+                  : activeMenu === 'retour' ? t('nav.returns', 'Retour')
+                  : activeMenu === 'facturation' ? t('nav.finances', 'Facturation')
+                  : activeMenu === 'facturation_crbt' ? t('nav.crbtList', 'Liste CRBT')
+                  : activeMenu === 'clients' ? t('nav.clients', 'Gestion des Clients')
+                  : activeMenu === 'affiliate' ? t('nav.affiliate', 'Affiliation')
+                  : activeMenu === 'api_docs' ? t('nav.apiDocs', 'Documentation API')
+                  : activeMenu === 'profile' ? t('nav.myProfile', 'Profil')
+                  : activeMenu === 'ai_predictions' ? t('nav.aiPredictions', 'Prédiction des retours')
+                  : activeMenu === 'ai_anomalies' ? t('nav.aiAnomalies', 'Détection des anomalies')
+                  : activeMenu === 'ai_tournees' ? t('nav.aiOptimization', 'Optimisation de tournées')
+                  : activeMenu === 'ai_chatbot' ? t('nav.aiAssistant', 'Chatbot Livreur')
+                  : activeMenu.startsWith('ai') ? t('nav.proSection', 'LivrExpress PRO')
+                  : t('nav.dashboard', 'Tableau de bord')}
               </span>
             </div>
 
@@ -872,7 +1048,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                 <button
                   onClick={() => { setIsNotifMenuOpen(!isNotifMenuOpen); setIsUserMenuOpen(false); }}
                   className="kt-btn kt-btn-icon kt-btn-ghost text-muted-foreground hover:text-foreground relative"
-                  title="Notifications"
+                  title={t('header.notifications', 'Notifications')}
                 >
                   <i className="ki-filled ki-notification-on text-lg"></i>
                   {unreadCount > 0 && (
@@ -886,10 +1062,10 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <div className="absolute end-0 top-full mt-2 w-[340px] sm:w-[380px] rounded-xl shadow-xl bg-background border border-border z-30 overflow-hidden">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-accent/30">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground text-sm">Notifications</span>
+                          <span className="font-semibold text-foreground text-sm">{t('header.notifications', 'Notifications')}</span>
                           {unreadCount > 0 && (
                             <span className="kt-badge kt-badge-primary kt-badge-outline rounded-full text-xs font-semibold px-2 py-0.5">
-                              {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''}
+                              {unreadCount} {unreadCount > 1 ? t('header.newsLabel', 'nouvelles') : t('header.newLabel', 'nouvelle')}
                             </span>
                           )}
                         </div>
@@ -898,7 +1074,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             onClick={handleMarkAllRead}
                             className="text-xs text-primary hover:underline font-medium bg-transparent border-0 cursor-pointer"
                           >
-                            Tout marquer comme lu
+                            {t('header.markAllRead', 'Tout marquer comme lu')}
                           </button>
                         )}
                       </div>
@@ -912,38 +1088,50 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       >
                         {notifications.length === 0 ? (
                           <div className="py-8 text-center text-sm text-secondary-foreground">
-                            Aucune notification
+                            {t('header.noNotifications', 'Aucune notification')}
                           </div>
                         ) : (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              onClick={() => handleNotifClick(n)}
-                              className={`p-3.5 flex items-start gap-3 hover:bg-accent/50 transition-colors cursor-pointer ${!n.isRead ? 'bg-primary/5' : ''}`}
-                            >
-                              <div className={`size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                                n.type === 'success' ? 'bg-success/15 text-success' :
-                                n.type === 'warning' ? 'bg-destructive/15 text-destructive' :
-                                'bg-primary/15 text-primary'
-                              }`}>
-                                <i className={`ki-filled ${n.icon || 'ki-notification-on'} text-base`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-1 mb-0.5">
-                                  <p className={`text-xs font-semibold truncate ${!n.isRead ? 'text-foreground font-bold' : 'text-secondary-foreground'}`}>
-                                    {n.title}
-                                  </p>
-                                  <span className="text-[10px] text-muted-foreground shrink-0">{n.createdAt}</span>
+                          notifications.map((rawN) => {
+                            const notifMap = {
+                              '1': { title: t('notifs.n1Title', rawN.title), message: t('notifs.n1Msg', rawN.message), createdAt: t('notifs.10min', rawN.createdAt) },
+                              '2': { title: t('notifs.n2Title', rawN.title), message: t('notifs.n2Msg', rawN.message), createdAt: t('notifs.30min', rawN.createdAt) },
+                              '3': { title: t('notifs.n3Title', rawN.title), message: t('notifs.n3Msg', rawN.message), createdAt: t('notifs.1hour', rawN.createdAt) },
+                              '4': { title: t('notifs.n4Title', rawN.title), message: t('notifs.n4Msg', rawN.message), createdAt: t('notifs.yesterday', rawN.createdAt) },
+                              '5': { title: t('notifs.n5Title', rawN.title), message: t('notifs.n5Msg', rawN.message), createdAt: t('notifs.yesterday', rawN.createdAt) },
+                              '6': { title: t('notifs.n6Title', rawN.title), message: t('notifs.n6Msg', rawN.message), createdAt: t('notifs.2days', rawN.createdAt) },
+                              '7': { title: t('notifs.n7Title', rawN.title), message: t('notifs.n7Msg', rawN.message), createdAt: t('notifs.3days', rawN.createdAt) }
+                            };
+                            const n = notifMap[String(rawN.id)] ? { ...rawN, ...notifMap[String(rawN.id)] } : rawN;
+                            return (
+                              <div
+                                key={n.id}
+                                onClick={() => handleNotifClick(n)}
+                                className={`p-3.5 flex items-start gap-3 hover:bg-accent/50 transition-colors cursor-pointer ${!n.isRead ? 'bg-primary/5' : ''}`}
+                              >
+                                <div className={`size-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                  n.type === 'success' ? 'bg-success/15 text-success' :
+                                  n.type === 'warning' ? 'bg-destructive/15 text-destructive' :
+                                  'bg-primary/15 text-primary'
+                                }`}>
+                                  <i className={`ki-filled ${n.icon || 'ki-notification-on'} text-base`} />
                                 </div>
-                                <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
-                                  {n.message}
-                                </p>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                                    <p className={`text-xs font-semibold truncate ${!n.isRead ? 'text-foreground font-bold' : 'text-secondary-foreground'}`}>
+                                      {n.title}
+                                    </p>
+                                    <span className="text-[10px] text-muted-foreground shrink-0">{n.createdAt}</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+                                    {n.message}
+                                  </p>
+                                </div>
+                                {!n.isRead && (
+                                  <span className="size-2 rounded-full bg-primary shrink-0 self-center"></span>
+                                )}
                               </div>
-                              {!n.isRead && (
-                                <span className="size-2 rounded-full bg-primary shrink-0 self-center"></span>
-                              )}
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
 
@@ -952,13 +1140,14 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           onClick={() => { setIsNotifMenuOpen(false); window.history.pushState({}, '', '/colis'); window.dispatchEvent(new PopStateEvent('popstate')); }}
                           className="text-xs font-medium text-primary hover:underline bg-transparent border-0 cursor-pointer"
                         >
-                          Voir toute l'activité →
+                          {t('header.viewAllActivity', "Voir toute l'activité →")}
                         </button>
                       </div>
                     </div>
                   </>
                 )}
               </div>
+
 
               {/* Theme Mode Toggle */}
               <button 
@@ -974,9 +1163,16 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
               </button>
 
               {/* User Dropdown */}
-              <div className="relative shrink-0">
+              <div ref={userMenuRef} className="relative shrink-0">
                 <button
-                  onClick={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsLangMenuOpen(false); }}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsUserMenuOpen(prev => !prev);
+                    setIsLangMenuOpen(false);
+                    setIsNotifMenuOpen(false);
+                  }}
                   className="cursor-pointer shrink-0 focus:outline-none"
                 >
                   {avatarUrl ? (
@@ -984,50 +1180,49 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       alt="Avatar"
                       className="size-9 rounded-full ring-2 ring-border shadow-sm shrink-0 object-cover hover:ring-primary/50 transition-all"
                       src={avatarUrl}
+                      onError={() => setAvatarUrl(null)}
                     />
                   ) : (
                     <div
                       className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
                       style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                     >
-                      {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
+                      {getUserInitials(user)}
                     </div>
                   )}
                 </button>
 
                 {isUserMenuOpen && (
-                  <>
-                    {/* Overlay to close on outside click */}
-                    <div
-                      onClick={() => { setIsUserMenuOpen(false); setIsLangMenuOpen(false); }}
-                      className="fixed inset-0 z-20"
-                    ></div>
-
+                  <MenuErrorBoundary>
+                    <>
                     {/* Dropdown panel */}
                     <div className="absolute end-0 top-full mt-2 w-[300px] rounded-lg shadow-xl bg-background border border-border z-30 overflow-hidden">
+
 
                       {/* User info header */}
                       <div className="flex items-center justify-between px-2.5 py-2 gap-1.5">
                         <div className="flex items-center gap-2">
                           {avatarUrl ? (
-                            <img alt="Avatar" className="size-9 shrink-0 rounded-full ring-2 ring-border shadow-sm object-cover" src={avatarUrl} />
+                            <img alt="Avatar" className="size-9 shrink-0 rounded-full ring-2 ring-border shadow-sm object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
                           ) : (
+
                             <div
                               className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm"
                               style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                             >
-                              {user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : user?.email ? user.email.slice(0, 2).toUpperCase() : 'LE'}
+                              {getUserInitials(user)}
                             </div>
                           )}
                           <div className="flex flex-col gap-1">
                             <span className="text-sm text-foreground font-semibold leading-none">
-                              {user?.name || user?.email?.split('@')[0] || 'Utilisateur'}
+                              {getUserDisplayName(user)}
                             </span>
                             <span className="text-xs text-secondary-foreground font-medium leading-none">
-                              {user?.email || 'demo@livrexpress.ma'}
+                              {getUserDisplayEmail(user)}
                             </span>
                           </div>
                         </div>
+
                         {isSuperAdmin ? (
                           <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
                         ) : isSuperviseur ? (
@@ -1057,8 +1252,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           }}
                         >
                           <i className="ki-filled ki-profile-circle text-base"></i>
-                          Mon Profil
+                          {t('nav.myProfile', 'Mon Profil')}
                         </a>
+
 
                         {/* Language selector */}
                         <div className="relative">
@@ -1069,36 +1265,34 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           >
                             <span className="flex items-center gap-2">
                               <i className="ki-filled ki-icon text-base"></i>
-                              Langue
+                              {t('nav.language', 'Langue')}
                             </span>
                             <span className="flex items-center gap-1 kt-badge kt-badge-stroke shrink-0">
-                              {selectedLang}
-                              <img alt="" className="inline-block size-3.5 rounded-full" src={selectedLangFlag} />
+                              {currentLangObj?.label || 'Français'}
+                              <img alt="" className="inline-block size-3.5 rounded-full" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
                             </span>
+
                           </button>
 
                           {isLangMenuOpen && (
                             <div className="absolute end-full top-0 me-1 w-[180px] rounded-md shadow-lg bg-background border border-border z-40 py-1">
-                              {[
-                                { label: 'Français', flag: '/assets/media/flags/france.svg' },
-                                { label: 'Anglais', flag: '/assets/media/flags/united-states.svg' },
-                                { label: 'Arabe', flag: '/assets/media/flags/saudi-arabia.svg' },
-                              ].map(({ label, flag }) => (
+                              {langOptions.map(({ code, label, flag }) => (
                                 <button
-                                  key={label}
+                                  key={code}
                                   className="flex items-center justify-between w-full px-3 py-2 text-sm text-foreground hover:bg-accent"
-                                  onClick={() => { setSelectedLang(label); setSelectedLangFlag(flag); setIsLangMenuOpen(false); }}
+                                  onClick={() => { setLanguage(code); setIsLangMenuOpen(false); }}
                                 >
                                   <span className="flex items-center gap-2">
                                     <img alt="" className="inline-block size-4 rounded-full" src={flag} />
                                     {label}
                                   </span>
-                                  {selectedLang === label && <i className="ki-solid ki-check-circle text-green-500 text-base"></i>}
+                                  {language === code && <i className="ki-solid ki-check-circle text-green-500 text-base"></i>}
                                 </button>
                               ))}
                             </div>
                           )}
                         </div>
+
                       </div>
 
                       {/* Separator */}
@@ -1109,7 +1303,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <div className="flex items-center gap-2 justify-between">
                           <span className="flex items-center gap-2">
                             <i className="ki-filled ki-moon text-base text-muted-foreground"></i>
-                            <span className="font-medium text-2sm">Mode sombre</span>
+                            <span className="font-medium text-2sm">{t('header.darkMode', 'Mode sombre')}</span>
                           </span>
                           <button
                             onClick={toggleTheme}
@@ -1148,12 +1342,15 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           onClick={handleLogout}
                           className="kt-btn kt-btn-outline justify-center w-full text-sm"
                         >
-                          Se déconnecter
+                          {t('nav.logout', 'Se déconnecter')}
                         </button>
+
                       </div>
                     </div>
                   </>
-                )}
+                </MenuErrorBoundary>
+              )}
+
               </div>
             </div>
           </div>
@@ -1170,19 +1367,19 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
             <div className="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
               <div className="flex order-2 md:order-1 gap-2 font-normal text-sm">
                 <span className="text-secondary-foreground">
-                  2026© Yassir
+                  {t('footer.copyright', '2026© Yassir - LivrExpress')}
                 </span>
               </div>
               <nav className="flex order-1 md:order-2 gap-4 font-normal text-sm text-secondary-foreground">
-                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs" target="_blank" rel="noopener noreferrer">Docs</a>
-                <a className="hover:text-primary" href="https://1.envato.market/Vm7VRE" target="_blank" rel="noopener noreferrer">Purchase</a>
-                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license" target="_blank" rel="noopener noreferrer">FAQ</a>
-                <a className="hover:text-primary" href="https://devs.keenthemes.com/" target="_blank" rel="noopener noreferrer">Support</a>
-                <a className="hover:text-primary" href="https://keenthemes.com/metronic/tailwind/docs/getting-started/license" target="_blank" rel="noopener noreferrer">License</a>
+                <a className="hover:text-primary" href="/api-docs">{t('footer.docs', 'Docs')}</a>
+                <a className="hover:text-primary" href="#">{t('footer.faq', 'FAQ')}</a>
+                <a className="hover:text-primary" href="#">{t('footer.support', 'Support')}</a>
+                <a className="hover:text-primary" href="#">{t('footer.license', 'Licence')}</a>
               </nav>
             </div>
           </div>
         </footer>
+
       </div>
 
       {/* Super Admin AI Chatbot Widget (Floating bottom-right, visible exclusively for ROLE_SUPER_ADMIN) */}

@@ -16,20 +16,31 @@ final class BonLivraisonPdfGenerator
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
     ) {}
 
-    public function generateDownloadResponse(BonLivraison $bon): Response
+    public function generateDownloadResponse(BonLivraison $bon, string $lang = 'fr'): Response
     {
         $reference = trim((string) $bon->getReference());
         if ($reference === '') {
             throw new \RuntimeException('Document non disponible');
         }
 
-        $statusLabel = BonLivraison::getStatusLabels()[$bon->getStatus()] ?? $bon->getStatus();
+        $isEn = strtolower($lang) === 'en';
+        $statusLabelsEn = [
+            'enregistre' => 'Registered',
+            'annule' => 'Cancelled',
+        ];
+        $statusLabelsFr = BonLivraison::getStatusLabels();
+
+        $statusLabel = $isEn
+            ? ($statusLabelsEn[$bon->getStatus()] ?? $bon->getStatus())
+            : ($statusLabelsFr[$bon->getStatus()] ?? $bon->getStatus());
+
         $logoDataUri = $this->resolveLogoDataUri();
 
         $html = $this->twig->render('bon_livraison/pdf.html.twig', [
             'bon' => $bon,
             'status_label' => $statusLabel,
             'logo_data_uri' => $logoDataUri,
+            'lang' => $lang,
         ]);
 
         $options = new Options();

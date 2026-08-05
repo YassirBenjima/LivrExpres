@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="fr">
+<html lang="{{ lang|default('fr') }}">
 <head>
   <meta charset="utf-8">
-  <title>Bon de retour {{ demande.bonReference }}</title>
+  <title>{% if lang == 'en' %}Return Slip{% else %}Bon de retour{% endif %} {{ demande.bonReference }}</title>
   <style>
     @page {
       margin: 12mm 14mm 14mm 14mm;
@@ -205,6 +205,8 @@
 </head>
 <body>
 
+  {% set is_en = (lang|default('fr')) == 'en' %}
+
   <!-- Top Header Table -->
   <table class="header-table">
     <tr>
@@ -214,12 +216,12 @@
         {% else %}
           <h1 class="brand-title">LivrExpress</h1>
         {% endif %}
-        <div class="brand-sub">Service de Gestion des Retours — Maroc</div>
+        <div class="brand-sub">{% if is_en %}Returns Management Service — Morocco{% else %}Service de Gestion des Retours — Maroc{% endif %}</div>
       </td>
       <td class="doc-badge-box" style="width: 45%;">
-        <div class="doc-title">Bon de Retour</div>
-        <div class="doc-ref">Réf: {{ demande.bonReference }}</div>
-        <div class="doc-date">Date de demande : {{ demande.createdAt ? demande.createdAt|date('d/m/Y à H:i') : 'N/A' }}</div>
+        <div class="doc-title">{% if is_en %}RETURN SLIP{% else %}BON DE RETOUR{% endif %}</div>
+        <div class="doc-ref">{% if is_en %}Ref{% else %}Réf{% endif %}: {{ demande.bonReference }}</div>
+        <div class="doc-date">{% if is_en %}Request Date{% else %}Date de demande{% endif %} : {{ demande.createdAt ? (is_en ? demande.createdAt|date('d/m/Y \\a\\t H:i') : demande.createdAt|date('d/m/Y \\à H:i')) : 'N/A' }}</div>
       </td>
     </tr>
   </table>
@@ -229,36 +231,44 @@
     <tr>
       <!-- Left Card: Customer & Details -->
       <td class="info-card">
-        <div class="info-card-title">Informations de la Demande</div>
-        <div class="info-row"><span class="info-label">Réf Bon :</span> <strong>{{ demande.bonReference }}</strong></div>
-        <div class="info-row"><span class="info-label">Mode de Réception :</span> {{ demande.receptionType }}</div>
-        <div class="info-row"><span class="info-label">Statut :</span> <strong>{{ status_label }}</strong></div>
+        <div class="info-card-title">{% if is_en %}Request Information{% else %}Informations de la Demande{% endif %}</div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Slip Ref :{% else %}Réf Bon :{% endif %}</span> <strong>{{ demande.bonReference }}</strong></div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Reception Mode :{% else %}Mode de Réception :{% endif %}</span> 
+          {% if demande.receptionType == 'Par Livreur' %}
+            {% if is_en %}By Driver{% else %}Par Livreur{% endif %}
+          {% elseif demande.receptionType == 'En Agence' %}
+            {% if is_en %}At Branch{% else %}En Agence{% endif %}
+          {% else %}
+            {{ demande.receptionType }}
+          {% endif %}
+        </div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Status :{% else %}Statut :{% endif %}</span> <strong>{{ status_label }}</strong></div>
       </td>
       
       <!-- Right Card: Dates & Remarques -->
       <td style="width: 4%;"></td>
       <td class="info-card">
-        <div class="info-card-title">Suivi &amp; Validation</div>
-        <div class="info-row"><span class="info-label">Nombre total de colis :</span> <strong>{{ demande.colis|length }} colis</strong></div>
-        <div class="info-row"><span class="info-label">Date de Réception :</span> {{ demande.receivedAt ? demande.receivedAt|date('d/m/Y H:i') : 'En attente' }}</div>
-        <div class="info-row"><span class="info-label">Remarque :</span> {{ demande.note ? demande.note : 'Aucune note' }}</div>
+        <div class="info-card-title">{% if is_en %}Tracking &amp; Validation{% else %}Suivi &amp; Validation{% endif %}</div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Total number of parcels :{% else %}Nombre total de colis :{% endif %}</span> <strong>{{ demande.colis|length }} {% if is_en %}parcels{% else %}colis{% endif %}</strong></div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Reception Date :{% else %}Date de Réception :{% endif %}</span> {{ demande.receivedAt ? demande.receivedAt|date('d/m/Y H:i') : (is_en ? 'Pending' : 'En attente') }}</div>
+        <div class="info-row"><span class="info-label">{% if is_en %}Notes :{% else %}Remarque :{% endif %}</span> {{ demande.note ? demande.note : (is_en ? 'No notes' : 'Aucune note') }}</div>
       </td>
     </tr>
   </table>
 
   <!-- Colis Section Title -->
-  <div class="section-header">Détails des colis à retourner</div>
+  <div class="section-header">{% if is_en %}Details of parcels to return{% else %}Détails des colis à retourner{% endif %}</div>
 
   <!-- Main Colis Table -->
   <table class="colis-table">
     <thead>
       <tr>
         <th style="width: 36px; text-align: center;">#</th>
-        <th style="width: 140px;">Code de Suivi</th>
-        <th>Nature du Produit</th>
-        <th>Destinataire / Adresse</th>
-        <th style="width: 110px;">Ville</th>
-        <th style="width: 95px; text-align: right;">Prix (MAD)</th>
+        <th style="width: 140px;">{% if is_en %}Tracking Code{% else %}Code de Suivi{% endif %}</th>
+        <th>{% if is_en %}Product Nature{% else %}Nature du Produit{% endif %}</th>
+        <th>{% if is_en %}Recipient / Address{% else %}Destinataire / Adresse{% endif %}</th>
+        <th style="width: 110px;">{% if is_en %}City{% else %}Ville{% endif %}</th>
+        <th style="width: 95px; text-align: right;">{% if is_en %}Price (MAD){% else %}Prix (MAD){% endif %}</th>
       </tr>
     </thead>
     <tbody>
@@ -268,7 +278,7 @@
         <tr>
           <td style="text-align: center; font-weight: bold; color: #64748b;">{{ loop.index }}</td>
           <td><span class="tracking-code">{{ colis.trackingCode }}</span></td>
-          <td>{{ colis.productNature ? colis.productNature : 'Colis' }}</td>
+          <td>{{ colis.productNature ? colis.productNature : (is_en ? 'Parcel' : 'Colis') }}</td>
           <td>{{ colis.recipient ? colis.recipient : '-' }}</td>
           <td>{{ colis.city ? colis.city : '-' }}</td>
           <td style="text-align: right; font-weight: bold; font-family: DejaVu Sans Mono, monospace;">
@@ -278,7 +288,7 @@
       {% else %}
         <tr>
           <td colspan="6" style="text-align: center; padding: 18px; color: #94a3b8;">
-            Aucun colis associé à ce bon de retour.
+            {% if is_en %}No parcel associated with this return slip.{% else %}Aucun colis associé à ce bon de retour.{% endif %}
           </td>
         </tr>
       {% endfor %}
@@ -286,7 +296,7 @@
       <!-- Total Summary Row -->
       {% if demande.colis|length > 0 %}
         <tr class="summary-row">
-          <td colspan="4" style="text-align: right; text-transform: uppercase;">Total des colis retournés ({{ demande.colis|length }} colis) :</td>
+          <td colspan="4" style="text-align: right; text-transform: uppercase;">{% if is_en %}Total returned parcels ({{ demande.colis|length }} parcels) :{% else %}Total des colis retournés ({{ demande.colis|length }} colis) :{% endif %}</td>
           <td colspan="2" style="text-align: right; font-family: DejaVu Sans Mono, monospace; color: #ef4444;">
             {{ totalPrix|number_format(2, ',', ' ') }} MAD
           </td>
@@ -299,20 +309,24 @@
   <table class="signatures-table">
     <tr>
       <td class="signature-card">
-        <div class="signature-title">Signature &amp; Cachet Agence / Transporteur</div>
-        <div class="signature-note">Validé lors du contrôle qualité à la réception</div>
+        <div class="signature-title">{% if is_en %}Signature &amp; Stamp Agency / Carrier{% else %}Signature &amp; Cachet Agence / Transporteur{% endif %}</div>
+        <div class="signature-note">{% if is_en %}Validated during quality control at reception{% else %}Validé lors du contrôle qualité à la réception{% endif %}</div>
       </td>
       <td style="width: 4%;"></td>
       <td class="signature-card">
-        <div class="signature-title">Signature &amp; Cachet Client Expéditeur</div>
-        <div class="signature-note">« Reçu conforme et retourné à l'expéditeur »</div>
+        <div class="signature-title">{% if is_en %}Signature &amp; Stamp Sender Client{% else %}Signature &amp; Cachet Client Expéditeur{% endif %}</div>
+        <div class="signature-note">{% if is_en %}« Received compliant and returned to sender »{% else %}« Reçu conforme et retourné à l'expéditeur »{% endif %}</div>
       </td>
     </tr>
   </table>
 
   <!-- Legal Notice Footer -->
   <div class="legal-footer">
-    Ce bon de retour atteste de la remise des colis retournés au client. LivrExpress Maroc — Document confidentiel.
+    {% if is_en %}
+      This return slip certifies the delivery of returned parcels to the client. LivrExpress Morocco — Confidential Document.
+    {% else %}
+      Ce bon de retour atteste de la remise des colis retournés au client. LivrExpress Maroc — Document confidentiel.
+    {% endif %}
   </div>
 
 </body>

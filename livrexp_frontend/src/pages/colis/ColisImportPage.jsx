@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ColisImportPage({ showNotification }) {
+  const { t } = useLanguage();
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ export default function ColisImportPage({ showNotification }) {
       selectedFile.name.endsWith('.xls');
 
     if (!isExcelOrCsv) {
-      const errText = 'Veuillez sélectionner un fichier au format Excel (.xlsx, .xls) ou CSV.';
+      const errText = t('colisPage.invalidFileFormat', 'Veuillez sélectionner un fichier au format Excel (.xlsx, .xls) ou CSV.');
       if (showNotification) {
         showNotification('danger', errText);
       } else {
@@ -60,7 +62,7 @@ export default function ColisImportPage({ showNotification }) {
       return;
     }
     if (selectedFile.size > 5 * 1024 * 1024) {
-      const errText = 'La taille du fichier ne doit pas dépasser 5 Mo.';
+      const errText = t('colisPage.fileSizeExceeded', 'La taille du fichier ne doit pas dépasser 5 Mo.');
       if (showNotification) {
         showNotification('danger', errText);
       } else {
@@ -106,7 +108,7 @@ export default function ColisImportPage({ showNotification }) {
       setProgress(100);
 
       if (response.ok) {
-        const msgText = 'Fichier importé avec succès ! Vos colis ont été ajoutés.';
+        const msgText = t('notifications.importSuccess', 'Fichier importé avec succès ! Vos colis ont été ajoutés.');
         if (showNotification) {
           showNotification('success', msgText);
         } else {
@@ -115,7 +117,7 @@ export default function ColisImportPage({ showNotification }) {
         setFile(null);
       } else {
         const data = await response.json();
-        const errMsgText = data.message || 'Une erreur est survenue lors de l\'importation.';
+        const errMsgText = data.message || t('notifications.importError', "Une erreur est survenue lors de l'importation.");
         if (showNotification) {
           showNotification('danger', errMsgText);
         } else {
@@ -126,7 +128,7 @@ export default function ColisImportPage({ showNotification }) {
       clearInterval(interval);
       setProgress(100);
       setTimeout(() => {
-        const demoMsg = 'Fichier importé avec succès ! 25 nouveaux colis créés.';
+        const demoMsg = t('notifications.importDemo', 'Fichier importé avec succès ! 25 nouveaux colis créés.');
         if (showNotification) {
           showNotification('success', demoMsg);
         } else {
@@ -151,10 +153,10 @@ export default function ColisImportPage({ showNotification }) {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Importer des colis
+                {t('colisPage.importTitle', 'Importer des colis')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Ajoutez vos colis en masse via un fichier Excel ou CSV
+                {t('colisPage.importSubtitle', 'Importez vos colis en masse via un fichier Excel ou CSV.')}
               </div>
             </div>
             {/* Quick Actions */}
@@ -165,7 +167,7 @@ export default function ColisImportPage({ showNotification }) {
                 download
               >
                 <i className="ki-filled ki-file-down"></i>
-                Télécharger le modèle Excel
+                {t('colisPage.downloadTemplate', 'Télécharger le modèle Excel')}
               </a>
             </div>
           </div>
@@ -191,7 +193,7 @@ export default function ColisImportPage({ showNotification }) {
             <div className="kt-card border border-border bg-card">
               <div className="kt-card-header">
                 <h3 className="kt-card-title text-sm font-semibold text-mono">
-                  Importer un fichier
+                  {t('common.import', 'Importer un fichier')}
                 </h3>
               </div>
               <div className="p-6">
@@ -234,23 +236,23 @@ export default function ColisImportPage({ showNotification }) {
                           <div className="w-full bg-muted h-2 rounded-full overflow-hidden mb-2">
                             <div className="bg-primary h-full transition-all duration-200" style={{ width: `${progress}%` }}></div>
                           </div>
-                          <span className="text-xs text-secondary-foreground">Traitement du fichier... {progress}%</span>
+                          <span className="text-xs text-secondary-foreground">{t('common.loading', 'Traitement...')} {progress}%</span>
                         </div>
                       ) : (
                         <button 
                           className="kt-btn kt-btn-primary w-full py-2.5 font-medium rounded-lg" 
                           onClick={handleUpload}
                         >
-                          Lancer l'importation
+                          {t('colisPage.importButton', 'Lancer l\'importation')}
                         </button>
                       )}
                     </div>
                   ) : (
                     <>
                       <span className="text-mono text-sm font-medium mb-1">
-                        Glissez-déposez votre fichier ici, ou{" "}
+                        {t('colisPage.dragDropText', 'Glissez-déposez votre fichier ici, ou')}{" "}
                         <label className="text-primary cursor-pointer underline hover:text-primary-active">
-                          parcourez vos fichiers
+                          {t('colisPage.browseFiles', 'parcourez vos fichiers')}
                           <input 
                             type="file" 
                             className="hidden" 
@@ -260,7 +262,7 @@ export default function ColisImportPage({ showNotification }) {
                         </label>
                       </span>
                       <span className="text-xs text-secondary-foreground">
-                        Excel (.xlsx, .xls) ou CSV (max. 5 Mo)
+                        {t('colisPage.supportedFormats', 'Formats supportés : .xlsx, .xls, .csv (Max 5 Mo)')}
                       </span>
                     </>
                   )}
@@ -272,20 +274,20 @@ export default function ColisImportPage({ showNotification }) {
             <div className="kt-card border border-border bg-card">
               <div className="p-5 flex flex-col gap-3">
                 <h4 className="text-sm font-bold text-foreground text-mono">
-                  Instructions d'importation
+                  {t('colisPage.importInstructionsTitle', 'Instructions d\'importation')}
                 </h4>
                 <ul className="space-y-2 text-sm text-secondary-foreground">
                   <li className="flex items-start gap-2">
                     <span className="text-primary font-bold">•</span>
-                    <span>Utilisez le modèle Excel officiel téléchargeable ci-dessus.</span>
+                    <span>{t('colisPage.importStep1', 'Utilisez le modèle Excel officiel téléchargeable ci-dessus.')}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary font-bold">•</span>
-                    <span>Les colonnes requises doivent être renseignées : <strong>orderNumber</strong>, <strong>recipient</strong>, <strong>phoneNumber</strong>, <strong>city</strong>, <strong>address</strong>, <strong>price</strong>.</span>
+                    <span>{t('colisPage.importStep2Prefix', 'Les colonnes requises doivent être renseignées :')} <strong>orderNumber</strong>, <strong>recipient</strong>, <strong>phoneNumber</strong>, <strong>city</strong>, <strong>address</strong>, <strong>price</strong>.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary font-bold">•</span>
-                    <span>Les numéros de commande (orderNumber) doivent être uniques.</span>
+                    <span>{t('colisPage.importStep3', 'Les numéros de commande (orderNumber) doivent être uniques.')}</span>
                   </li>
                 </ul>
               </div>
@@ -298,3 +300,4 @@ export default function ColisImportPage({ showNotification }) {
     </DashboardLayout>
   );
 }
+

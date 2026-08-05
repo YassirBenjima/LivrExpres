@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LivreurAutoAssignPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [livreurs, setLivreurs]       = useState([]);
   const [colisDisp, setColisDisp]     = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -14,8 +16,8 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
   const [done, setDone]               = useState(false);
 
   const headers = () => {
-    const t = localStorage.getItem('auth_token');
-    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+    const token = localStorage.getItem('auth_token');
+    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   };
 
   const load = async () => {
@@ -58,17 +60,17 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
       if (d.success) {
         setAssignments(d.assignments || []);
         setDone(true);
-        showNotification?.('success', d.message);
+        showNotification?.('success', d.message || t('drivers.assignedSuccess', '{count} colis assignés automatiquement avec succès.').replace('{count}', (d.assignments || []).length));
         load();
       } else {
-        showNotification?.('error', d.message || "Erreur lors de l'attribution.");
+        showNotification?.('error', d.message || t('drivers.autoAssignError', "Erreur lors de l'attribution."));
       }
-    } catch { showNotification?.('error', 'Erreur de connexion.'); }
+    } catch { showNotification?.('error', t('drivers.connError', 'Erreur de connexion.')); }
     finally { setLoading(false); }
   };
 
   const handleManualAssign = async (livreurId, livreurName) => {
-    if (selectedColis.length === 0) { showNotification?.('error', 'Sélectionnez au moins un colis.'); return; }
+    if (selectedColis.length === 0) { showNotification?.('error', t('drivers.selectAtLeastOneColis', 'Sélectionnez au moins un colis.')); return; }
     setLoading(true);
     try {
       const r = await fetch(`/api/livreurs/${livreurId}/assign`, {
@@ -82,7 +84,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         load();
       }
       else showNotification?.('error', d.message);
-    } catch { showNotification?.('error', 'Erreur de connexion.'); }
+    } catch { showNotification?.('error', t('drivers.connError', 'Erreur de connexion.')); }
     finally { setLoading(false); }
   };
 
@@ -121,21 +123,21 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
   const disponibles = livreurs.filter(l => l.disponible);
 
   return (
-    <DashboardLayout activeMenu="livreurs_list">
+    <DashboardLayout activeMenu="livreurs_auto_assign">
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
 
         {/* Page Header */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Attribution des Colis</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('drivers.autoAssignTitle', 'Attribution des Colis')}</h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Attribution automatique ou manuelle des colis aux livreurs selon leur zone
+                {t('drivers.autoAssignDesc', 'Attribution automatique ou manuelle des colis aux livreurs selon leur zone')}
               </div>
             </div>
             <div className="flex items-center gap-2.5">
               <button type="button" className="kt-btn kt-btn-outline" onClick={() => navigate('/livreurs')}>
-                Retour à la liste
+                {t('drivers.backToList', 'Retour à la liste')}
               </button>
             </div>
           </div>
@@ -147,24 +149,24 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
             {/* Auto Attribution Card */}
             <div className="kt-card">
               <div className="kt-card-header">
-                <h3 className="kt-card-title">Attribution Automatique</h3>
+                <h3 className="kt-card-title">{t('drivers.autoAssignSection', 'Attribution Automatique')}</h3>
               </div>
               <div className="kt-card-content px-10 py-7.5 lg:pe-12.5">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-2.5 mb-6">
                   <div className="flex flex-col items-start gap-3 w-full lg:max-w-[65%]">
-                    <h2 className="text-xl font-semibold text-mono">Attribution par ville</h2>
+                    <h2 className="text-xl font-semibold text-mono">{t('drivers.autoAssignByCity', 'Attribution par ville')}</h2>
                     <div className="grid grid-cols-1 gap-2 w-full">
                       <div className="flex items-start gap-1.5 lg:pe-7.5">
                         <i className="ki-filled ki-check-circle text-base text-green-500" />
-                        <span className="text-sm text-mono">Cible les colis en état <strong>En préparation</strong></span>
+                        <span className="text-sm text-mono">{t('drivers.checkTarget', 'Cible les colis en état')} <strong>{t('drivers.inPrepStatus', 'En préparation')}</strong></span>
                       </div>
                       <div className="flex items-start gap-1.5 lg:pe-7.5">
                         <i className="ki-filled ki-check-circle text-base text-green-500" />
-                        <span className="text-sm text-mono">Associe automatiquement les colis aux livreurs par <strong>ville correspondante</strong></span>
+                        <span className="text-sm text-mono">{t('drivers.checkMatch', 'Associe automatiquement les colis aux livreurs par')} <strong>{t('drivers.matchCity', 'ville correspondante')}</strong></span>
                       </div>
                       <div className="flex items-start gap-1.5 lg:pe-7.5">
                         <i className="ki-filled ki-check-circle text-base text-green-500" />
-                        <span className="text-sm text-mono">Passe le statut du colis à <strong>Expédié / En cours</strong></span>
+                        <span className="text-sm text-mono">{t('drivers.checkChangeStatus', 'Passe le statut du colis à')} <strong>{t('drivers.dispatchedStatus', 'Expédié / En cours')}</strong></span>
                       </div>
                     </div>
                   </div>
@@ -178,7 +180,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                     <div className="flex gap-3 border rounded-lg p-4 mb-5" style={{ backgroundColor: 'rgba(39,211,127,0.08)', borderColor: 'rgba(39,211,127,0.2)' }}>
                       <i className="ki-filled ki-check-circle text-green-600 text-xl shrink-0 mt-0.5" />
                       <div className="text-sm text-foreground">
-                        <strong>{assignments.length} colis</strong> assignés automatiquement avec succès.
+                        <strong>{assignments.length} {t('changeRecipient.parcelsCount', 'colis')}</strong> {t('drivers.assignedSuccess', 'assignés automatiquement avec succès.')}
                       </div>
                     </div>
                     {assignments.length > 0 && (
@@ -196,7 +198,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                       className="kt-btn kt-btn-outline w-full"
                       onClick={() => { setDone(false); setAssignments([]); }}
                     >
-                      Nouvelle attribution
+                      {t('drivers.newAssignment', 'Nouvelle attribution')}
                     </button>
                   </div>
                 ) : (
@@ -206,7 +208,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                     onClick={handleAutoAssign}
                     disabled={loading}
                   >
-                    {loading ? 'Attribution en cours...' : 'Lancer l\'attribution automatique'}
+                    {loading ? t('drivers.runningAutoAssign', 'Attribution en cours...') : t('drivers.runAutoAssign', 'Lancer l\'attribution automatique')}
                   </button>
                 )}
               </div>
@@ -215,10 +217,10 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
             {/* Manual Attribution Card with Search & Pagination */}
             <div className="kt-card">
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title">Attribution Manuelle</h3>
+                <h3 className="kt-card-title">{t('drivers.manualAssignSection', 'Attribution Manuelle')}</h3>
                 {selectedColis.length > 0 && (
                   <span className="kt-badge kt-badge-primary kt-badge-outline rounded-[30px]">
-                    <span className="kt-badge-dot size-1.5" />{selectedColis.length} sélectionné{selectedColis.length > 1 ? 's' : ''}
+                    <span className="kt-badge-dot size-1.5" />{selectedColis.length} {t('drivers.selectedCount', 'sélectionné(s)')}
                   </span>
                 )}
               </div>
@@ -237,7 +239,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                         <i className="ki-filled ki-magnifier"></i>
                         <input
                           type="text"
-                          placeholder="Rechercher (N° commande, ville...)"
+                          placeholder={t('drivers.searchManualPlaceholder', 'Rechercher (N° commande, ville...)')}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                         />
@@ -251,21 +253,21 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                             checked={allPageSelected}
                             onChange={toggleSelectAllPage}
                           />
-                          Tout sur la page
+                          {t('drivers.selectAllPage', 'Tout sur la page')}
                         </label>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-secondary-foreground mb-2">
-                      <span>Colis disponibles : <strong>{totalColis}</strong></span>
-                      <span>Page {currentPage} / {totalPages}</span>
+                      <span>{t('drivers.availableParcelsCount', 'Colis disponibles :')} <strong>{totalColis}</strong></span>
+                      <span>{t('drivers.page', 'Page')} {currentPage} / {totalPages}</span>
                     </div>
 
                     {/* Paginated Colis List */}
                     <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto border border-border rounded-lg">
                       {paginatedColis.length === 0 ? (
                         <div className="p-4 text-sm text-secondary-foreground text-center">
-                          Aucun colis correspondant trouvé
+                          {t('drivers.noMatchingParcel', 'Aucun colis correspondant trouvé')}
                         </div>
                       ) : paginatedColis.map(c => (
                         <label key={c.id} className={`flex items-center gap-3 px-3.5 py-2 hover:bg-accent cursor-pointer border-b border-border/40 last:border-b-0 ${selectedColis.includes(c.id) ? 'bg-primary/5' : ''}`}>
@@ -289,7 +291,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                     {/* Pagination Bar */}
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between gap-2 pt-2.5 text-xs text-secondary-foreground me-2 me-sm-0">
-                        <span>Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalColis)} sur {totalColis}</span>
+                        <span>{t('returns.showing', 'Affichage de')} {(currentPage - 1) * itemsPerPage + 1} {t('returns.to', 'à')} {Math.min(currentPage * itemsPerPage, totalColis)} {t('returns.of', 'sur')} {totalColis}</span>
                         <div className="flex items-center gap-1 me-2 me-sm-0">
                           <button
                             type="button"
@@ -297,7 +299,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           >
-                            Précédent
+                            {t('returns.previous', 'Précédent')}
                           </button>
                           <span className="px-2 py-0.5 bg-accent rounded text-foreground font-semibold me-2 me-sm-0">{currentPage}</span>
                           <button
@@ -306,7 +308,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                           >
-                            Suivant
+                            {t('returns.next', 'Suivant')}
                           </button>
                         </div>
                       </div>
@@ -319,12 +321,12 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                   {/* Livreurs list */}
                   <div className="px-5 lg:px-7.5 pb-4">
                     <p className="text-sm font-medium text-secondary-foreground mb-2 me-2 me-sm-0">
-                      Assigner au livreur disponible :
+                      {t('drivers.assignToAvailableDriver', 'Assigner au livreur disponible :')}
                     </p>
                     <div className="flex flex-col gap-2 max-h-48 overflow-y-auto me-2 me-sm-0">
                       {disponibles.length === 0 ? (
                         <div className="p-4 text-sm text-secondary-foreground text-center border border-border rounded-lg me-2 me-sm-0">
-                          Aucun livreur disponible
+                          {t('drivers.noAvailableDriver', 'Aucun livreur disponible')}
                         </div>
                       ) : disponibles.map(l => (
                         <div
@@ -340,7 +342,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                             </div>
                             <div className="flex flex-col gap-0.5 me-2 me-sm-0">
                               <span className="text-sm font-medium text-foreground me-2 me-sm-0">{l.fullName}</span>
-                              <span className="text-xs text-secondary-foreground me-2 me-sm-0">{l.city} • {l.stats?.total ?? 0} colis assignés</span>
+                              <span className="text-xs text-secondary-foreground me-2 me-sm-0">{l.city} • {l.stats?.total ?? 0} {t('drivers.parcelsAssignedSuffix', 'colis assignés')}</span>
                             </div>
                           </div>
                           <button
@@ -349,7 +351,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
                             onClick={() => handleManualAssign(l.id, l.fullName)}
                             disabled={loading || selectedColis.length === 0}
                           >
-                            Assigner ({selectedColis.length})
+                            {t('drivers.assignBtn', 'Assigner')} ({selectedColis.length})
                           </button>
                         </div>
                       ))}

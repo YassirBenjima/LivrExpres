@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from './context/LanguageContext';
 import { getUserRoles, getStoredUser } from './hooks/useAuth';
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
@@ -44,6 +45,7 @@ import LivrExpressAiSuitePage from './pages/ai/LivrExpressAiSuitePage';
 import OfflineBanner from './components/ui/OfflineBanner';
 
 function App() {
+  const { t } = useLanguage();
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
   const [colisList, setColisList] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
@@ -218,7 +220,7 @@ function App() {
     }
     
     if (route.match(/^\/stock\/produits\/([^/]+)\/edit$/)) {
-      document.title = 'Modifier un produit - LivrExpress';
+      document.title = `${t('stockPage.editProductTitle', 'Modifier un produit')} - LivrExpress`;
       return;
     }
     
@@ -228,7 +230,8 @@ function App() {
     }
 
     if (route.match(/^\/stock\/produits\/variant\/([^/]+)\/sticker$/) || route.match(/^\/stock\/produits\/([^/]+)\/sticker$/)) {
-      document.title = 'Sticker - LivrExpress';
+      const isVariantSticker = /variant/.test(route);
+      document.title = `${isVariantSticker ? t('stockPage.stickerVariantTitle', 'Sticker variante') : t('stockPage.stickerProductTitle', 'Sticker produit')} - LivrExpress`;
       return;
     }
     
@@ -252,31 +255,37 @@ function App() {
         title = 'Paramètres des colis - LivrExpress';
         break;
       case '/stock/produits':
-        title = 'Liste des produits - LivrExpress';
+        title = `${t('stockPage.productListTitle', 'Liste des produits')} - LivrExpress`;
         break;
       case '/stock/produits/new':
-        title = 'Ajouter un produit - LivrExpress';
+        title = `${t('stockPage.addProductTitle', 'Ajouter un produit')} - LivrExpress`;
         break;
       case '/stock/entree':
-        title = 'Stock Entrée - LivrExpress';
+        title = `${t('stockPage.stockInboundTitle', 'Stock Entrée')} - LivrExpress`;
         break;
       case '/stock/colis':
-        title = 'Colis du stock - LivrExpress';
+        title = `${t('stockPage.stockParcelsTitle', 'Colis du stock')} - LivrExpress`;
         break;
       case '/ramassage':
-        title = 'Liste des ramassages - LivrExpress';
+        title = `${t('colisPage.pickupListPageTitle', 'Liste des ramassages')} - LivrExpress`;
         break;
       case '/ramassage/new':
-        title = 'Nouvelle demande de ramassage - LivrExpress';
+        title = `${t('colisPage.ramassageNewTitle', 'Nouvelle demande de ramassage')} - LivrExpress`;
         break;
       case '/ramassage/planning':
-        title = 'Planification des ramassages - LivrExpress';
+        title = `${t('colisPage.planningTitle', 'Planification des ramassages')} - LivrExpress`;
         break;
       case '/suivi/changement-destinataire':
         title = 'Changement destinataire - LivrExpress';
         break;
       case '/suivi/modele-whatsapp':
         title = 'Suivi par Whatsapp - LivrExpress';
+        break;
+      case '/bon-livraison':
+        title = `${t('deliverySlip.listTitle', 'Liste bons de livraison')} - LivrExpress`;
+        break;
+      case '/bon-livraison/new':
+        title = `${t('deliverySlip.addTitle', 'Ajouter Bon de Livraison')} - LivrExpress`;
         break;
       case '/retour/demandes':
         title = 'Demandes de retour - LivrExpress';
@@ -615,7 +624,11 @@ function App() {
             </div>
             <div className="custom-toast-content">
               <h4 className="custom-toast-title">
-                {notification.type === 'success' ? 'Succès' : notification.type === 'info' ? 'Information' : 'Erreur'}
+                {notification.type === 'success'
+                  ? t('notifications.toastSuccess', 'Success')
+                  : notification.type === 'info'
+                  ? t('notifications.toastInfo', 'Information')
+                  : t('notifications.toastError', 'Error')}
               </h4>
               <p className="custom-toast-message">
                 {notification.message}

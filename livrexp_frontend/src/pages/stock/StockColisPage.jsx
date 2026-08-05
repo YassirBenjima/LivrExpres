@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function StockColisPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [colisList, setColisList]       = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -17,6 +19,44 @@ export default function StockColisPage({ navigate, showNotification }) {
   const [deleteColis, setDeleteColis]   = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [pickupLoading, setPickupLoading] = useState(false);
+
+  const formatStatusLabel = (label) => {
+    if (!label) return label;
+    const keyMap = {
+      // French values (etatLabel / statutLabel from API)
+      'Créé':       'status.cree',
+      'Expédié':    'status.expedie',
+      'Reçu':       'status.pickedUp',
+      'En attente': 'status.enAttente',
+      'Annulé':     'status.annule',
+      'Livré':      'status.livre',
+      'Retourné':   'status.retourne',
+      'En cours':   'status.enCours',
+      'En préparation': 'status.enPreparation',
+      'Reporté':    'status.reporte',
+      'Terminé':    'status.termine',
+      'Litige':     'status.litige',
+      'Refusé':     'status.refuse',
+      // English values that may come from API
+      'Pending':    'status.enAttente',
+      'Created':    'status.cree',
+      'Shipped':    'status.expedie',
+      'Delivered':  'status.livre',
+      'Returned':   'status.retourne',
+      'Cancelled':  'status.annule',
+      'Picked Up':  'status.pickedUp',
+      'In Progress':'status.enCours',
+      'In preparation': 'status.enPreparation',
+      'Postponed':  'status.reporte',
+      'Completed':  'status.termine',
+      'Dispute':    'status.litige',
+      'Refused':    'status.refuse',
+      'Active':     'status.active',
+      'Inactive':   'status.inactive',
+    };
+    const key = keyMap[label];
+    return key ? t(key, label) : label;
+  };
 
   const token = localStorage.getItem('auth_token');
   const headers = {
@@ -101,20 +141,20 @@ export default function StockColisPage({ navigate, showNotification }) {
       });
       if (response.ok) {
         if (showNotification) {
-          showNotification('success', `${selectedIds.length} colis envoyé(s) en demande de ramassage.`);
+          showNotification('success', `${selectedIds.length} ${t('colisPage.parcelsSentForPickup', 'colis envoyé(s) en demande de ramassage.')}`);
         }
         setSelectedIds([]);
         fetchColis();
       } else {
         const data = await response.json();
         if (showNotification) {
-          showNotification('error', data.message || 'Une erreur est survenue.');
+          showNotification('error', data.message || t('colisPage.errorOccurred', 'Une erreur est survenue.'));
         }
       }
     } catch (err) {
       console.error(err);
       if (showNotification) {
-        showNotification('error', 'Une erreur de réseau est survenue.');
+        showNotification('error', t('colisPage.networkError', 'Une erreur de réseau est survenue.'));
       }
     } finally {
       setPickupLoading(false);
@@ -134,19 +174,19 @@ export default function StockColisPage({ navigate, showNotification }) {
       });
       if (response.ok) {
         if (showNotification) {
-          showNotification('success', 'Colis envoyé en demande de ramassage.');
+          showNotification('success', t('colisPage.parcelSentForPickup', 'Colis envoyé en demande de ramassage.'));
         }
         fetchColis();
       } else {
         const data = await response.json();
         if (showNotification) {
-          showNotification('error', data.message || 'Une erreur est survenue.');
+          showNotification('error', data.message || t('colisPage.errorOccurred', 'Une erreur est survenue.'));
         }
       }
     } catch (err) {
       console.error(err);
       if (showNotification) {
-        showNotification('error', 'Une erreur de réseau est survenue.');
+        showNotification('error', t('colisPage.networkError', 'Une erreur de réseau est survenue.'));
       }
     }
   };
@@ -164,20 +204,20 @@ export default function StockColisPage({ navigate, showNotification }) {
 
       if (response.ok) {
         if (showNotification) {
-          showNotification('success', 'Colis supprimé avec succès.');
+          showNotification('success', t('colisPage.deleteSuccess', 'Colis supprimé avec succès.'));
         }
         setDeleteColis(null);
         fetchColis();
       } else {
         const data = await response.json();
         if (showNotification) {
-          showNotification('error', data.message || 'Une erreur est survenue lors de la suppression.');
+          showNotification('error', data.message || t('colisPage.deleteError', 'Une erreur est survenue lors de la suppression.'));
         }
       }
     } catch (err) {
       console.error(err);
       if (showNotification) {
-        showNotification('error', 'Une erreur est survenue lors de la suppression.');
+        showNotification('error', t('colisPage.deleteError', 'Une erreur est survenue lors de la suppression.'));
       }
     } finally {
       setDeleteLoading(false);
@@ -258,17 +298,17 @@ export default function StockColisPage({ navigate, showNotification }) {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Liste colis stock en attente de ramassage
+                {t('stockPage.stockParcelsTitle', 'Liste colis stock en attente de ramassage')}
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
                 <span className="text-base text-secondary-foreground">
-                  Total colis:
+                  {t('stockPage.stockTotalColis', 'Total colis')}:
                 </span>
                 <span className="text-base text-foreground font-medium me-2">
                   {totalColis}
                 </span>
                 <span className="text-base text-secondary-foreground border-s border-input ps-3">
-                  Montant total:
+                  {t('stockPage.stockTotalAmount', 'Montant total')}:
                 </span>
                 <span className="text-base text-foreground font-medium">
                   {totalMontant.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
@@ -281,10 +321,10 @@ export default function StockColisPage({ navigate, showNotification }) {
                 onClick={handleBulkPickupRequest}
                 disabled={selectedIds.length === 0 || pickupLoading}
               >
-                {pickupLoading ? 'Envoi...' : `Demander un ramassage (${selectedIds.length})`}
+                {pickupLoading ? t('stockPage.sending', 'Envoi...') : `${t('stockPage.requestPickupBtn', 'Demander un ramassage')} (${selectedIds.length})`}
               </button>
               <button className="kt-btn kt-btn-primary" onClick={() => navigate('/colis/new')}>
-                Ajouter un colis
+                {t('stockPage.addColisBtn', 'Ajouter un colis')}
               </button>
             </div>
           </div>
@@ -298,7 +338,7 @@ export default function StockColisPage({ navigate, showNotification }) {
               {/* Card Header & Filters */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {filteredColis.length} colis
+                  {t('stockPage.showingColis', 'Affichage de')} {filteredColis.length} {t('stockPage.colisCount', 'colis')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -310,7 +350,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                           setSearchQuery(e.target.value);
                           setCurrentPage(1);
                         }}
-                        placeholder="Rechercher un colis" 
+                        placeholder={t('stockPage.searchColis', 'Rechercher un colis')} 
                         type="text" 
                       />
                     </label>
@@ -319,22 +359,22 @@ export default function StockColisPage({ navigate, showNotification }) {
                     <KtSelect
                       value={selectedEtat}
                       onChange={(val) => { setSelectedEtat(val); setCurrentPage(1); }}
-                      placeholder="État"
+                      placeholder={t('stockPage.colEtat', 'État')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les états' },
-                        ...etatsPossibles.map(e => ({ value: e, label: e }))
+                        { value: '', label: t('stockPage.allStates', 'Tous les états') },
+                        ...etatsPossibles.map(e => ({ value: e, label: formatStatusLabel(e) }))
                       ]}
                     />
 
                     <KtSelect
                       value={selectedStatut}
                       onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
+                      placeholder={t('stockPage.colStatut', 'Statut')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les statuts' },
-                        ...statutsPossibles.map(s => ({ value: s, label: s }))
+                        { value: '', label: t('stockPage.allStatuses', 'Tous les statuts') },
+                        ...statutsPossibles.map(s => ({ value: s, label: formatStatusLabel(s) }))
                       ]}
                     />
 
@@ -342,7 +382,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                       className="kt-btn kt-btn-outline"
                       onClick={handleResetFilters}
                     >
-                      Réinitialiser
+                      {t('stockPage.reset', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -363,19 +403,19 @@ export default function StockColisPage({ navigate, showNotification }) {
                               checked={paginatedColis.length > 0 && selectedIds.length === paginatedColis.length}
                             />
                           </th>
-                          <th className="min-w-[150px]">Code de suivi</th>
-                          <th className="min-w-[180px]">Nom du produit</th>
-                          <th className="min-w-[150px]">Date de création</th>
-                          <th className="min-w-[180px]">Adresse de livraison</th>
-                          <th className="min-w-[120px]">État</th>
-                          <th className="min-w-[120px]">Statut</th>
-                          <th className="min-w-[120px]">Livreur</th>
-                          <th className="min-w-[160px]">Date de livraison</th>
-                          <th className="min-w-[140px]">Ville</th>
-                          <th className="min-w-[120px]">Prix</th>
-                          <th className="min-w-[140px]">Réclamation</th>
-                          <th className="min-w-[180px]">Commentaires</th>
-                          <th className="w-[90px] text-center">Actions</th>
+                          <th className="min-w-[150px]">{t('stockPage.colTrackingCode', 'Code de suivi')}</th>
+                          <th className="min-w-[180px]">{t('stockPage.colProduct', 'Nom du produit')}</th>
+                          <th className="min-w-[150px]">{t('stockPage.colCreatedAt', 'Date de création')}</th>
+                          <th className="min-w-[180px]">{t('stockPage.colAddress', 'Adresse de livraison')}</th>
+                          <th className="min-w-[120px]">{t('stockPage.colEtat', 'État')}</th>
+                          <th className="min-w-[120px]">{t('stockPage.colStatut', 'Statut')}</th>
+                          <th className="min-w-[120px]">{t('stockPage.colDriver', 'Livreur')}</th>
+                          <th className="min-w-[160px]">{t('stockPage.colDeliveryDate', 'Date de livraison')}</th>
+                          <th className="min-w-[140px]">{t('stockPage.pickupCityLabel', 'Ville')}</th>
+                          <th className="min-w-[120px]">{t('stockPage.colQty', 'Prix')}</th>
+                          <th className="min-w-[140px]">{t('colisPage.colClaim', 'Réclamation')}</th>
+                          <th className="min-w-[180px]">{t('colisPage.colComments', 'Commentaires')}</th>
+                          <th className="w-[90px] text-center">{t('stockPage.colActions', 'Actions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -399,13 +439,13 @@ export default function StockColisPage({ navigate, showNotification }) {
                               <td>
                                 <span className={`kt-badge ${colis.etatBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
                                   <span className="kt-badge-dot size-1.5"></span>
-                                  {colis.etatLabel}
+                                  {formatStatusLabel(colis.etatLabel)}
                                 </span>
                               </td>
                               <td>
                                 <span className={`kt-badge ${colis.statutBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
                                   <span className="kt-badge-dot size-1.5"></span>
-                                  {colis.statutLabel}
+                                  {formatStatusLabel(colis.statutLabel)}
                                 </span>
                               </td>
                               <td className="text-foreground font-normal">{colis.assignedDriver || '-'}</td>
@@ -414,7 +454,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                               <td className="text-foreground font-medium">
                                 {colis.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
                               </td>
-                              <td className="text-foreground font-normal">Non</td>
+                              <td className="text-foreground font-normal">{t('stockPage.pickupNo', 'Non')}</td>
                               <td className="text-secondary-foreground font-normal text-sm">{colis.comment}</td>
                               <td className="text-center relative">
                                 <div className="inline-block text-left">
@@ -448,7 +488,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                                           <span className="kt-menu-icon">
                                             <i className="ki-filled ki-pencil"></i>
                                           </span>
-                                          <span className="kt-menu-title">Modifier</span>
+                                          <span className="kt-menu-title">{t('stockPage.actionEdit', 'Modifier')}</span>
                                         </button>
                                       </div>
                                       <div className="kt-menu-item">
@@ -460,7 +500,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                                           <span className="kt-menu-icon text-destructive">
                                             <i className="ki-filled ki-trash"></i>
                                           </span>
-                                          <span className="kt-menu-title text-destructive">Supprimer</span>
+                                          <span className="kt-menu-title text-destructive">{t('stockPage.actionDelete', 'Supprimer')}</span>
                                         </button>
                                       </div>
                                       <div className="kt-menu-separator"></div>
@@ -473,7 +513,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                                           <span className="kt-menu-icon">
                                             <i className="ki-filled ki-delivery-2"></i>
                                           </span>
-                                          <span className="kt-menu-title">Demander un ramassage</span>
+                                          <span className="kt-menu-title">{t('stockPage.requestPickupBtn', 'Demander un ramassage')}</span>
                                         </button>
                                       </div>
                                     </div>,
@@ -486,7 +526,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                         ) : (
                           <tr>
                             <td colSpan={14} className="py-8 text-center text-secondary-foreground">
-                              Aucun colis en attente de ramassage
+                              {t('stockPage.noColisFound', 'Aucun colis en attente de ramassage')}
                             </td>
                           </tr>
                         )}
@@ -497,19 +537,19 @@ export default function StockColisPage({ navigate, showNotification }) {
                   {/* Pagination Footer */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('stockPage.show', 'Afficher')}
                       <KtSelect
                         value={String(itemsPerPage)}
                         onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
                         className="w-16"
                         options={perPageOptions}
                       />
-                      par page
+                      {t('stockPage.perPage', 'par page')}
                     </div>
                     
                     <div className="flex items-center gap-4 order-1 md:order-2">
                       <span>
-                        Affichage de {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalColis, currentPage * itemsPerPage)} sur {totalColis} colis
+                        {t('stockPage.showingColis', 'Affichage de')} {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} {t('colisPage.to', 'à')} {Math.min(totalColis, currentPage * itemsPerPage)} {t('colisPage.of', 'sur')} {totalColis} {t('stockPage.colisCount', 'colis')}
                       </span>
                       {totalPages > 1 && (
                         <div className="flex gap-1">
@@ -518,7 +558,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                           >
-                            Précédent
+                            {t('colisPage.prev', 'Précédent')}
                           </button>
                           <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                           <button 
@@ -526,7 +566,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                           >
-                            Suivant
+                            {t('colisPage.next', 'Suivant')}
                           </button>
                         </div>
                       )}
@@ -563,7 +603,7 @@ export default function StockColisPage({ navigate, showNotification }) {
         >
           <div className="kt-modal-content w-full max-w-lg" id="colis_delete_modal">
             <div className="kt-modal-header">
-              <h3 className="kt-modal-title">Supprimer le colis</h3>
+              <h3 className="kt-modal-title">{t('colisPage.deleteColisTitle', 'Supprimer le colis')}</h3>
               <button 
                 className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" 
                 onClick={() => setDeleteColis(null)} 
@@ -574,7 +614,7 @@ export default function StockColisPage({ navigate, showNotification }) {
             </div>
             <div className="kt-modal-body px-5 py-5">
               <p className="text-sm text-secondary-foreground mb-4">
-                Vous êtes sur le point de supprimer le colis <span className="font-medium text-foreground">{deleteColis.trackingCode}</span>.
+                {t('colisPage.deleteColisConfirm', 'Vous êtes sur le point de supprimer le colis')} <span className="font-medium text-foreground">{deleteColis.trackingCode}</span>.
               </p>
               <form onSubmit={handleDeleteSubmit}>
                 <div className="flex items-center justify-end gap-2">
@@ -584,14 +624,14 @@ export default function StockColisPage({ navigate, showNotification }) {
                     type="button"
                     disabled={deleteLoading}
                   >
-                    Annuler
+                    {t('stockPage.cancel', 'Annuler')}
                   </button>
                   <button 
                     className="kt-btn kt-btn-destructive" 
                     type="submit"
                     disabled={deleteLoading}
                   >
-                    {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                    {deleteLoading ? t('stockPage.deleting', 'Suppression...') : t('stockPage.actionDelete', 'Supprimer')}
                   </button>
                 </div>
               </form>

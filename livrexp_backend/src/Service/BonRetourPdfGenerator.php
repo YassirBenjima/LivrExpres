@@ -16,20 +16,35 @@ final class BonRetourPdfGenerator
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
     ) {}
 
-    public function generateDownloadResponse(ReturnRequest $demande): Response
+    public function generateDownloadResponse(ReturnRequest $demande, string $lang = 'fr'): Response
     {
         $reference = trim((string) $demande->getBonReference());
         if ($reference === '') {
             throw new \RuntimeException('Document non disponible');
         }
 
-        $statusLabel = ReturnRequest::getStatusLabels()[$demande->getStatus()] ?? $demande->getStatus();
+        $lang = strtolower($lang) === 'en' ? 'en' : 'fr';
+
+        $statusRaw = $demande->getStatus();
+        $statusLabelsFr = ReturnRequest::getStatusLabels();
+        $statusLabelsEn = [
+            'En attente' => 'Pending',
+            'En traitement' => 'In processing',
+            'Reçu' => 'Received',
+            'Annulé' => 'Cancelled',
+        ];
+
+        $statusLabel = $lang === 'en'
+            ? ($statusLabelsEn[$statusRaw] ?? $statusRaw)
+            : ($statusLabelsFr[$statusRaw] ?? $statusRaw);
+
         $logoDataUri = $this->resolveLogoDataUri();
 
         $html = $this->twig->render('retour/bons/pdf.html.twig', [
             'demande' => $demande,
             'status_label' => $statusLabel,
             'logo_data_uri' => $logoDataUri,
+            'lang' => $lang,
         ]);
 
         $options = new Options();

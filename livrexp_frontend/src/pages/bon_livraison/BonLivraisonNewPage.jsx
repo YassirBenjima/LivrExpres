@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function BonLivraisonNewPage({ navigate, bonId = null, showNotification }) {
+  const { t } = useLanguage();
   const isEditMode = !!bonId;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -9,6 +12,24 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
   const [availableColis, setAvailableColis] = useState([]);
   const [selectedColisIds, setSelectedColisIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const formatStatusLabel = (label) => {
+    if (!label) return label;
+    const cleanLabel = String(label).trim();
+    const map = {
+      'Terminé': t('status.done', 'Terminé'),
+      'En cours': t('status.in_progress', 'En cours'),
+      'Reporté': t('status.reporte', 'Reporté'),
+      'Échec': t('status.refuse', 'Échec'),
+      'En attente': t('status.pending', 'En attente'),
+      'Annulé': t('status.cancelled', 'Annulé')
+    };
+    return map[cleanLabel] || cleanLabel;
+  };
 
   const fetchAvailableColis = async (query = '') => {
     setLoading(true);
@@ -27,6 +48,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
       if (res.ok) {
         const data = await res.json();
         setAvailableColis(data.availableColis || []);
+        setCurrentPage(1);
         if (!isEditMode) {
           // Keep whatever was checked or preset
         } else {
@@ -103,7 +125,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedColisIds.length === 0) {
-      showNotification?.('error', 'Veuillez sélectionner au moins un colis.');
+      showNotification?.('error', t('deliverySlip.selectAtLeastOne', 'Veuillez sélectionner au moins un colis.'));
       return;
     }
 
@@ -127,17 +149,27 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
       const data = await res.json();
 
       if (res.ok) {
-        showNotification?.('success', data.message || (isEditMode ? 'Bon mis à jour.' : 'Bon créé.'));
+        showNotification?.('success', isEditMode ? t('deliverySlip.updateSuccess', 'Bon de livraison mis à jour avec succès.') : t('deliverySlip.createSuccess', 'Bon de livraison créé avec succès.'));
         navigate('/bon-livraison');
       } else {
-        showNotification?.('error', data.message || 'Erreur lors de l\'enregistrement.');
+        showNotification?.('error', t('deliverySlip.saveError', 'Erreur lors de l\'enregistrement.'));
       }
     } catch (err) {
-      showNotification?.('error', 'Erreur de connexion serveur.');
+      showNotification?.('error', t('deliverySlip.serverError', 'Erreur de connexion serveur.'));
     } finally {
       setSubmitting(false);
     }
   };
+
+  // Pagination calculation
+  const totalPages = Math.ceil(availableColis.length / itemsPerPage);
+  const paginatedColis = availableColis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const perPageOptions = [
+    { value: '10', label: '10' },
+    ...(availableColis.length > 10 ? [{ value: '25', label: '25' }] : []),
+    ...(availableColis.length > 25 ? [{ value: '50', label: '50' }] : []),
+  ];
 
   const SkeletonRow = () => (
     <tr className="animate-pulse">
@@ -169,13 +201,13 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                {isEditMode ? 'Modifier Bon de Livraison' : 'Ajouter Bon de Livraison'}
+                {isEditMode ? t('deliverySlip.editTitle', 'Modifier Bon de Livraison') : t('deliverySlip.addTitle', 'Ajouter Bon de Livraison')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
                 {isEditMode && bonReference ? (
-                  <>Référence : <span className="font-medium text-foreground">{bonReference}</span></>
+                  <>{t('deliverySlip.reference', 'Référence')} : <span className="font-medium text-foreground">{bonReference}</span></>
                 ) : (
-                  'Sélectionnez les colis à inclure dans le bon de livraison'
+                  t('deliverySlip.selectColisToInclude', 'Sélectionnez les colis à inclure dans le bon de livraison')
                 )}
               </div>
             </div>
@@ -186,7 +218,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                   onClick={() => navigate('/bon-livraison')}
                   className="kt-btn kt-btn-outline"
                 >
-                  Retour à la liste
+                  {t('stockPage.backToList', 'Retour à la liste')}
                 </button>
                 <button 
                   type="button"
@@ -194,7 +226,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                   disabled={selectedColisIds.length === 0 || submitting}
                   className="kt-btn kt-btn-primary"
                 >
-                  {submitting ? 'Enregistrement...' : (isEditMode ? 'Enregistrer les modifications' : 'Créer le bon de livraison')}
+                  {submitting ? t('stockPage.saving', 'Enregistrement...') : (isEditMode ? t('stockPage.editSaveChanges', 'Enregistrer les modifications') : t('deliverySlip.createBtn', 'Créer le bon de livraison'))}
                 </button>
               </div>
             </div>
@@ -208,14 +240,16 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="text-sm font-semibold text-foreground">Colis sélectionnés</div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {t('deliverySlip.selectedColis', 'Colis sélectionnés')}
+                    </div>
                     <span className="kt-badge kt-badge-info kt-badge-outline rounded-[30px]">
                       <span className="kt-badge-dot size-1.5"></span>
-                      <span>{selectedColisIds.length}</span>&nbsp;sélectionné(s)
+                      <span>{selectedColisIds.length}</span>&nbsp;{t('deliverySlip.selectedCount', 'sélectionné(s)')}
                     </span>
                   </div>
                   <div className="text-2sm text-secondary-foreground">
-                    Cochez un ou plusieurs colis pour les associer à ce bon de livraison.
+                    {t('deliverySlip.checkColisInstruction', 'Cochez un ou plusieurs colis pour les associer à ce bon de livraison.')}
                   </div>
                 </div>
               </div>
@@ -231,14 +265,14 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
               {/* Card Header Filter */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {availableColis.length} colis disponible(s)
+                  {t('deliverySlip.showingAvailableColis', 'Affichage de')} {availableColis.length} {t('deliverySlip.availableColisCount', 'colis disponible(s)')}
                 </h3>
                 <form onSubmit={handleSearchSubmit} className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
                     <label className="kt-input">
                       <i className="ki-filled ki-magnifier"></i>
                       <input 
-                        placeholder="Code de suivi, destinataire, ville..." 
+                        placeholder={t('deliverySlip.searchColisPlaceholder', 'Code de suivi, destinataire, ville...')} 
                         type="text" 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,14 +281,14 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                   </div>
                   <button className="kt-btn kt-btn-outline kt-btn-primary" type="submit">
                     <i className="ki-filled ki-setting-4"></i>
-                    Filtrer
+                    {t('deliverySlip.filterBtn', 'Filtrer')}
                   </button>
                   <button 
                     type="button" 
                     onClick={handleResetSearch}
                     className="kt-btn kt-btn-outline"
                   >
-                    Réinitialiser
+                    {t('stockPage.reset', 'Réinitialiser')}
                   </button>
                 </form>
               </div>
@@ -275,36 +309,36 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                             />
                           </th>
                           <th className="min-w-[150px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Code de suivi</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.trackingCode', 'Code de suivi')}</span></span>
                           </th>
                           <th className="min-w-[180px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Nature du produit</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.productNature', 'Nature du produit')}</span></span>
                           </th>
                           <th className="min-w-[140px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Destinataire</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.recipient', 'Destinataire')}</span></span>
                           </th>
                           <th className="min-w-[120px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Ville</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.city', 'Ville')}</span></span>
                           </th>
                           <th className="min-w-[150px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Date de création</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.creationDate', 'Date de création')}</span></span>
                           </th>
                           <th className="min-w-[120px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Statut</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('colisPage.statut', 'Statut')}</span></span>
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {loading ? (
                           [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-                        ) : availableColis.length === 0 ? (
+                        ) : paginatedColis.length === 0 ? (
                           <tr>
                             <td colSpan="7" className="text-secondary-foreground text-center py-8">
-                              Aucun colis disponible.
+                              {t('deliverySlip.noColisAvailable', 'Aucun colis disponible.')}
                             </td>
                           </tr>
                         ) : (
-                          availableColis.map((colis) => {
+                          paginatedColis.map((colis) => {
                             const isChecked = selectedColisIds.includes(colis.id);
                             const statutBadgeClass = colis.statut === 'Terminé' ? 'kt-badge-success' 
                               : colis.statut === 'En cours' ? 'kt-badge-primary'
@@ -338,7 +372,7 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                                 <td>
                                   <span className={`kt-badge ${statutBadgeClass} kt-badge-outline rounded-[30px]`}>
                                     <span className="kt-badge-dot size-1.5"></span>
-                                    {colis.statut}
+                                    {formatStatusLabel(colis.statut)}
                                   </span>
                                 </td>
                               </tr>
@@ -349,11 +383,44 @@ export default function BonLivraisonNewPage({ navigate, bonId = null, showNotifi
                     </table>
                   </div>
 
-                  <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      Affichage de {availableColis.length} colis
+                  {/* Table Footer with Pagination */}
+                  <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
+                    <div className="flex items-center gap-2 order-2 md:order-1">
+                      {t('stockPage.show', 'Afficher')}
+                      <KtSelect
+                        value={String(itemsPerPage)}
+                        onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
+                        className="w-16"
+                        options={perPageOptions}
+                      />
+                      {t('stockPage.perPage', 'par page')}
+                    </div>
+                    
+                    <div className="flex items-center gap-4 order-1 md:order-2">
+                      <span>
+                        {availableColis.length === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, availableColis.length)} ${t('colisPage.of', 'sur')} ${availableColis.length}`}
+                      </span>
+                      <div className="flex gap-1">
+                        <button 
+                          type="button"
+                          className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" 
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                          disabled={currentPage === 1}
+                        >
+                          <i className="ki-filled ki-left text-xs"></i>
+                        </button>
+                        <button 
+                          type="button"
+                          className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" 
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                          disabled={currentPage === totalPages || totalPages === 0}
+                        >
+                          <i className="ki-filled ki-right text-xs"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
+
                 </div>
               </div>
 

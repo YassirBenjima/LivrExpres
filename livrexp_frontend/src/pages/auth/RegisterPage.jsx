@@ -4,9 +4,11 @@ import ApiAlert from '../../components/ui/ApiAlert';
 import PasswordInput from '../../components/ui/PasswordInput';
 import KtSelect from '../../components/ui/KtSelect';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function RegisterPage({ navigate }) {
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [businessPhone, setBusinessPhone] = useState('');
@@ -48,26 +50,26 @@ export default function RegisterPage({ navigate }) {
 
   const validateForm = () => {
     const tempErrors = {};
-    if (!fullName.trim()) tempErrors.fullName = "Le nom complet est requis";
-    if (!businessName.trim()) tempErrors.businessName = "Le nom du business est requis";
-    if (!businessPhone.trim()) tempErrors.businessPhone = "Le numéro de téléphone du business est requis";
+    if (!fullName.trim()) tempErrors.fullName = t('auth.fullNameReq', "Le nom complet est requis");
+    if (!businessName.trim()) tempErrors.businessName = t('auth.businessNameReq', "Le nom du business est requis");
+    if (!businessPhone.trim()) tempErrors.businessPhone = t('auth.businessPhoneReq', "Le numéro de téléphone du business est requis");
     
     if (!email) {
-      tempErrors.email = "L'adresse email est requise";
+      tempErrors.email = t('auth.emailReq', "L'adresse email est requise");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      tempErrors.email = "Veuillez entrer une adresse email valide";
+      tempErrors.email = t('auth.emailInvalid', "Veuillez entrer une adresse email valide");
     }
 
-    if (!city) tempErrors.city = "Veuillez choisir une ville";
+    if (!city) tempErrors.city = t('auth.cityReq', "Veuillez choisir une ville");
 
     if (!password) {
-      tempErrors.password = "Le mot de passe est requis";
+      tempErrors.password = t('auth.passwordReq', "Le mot de passe est requis");
     } else if (password.length < 6) {
-      tempErrors.password = "Le mot de passe doit comporter au moins 6 caractères";
+      tempErrors.password = t('auth.passMinChars', "Le mot de passe doit comporter au moins 6 caractères");
     }
 
     if (password !== confirmPassword) {
-      tempErrors.confirmPassword = "Les mots de passe saisis ne correspondent pas";
+      tempErrors.confirmPassword = t('auth.passMismatch', "Les mots de passe saisis ne correspondent pas");
     }
 
     setErrors(tempErrors);
@@ -94,14 +96,14 @@ export default function RegisterPage({ navigate }) {
         confirm_password: confirmPassword
       });
 
-      setApiSuccess(data.message || 'Votre compte a été créé avec succès.');
+      setApiSuccess(data.message || t('auth.regSuccessMsg', 'Votre compte a été créé avec succès.'));
       setTimeout(() => {
         navigate('/login');
       }, 1500);
     } catch (error) {
       console.warn('API connection failed, simulating registration...', error);
       setTimeout(() => {
-        setApiSuccess('Inscription réussie (Mode Simulation). Redirection...');
+        setApiSuccess(t('auth.regSuccessMsg', 'Votre compte a été créé avec succès.'));
         setTimeout(() => {
           navigate('/login');
         }, 1200);
@@ -111,8 +113,9 @@ export default function RegisterPage({ navigate }) {
 
   return (
     <AuthLayout
-      rightPaneTitle="Join LivrExpress"
-      rightPaneDesc="Commencez à expédier dès aujourd'hui avec le réseau le plus dynamique. Bénéficiez de tarifs compétitifs, d'un suivi en temps réel et d'un service client dédié pour faire croître votre business."
+      docTitle={t('auth.pageTitleRegister', 'Création de Compte - LivrExpress')}
+      rightPaneTitle={t('auth.registerTitle', 'Création de Compte Client')}
+      rightPaneDesc={t('auth.portalDesc', "Commencez à expédier dès aujourd'hui avec le réseau le plus dynamique. Bénéficiez de tarifs compétitifs, d'un suivi en temps réel et d'un service client dédié.")}
       useAltBg={true}
     >
       <form onSubmit={handleRegisterSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="registration_form">
@@ -121,9 +124,9 @@ export default function RegisterPage({ navigate }) {
           <div className="flex justify-center mb-4">
             <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
           </div>
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Devenir client</h3>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">{t('auth.registerTitle', 'Création de Compte Client')}</h3>
           <div className="flex items-center justify-center font-medium">
-            <span className="text-sm text-secondary-foreground me-1.5">Déjà inscrit ?</span>
+            <span className="text-sm text-secondary-foreground me-1.5">{t('auth.alreadyHaveAccount', 'Déjà inscrit ?')}</span>
             <a 
               className="text-sm kt-link auth-link-custom cursor-pointer"
               href="/login"
@@ -132,7 +135,7 @@ export default function RegisterPage({ navigate }) {
                 navigate('/login');
               }}
             >
-              Connexion
+              {t('auth.signIn', 'Se connecter')}
             </a>
           </div>
         </div>
@@ -142,10 +145,10 @@ export default function RegisterPage({ navigate }) {
 
         {/* Full Name */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Nom complet *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.fullName', 'Nom complet *')}</label>
           <input 
             className="kt-input" 
-            placeholder="Nom complet" 
+            placeholder={t('auth.fullName', 'Nom complet *')} 
             type="text" 
             value={fullName}
             onChange={(e) => {
@@ -160,10 +163,10 @@ export default function RegisterPage({ navigate }) {
 
         {/* Business Name */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Nom du business *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.businessName', 'Nom du business *')}</label>
           <input 
             className="kt-input" 
-            placeholder="Nom du business" 
+            placeholder={t('auth.businessName', 'Nom du business *')} 
             type="text" 
             value={businessName}
             onChange={(e) => {
@@ -178,10 +181,10 @@ export default function RegisterPage({ navigate }) {
 
         {/* Business Phone */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Numéro de téléphone du business *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.businessPhone', 'Téléphone du business *')}</label>
           <input 
             className="kt-input" 
-            placeholder="Numéro de téléphone du business" 
+            placeholder={t('auth.businessPhone', 'Téléphone du business *')} 
             type="tel" 
             value={businessPhone}
             onChange={(e) => {
@@ -196,10 +199,10 @@ export default function RegisterPage({ navigate }) {
 
         {/* Email */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Adresse email *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.emailAddress', 'Adresse email *')}</label>
           <input 
             className="kt-input" 
-            placeholder="contact@votre-entreprise.com" 
+            placeholder={t('auth.emailPlaceholder', 'contact@votre-entreprise.com')} 
             type="email" 
             value={email}
             onChange={(e) => {
@@ -214,7 +217,7 @@ export default function RegisterPage({ navigate }) {
 
         {/* City */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Ville *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.city', 'Ville *')}</label>
           <KtSelect
             value={city}
             onChange={(val) => {
@@ -222,16 +225,16 @@ export default function RegisterPage({ navigate }) {
               if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
             }}
             options={cities.map(c => ({ value: c.name, label: c.name }))}
-            placeholder="Choisir une ville"
+            placeholder={t('auth.selectCity', 'Choisir une ville')}
             enableSearch={true}
-            searchPlaceholder="Rechercher une ville..."
+            searchPlaceholder={t('common.search', 'Rechercher...')}
           />
           {errors.city && <span className="text-red-500 text-xs mt-1">{errors.city}</span>}
         </div>
 
         {/* Password */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Mot de passe *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.password', 'Mot de passe *')}</label>
           <PasswordInput
             value={password}
             onChange={(e) => {
@@ -246,7 +249,7 @@ export default function RegisterPage({ navigate }) {
 
         {/* Confirm Password */}
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Confirmation mot de passe *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.confirmPassword', 'Confirmer le mot de passe *')}</label>
           <PasswordInput
             value={confirmPassword}
             onChange={(e) => {
@@ -260,7 +263,7 @@ export default function RegisterPage({ navigate }) {
         </div>
 
         <button className="kt-btn kt-btn-primary flex justify-center grow" type="submit" disabled={isLoading}>
-          {isLoading ? 'Inscription...' : 'Devenir client'}
+          {isLoading ? t('auth.creatingAccount', 'Création du compte...') : t('auth.createAccountBtn', 'Créer mon compte')}
         </button>
       </form>
     </AuthLayout>

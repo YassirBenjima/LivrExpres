@@ -3,14 +3,8 @@ import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { getUserRoles } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 
-const STATUS_MAP = { 
-  draft: 'Brouillon', 
-  pending: 'En attente', 
-  in_progress: 'En cours', 
-  done: 'Terminé', 
-  cancelled: 'Annulé' 
-};
 const STATUS_BADGE = { 
   done: 'kt-badge-success', 
   in_progress: 'kt-badge-primary', 
@@ -20,8 +14,20 @@ const STATUS_BADGE = {
 };
 
 export default function StockEntryPage({ showNotification }) {
+  const { t } = useLanguage();
   const userRoles = getUserRoles();
   const isSuperAdmin = userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ROLE_ADMIN') || userRoles.includes('ROLE_SUPERVISEUR');
+
+  const getStatusLabel = (statusKey) => {
+    const map = {
+      draft: t('status.draft', 'Brouillon'),
+      pending: t('status.pending', 'En attente'),
+      in_progress: t('status.in_progress', 'En cours'),
+      done: t('status.done', 'Terminé'),
+      cancelled: t('status.cancelled', 'Annulé')
+    };
+    return map[statusKey] || statusKey;
+  };
 
   const [movements, setMovements]       = useState([]);
   const [products, setProducts]         = useState([]);
@@ -131,16 +137,16 @@ export default function StockEntryPage({ showNotification }) {
       });
 
       if (res.ok) {
-        if (showNotification) showNotification('success', 'Mouvement mis à jour avec succès.');
+        if (showNotification) showNotification('success', t('stockPage.notifMovementUpdated', 'Mouvement mis à jour avec succès.'));
         setEditModalOpen(false);
         fetchData();
       } else {
         const j = await res.json().catch(() => ({}));
-        if (showNotification) showNotification('error', j.message || 'Erreur lors de la mise à jour.');
+        if (showNotification) showNotification('error', j.message || t('stockPage.notifUpdateError', 'Erreur lors de la mise à jour.'));
       }
     } catch (e) {
       console.error(e);
-      if (showNotification) showNotification('error', 'Erreur serveur.');
+      if (showNotification) showNotification('error', t('stockPage.notifServerError', 'Erreur serveur.'));
     } finally {
       setUpdating(false);
     }
@@ -212,7 +218,7 @@ export default function StockEntryPage({ showNotification }) {
     e.preventDefault();
     const hasQty = Object.values(quantities).some(q => Number(q) > 0);
     if (!hasQty) {
-      if (showNotification) showNotification('error', 'Veuillez saisir au moins une quantité à récupérer.');
+      if (showNotification) showNotification('error', t('stockPage.notifEnterQty', 'Veuillez saisir au moins une quantité à récupérer.'));
       return;
     }
 
@@ -235,12 +241,12 @@ export default function StockEntryPage({ showNotification }) {
       });
 
       if (res.ok) {
-        if (showNotification) showNotification('success', 'Mouvement de stock (entrée) enregistré avec succès.');
+        if (showNotification) showNotification('success', t('stockPage.notifEntryCreated', 'Mouvement de stock (entrée) enregistré avec succès.'));
         setSelectedProductIds([]);
         setQuantities({});
         fetchData();
       } else {
-        let msg = 'Erreur lors de l’enregistrement.';
+        let msg = t('stockPage.notifSaveError', 'Erreur lors de l\'enregistrement.');
         try {
           const err = await res.json();
           if (err.message) msg = err.message;
@@ -249,7 +255,7 @@ export default function StockEntryPage({ showNotification }) {
       }
     } catch (err) { 
       console.error(err);
-      if (showNotification) showNotification('error', 'Erreur réseau.'); 
+      if (showNotification) showNotification('error', t('stockPage.notifNetworkError', 'Erreur réseau.')); 
     } finally { 
       setSaving(false); 
     }
@@ -276,19 +282,19 @@ export default function StockEntryPage({ showNotification }) {
   const handlePickupModalSubmit = async (e) => {
     e.preventDefault();
     if (!pickupForm.city) {
-      if (showNotification) showNotification('error', 'La ville est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifCityRequired', 'La ville est obligatoire.'));
       return;
     }
     if (!pickupForm.neighborhood) {
-      if (showNotification) showNotification('error', 'Le quartier est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifNeighborhoodRequired', 'Le quartier est obligatoire.'));
       return;
     }
     if (!pickupForm.address) {
-      if (showNotification) showNotification('error', 'L’adresse est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifAddressRequired', 'L\'adresse est obligatoire.'));
       return;
     }
     if (!pickupForm.phone) {
-      if (showNotification) showNotification('error', 'Le téléphone est obligatoire.');
+      if (showNotification) showNotification('error', t('stockPage.notifPhoneRequired', 'Le téléphone est obligatoire.'));
       return;
     }
 
@@ -313,12 +319,12 @@ export default function StockEntryPage({ showNotification }) {
       });
       
       if (res.ok) {
-        if (showNotification) showNotification('success', 'Demande de ramassage enregistrée avec succès.');
+        if (showNotification) showNotification('success', t('stockPage.notifPickupCreated', 'Demande de ramassage enregistrée avec succès.'));
         setPickupModalOpen(false);
         setSelectedMovementIds([]);
         fetchData();
       } else {
-        let msg = 'Erreur lors de la création de la demande.';
+        let msg = t('stockPage.notifPickupError', 'Erreur lors de la création de la demande.');
         try {
           const err = await res.json();
           if (err.message) msg = err.message;
@@ -327,7 +333,7 @@ export default function StockEntryPage({ showNotification }) {
       }
     } catch (err) {
       console.error(err);
-      if (showNotification) showNotification('error', 'Erreur réseau.');
+      if (showNotification) showNotification('error', t('stockPage.notifNetworkError', 'Erreur réseau.'));
     } finally {
       setPickupLoading(false);
     }
@@ -412,9 +418,9 @@ export default function StockEntryPage({ showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Stock Entrée</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('stockPage.stockInboundTitle', 'Stock Entrée')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total mouvements:</span>
+                <span className="text-base text-secondary-foreground">{t('stockPage.totalMovements', 'Total mouvements')}:</span>
                 <span className="text-base text-foreground font-medium">{movements.length}</span>
               </div>
             </div>
@@ -423,7 +429,7 @@ export default function StockEntryPage({ showNotification }) {
               onClick={handleSave} 
               disabled={saving || !hasQty}
             >
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? t('stockPage.saving', 'Enregistrement...') : t('stockPage.save', 'Enregistrer')}
             </button>
           </div>
         </div>
@@ -435,7 +441,7 @@ export default function StockEntryPage({ showNotification }) {
             <form onSubmit={handleSave} id="stock_entry_form">
               <div className="kt-card kt-card-grid min-w-full">
                 <div className="kt-card-header flex-wrap gap-2">
-                  <h3 className="kt-card-title text-sm">Liste des produits</h3>
+                  <h3 className="kt-card-title text-sm">{t('stockPage.productListLabel', 'Liste des produits')}</h3>
                   <div className="flex flex-wrap gap-2 lg:gap-5 items-center">
                     
                     {/* Custom Multiple Select Dropdown */}
@@ -464,10 +470,10 @@ export default function StockEntryPage({ showNotification }) {
                       >
                         <span style={{ color: selectedProductIds.length === 0 ? 'var(--muted-foreground, #a1a1aa)' : 'inherit' }}>
                           {selectedProductIds.length === 0 
-                            ? 'Sélectionner des produits' 
+                            ? t('stockPage.selectProducts', 'Sélectionner des produits') 
                             : selectedProductIds.length === 1 
                               ? products.find(p => p.id === selectedProductIds[0])?.name 
-                              : `${selectedProductIds.length} produits`
+                              : `${selectedProductIds.length} ${t('stockPage.productsLabel', 'produit(s)')}`
                           }
                         </span>
                         {/* Chevron icon */}
@@ -511,7 +517,7 @@ export default function StockEntryPage({ showNotification }) {
                                 fontSize: '13px',
                                 color: '#09090b',
                               }}
-                              placeholder="Rechercher un produit..."
+                              placeholder={t('stockPage.searchProduct', 'Rechercher un produit...')}
                               value={productSearch}
                               onChange={(e) => setProductSearch(e.target.value)}
                               onClick={(e) => e.stopPropagation()}
@@ -557,7 +563,7 @@ export default function StockEntryPage({ showNotification }) {
                               );
                             })}
                             {filteredDropdownProducts.length === 0 && (
-                              <div style={{ padding: '12px 16px', fontSize: '13px', color: '#a1a1aa', textAlign: 'center', backgroundColor: '#ffffff' }}>Aucun produit trouvé</div>
+                              <div style={{ padding: '12px 16px', fontSize: '13px', color: '#a1a1aa', textAlign: 'center', backgroundColor: '#ffffff' }}>{t('stockPage.noProductFound', 'Aucun produit trouvé')}</div>
                             )}
                           </div>
                         </div>
@@ -584,7 +590,7 @@ export default function StockEntryPage({ showNotification }) {
                             <span className="kt-badge kt-badge-primary kt-badge-outline rounded-[30px]" id="stock_entry_selected_name">
                               {selectedProductIds.length === 1 
                                 ? selectedProducts[0].name 
-                                : `${selectedProductIds.length} produits`
+                                : `${selectedProductIds.length} ${t('stockPage.productsLabel', 'produits')}`
                               }
                             </span>
                           </div>
@@ -595,9 +601,9 @@ export default function StockEntryPage({ showNotification }) {
                             <table className="kt-table table-auto kt-table-border">
                               <thead>
                                 <tr>
-                                  <th className="min-w-[160px]"># RÉF</th>
-                                  <th className="min-w-[240px]">NOM DE LA VARIANTE</th>
-                                  <th className="min-w-[220px]">QUANTITÉ À RÉCUPÉRER</th>
+                                  <th className="min-w-[160px]">{t('stockPage.colRef', '# RÉF')}</th>
+                                  <th className="min-w-[240px]">{t('stockPage.colVariantName', 'NOM DE LA VARIANTE')}</th>
+                                  <th className="min-w-[220px]">{t('stockPage.colQtyToRecover', 'QUANTITÉ À RÉCUPÉRER')}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -644,7 +650,7 @@ export default function StockEntryPage({ showNotification }) {
             {/* Card 2 - Table of Movements */}
             <div className="kt-card kt-card-grid min-w-full">
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm">Affichage de {filtered.length} mouvement(s)</h3>
+                <h3 className="kt-card-title text-sm">{t('stockPage.showingMovements', 'Affichage de')} {filtered.length} {t('stockPage.movementsCount', 'mouvement(s)')}</h3>
                 
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -653,7 +659,7 @@ export default function StockEntryPage({ showNotification }) {
                       <input 
                         value={searchQuery} 
                         onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} 
-                        placeholder="Rechercher" 
+                        placeholder={t('stockPage.searchMovements', 'Rechercher')} 
                         type="text" 
                       />
                     </label>
@@ -663,12 +669,12 @@ export default function StockEntryPage({ showNotification }) {
                     <KtSelect
                       value={statusFilter}
                       onChange={val => { setStatusFilter(val); setCurrentPage(1); }}
-                      placeholder="Tous les statuts"
+                      placeholder={t('stockPage.allStatuses2', 'Tous les statuts')}
                       options={[
-                        { value: '', label: 'Tous les statuts' },
-                        ...Object.entries(STATUS_MAP).map(([key, val]) => ({
+                        { value: '', label: t('stockPage.allStatuses2', 'Tous les statuts') },
+                        ...Object.keys(STATUS_BADGE).map((key) => ({
                           value: key,
-                          label: val
+                          label: getStatusLabel(key)
                         }))
                       ]}
                       className="w-48"
@@ -682,7 +688,7 @@ export default function StockEntryPage({ showNotification }) {
                       disabled={selectedMovementIds.length === 0}
                       onClick={handleOpenPickupModal}
                     >
-                      Demande de ramassage
+                      {t('stockPage.pickupRequest', 'Demande de ramassage')}
                     </button>
                     <button 
                       className="kt-btn kt-btn-outline" 
@@ -692,7 +698,7 @@ export default function StockEntryPage({ showNotification }) {
                         setCurrentPage(1); 
                       }}
                     >
-                      Réinitialiser
+                      {t('stockPage.reset', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -712,12 +718,12 @@ export default function StockEntryPage({ showNotification }) {
                               checked={paginated.length > 0 && selectedMovementIds.length === paginated.length}
                             />
                           </th>
-                          <th className="min-w-[180px]">Réf</th>
-                          <th className="min-w-[260px]">Liste des produits</th>
-                          <th className="min-w-[180px]">Date de création</th>
-                          <th className="min-w-[180px]">Dernière mise à jour</th>
-                          <th className="min-w-[140px]">Statut</th>
-                          <th className="w-[90px] text-center">Actions</th>
+                          <th className="min-w-[180px]">{t('stockPage.colRefTable', 'Réf')}</th>
+                          <th className="min-w-[260px]">{t('stockPage.colProductList', 'Liste des produits')}</th>
+                          <th className="min-w-[180px]">{t('stockPage.colCreatedDate', 'Date de création')}</th>
+                          <th className="min-w-[180px]">{t('stockPage.colLastUpdate', 'Dernière mise à jour')}</th>
+                          <th className="min-w-[140px]">{t('stockPage.colStatus', 'Statut')}</th>
+                          <th className="w-[90px] text-center">{t('stockPage.colActions', 'Actions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -726,7 +732,7 @@ export default function StockEntryPage({ showNotification }) {
                         ) : paginated.length === 0 ? (
                           <tr>
                             <td colSpan={7} className="text-secondary-foreground text-center py-8">
-                              Aucun mouvement trouvé.
+                              {t('stockPage.noMovementFound', 'Aucun mouvement trouvé.')}
                             </td>
                           </tr>
                         ) : (
@@ -744,7 +750,7 @@ export default function StockEntryPage({ showNotification }) {
                               <td>
                                 <div className="flex flex-col gap-1">
                                   <div className="text-foreground font-normal">{m.products_summary || '-'}</div>
-                                  <div className="text-xs text-secondary-foreground">{m.products_count || 0} produit(s)</div>
+                                  <div className="text-xs text-secondary-foreground">{m.products_count || 0} {t('stockPage.productsLabel', 'produit(s)')}</div>
                                 </div>
                               </td>
                               <td className="text-foreground font-normal">{m.created_at || '-'}</td>
@@ -752,7 +758,7 @@ export default function StockEntryPage({ showNotification }) {
                               <td>
                                 <span className={`kt-badge ${STATUS_BADGE[m.status] || 'kt-badge-warning'} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
                                   <span className="kt-badge-dot size-1.5"></span>
-                                  {STATUS_MAP[m.status] || m.status}
+                                  {getStatusLabel(m.status)}
                                 </span>
                               </td>
                               <td className="text-center relative" style={activeDropdownId === m.id ? { zIndex: 9999 } : {}}>
@@ -779,7 +785,7 @@ export default function StockEntryPage({ showNotification }) {
                                           <span className="kt-menu-icon">
                                             <i className="ki-filled ki-eye text-primary"></i>
                                           </span>
-                                          <span className="kt-menu-title font-medium">Détails</span>
+                                          <span className="kt-menu-title font-medium">{t('stockPage.detailsTab', 'Détails')}</span>
                                         </button>
                                       </div>
                                       <div className="kt-menu-item">
@@ -795,7 +801,7 @@ export default function StockEntryPage({ showNotification }) {
                                           <span className="kt-menu-icon">
                                             <i className="ki-filled ki-pencil text-info"></i>
                                           </span>
-                                          <span className="kt-menu-title font-medium">Modifier</span>
+                                          <span className="kt-menu-title font-medium">{t('stockPage.actionEdit', 'Modifier')}</span>
                                         </button>
                                       </div>
                                     </div>
@@ -812,7 +818,7 @@ export default function StockEntryPage({ showNotification }) {
                   {/* Pagination Footer */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('stockPage.show', 'Afficher')}
                       <KtSelect 
                         value={String(itemsPerPage)} 
                         onChange={v => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
@@ -823,11 +829,11 @@ export default function StockEntryPage({ showNotification }) {
                           ...(filtered.length > 25 ? [{ value: '50', label: '50' }] : []),
                         ]} 
                       />
-                      par page
+                      {t('stockPage.perPage', 'par page')}
                     </div>
                     
                     <div className="flex items-center gap-4 order-1 md:order-2">
-                      <span>{filtered.length === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filtered.length)} sur ${filtered.length}`}</span>
+                      <span>{filtered.length === 0 ? '0' : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filtered.length)} ${t('colisPage.of', 'sur')} ${filtered.length}`}</span>
                       <div className="flex gap-1">
                         <button className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}><i className="ki-filled ki-left text-xs"></i></button>
                         <button className="kt-btn kt-btn-sm kt-btn-icon kt-btn-outline" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}><i className="ki-filled ki-right text-xs"></i></button>
@@ -869,7 +875,7 @@ export default function StockEntryPage({ showNotification }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="kt-modal-header">
-              <h3 className="kt-modal-title">Nouvelle demande de ramassage</h3>
+              <h3 className="kt-modal-title">{t('stockPage.pickupModalTitle', 'Nouvelle demande de ramassage')}</h3>
               <button 
                 className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost shrink-0" 
                 onClick={() => setPickupModalOpen(false)} 
@@ -884,12 +890,12 @@ export default function StockEntryPage({ showNotification }) {
                 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Produit(s)</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupProductLabel', 'Produit(s)')}</label>
                     <label className="kt-input">
                       <input
                         className="w-full bg-transparent outline-none border-0"
                         type="text"
-                        placeholder={modalData.loading ? 'Chargement...' : 'Produits'}
+                        placeholder={modalData.loading ? t('common.loading', 'Chargement...') : t('stockPage.productsLabel', 'Produits')}
                         value={modalData.summary}
                         readOnly
                         disabled
@@ -899,12 +905,12 @@ export default function StockEntryPage({ showNotification }) {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Ville</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupCityLabel', 'Ville')}</label>
                       <KtSelect
                         value={pickupForm.city}
                         onChange={val => setPickupForm(prev => ({ ...prev, city: val }))}
                         options={[
-                          { value: '', label: 'Choisir une ville' },
+                          { value: '', label: t('stockPage.pickupCityPlaceholder', 'Choisir une ville') },
                           ...cities.map(c => {
                             const val = (typeof c === 'object' && c !== null) ? (c.name || c.label || c.value || '') : c;
                             return { value: val, label: val };
@@ -912,16 +918,16 @@ export default function StockEntryPage({ showNotification }) {
                         ]}
                         className="w-full"
                         enableSearch={true}
-                        searchPlaceholder="Rechercher une ville..."
+                        searchPlaceholder={t('stockPage.pickupCitySearch', 'Rechercher une ville...')}
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-1.5">
-                      <label className="text-sm font-medium text-mono text-foreground">Quartier</label>
+                      <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupNeighborhoodLabel', 'Quartier')}</label>
                       <label className="kt-input">
                         <input 
                           name="neighborhood" 
                           type="text" 
-                          placeholder="Quartier" 
+                          placeholder={t('stockPage.pickupNeighborhoodPlaceholder', 'Quartier')} 
                           value={pickupForm.neighborhood}
                           onChange={e => setPickupForm(prev => ({ ...prev, neighborhood: e.target.value }))}
                           className="w-full bg-transparent outline-none border-0"
@@ -931,12 +937,12 @@ export default function StockEntryPage({ showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Adresse</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupAddressLabel', 'Adresse')}</label>
                     <label className="kt-input">
                       <input 
                         name="address" 
                         type="text" 
-                        placeholder="Adresse" 
+                        placeholder={t('stockPage.pickupAddressPlaceholder', 'Adresse')} 
                         value={pickupForm.address}
                         onChange={e => setPickupForm(prev => ({ ...prev, address: e.target.value }))}
                         className="w-full bg-transparent outline-none border-0"
@@ -945,12 +951,12 @@ export default function StockEntryPage({ showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Téléphone</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupPhoneLabel', 'Téléphone')}</label>
                     <label className="kt-input">
                       <input 
                         name="phone" 
                         type="text" 
-                        placeholder="Téléphone" 
+                        placeholder={t('stockPage.pickupPhonePlaceholder', 'Téléphone')} 
                         value={pickupForm.phone}
                         onChange={e => setPickupForm(prev => ({ ...prev, phone: e.target.value }))}
                         className="w-full bg-transparent outline-none border-0"
@@ -959,12 +965,12 @@ export default function StockEntryPage({ showNotification }) {
                   </div>
 
                   <div className="grid grid-cols-1 gap-1.5">
-                    <label className="text-sm font-medium text-mono text-foreground">Note &amp; Remarque</label>
+                    <label className="text-sm font-medium text-mono text-foreground">{t('stockPage.pickupNoteLabel', 'Note & Remarque')}</label>
                     <label className="kt-input">
                       <input 
                         name="note" 
                         type="text" 
-                        placeholder="Note & Remarque" 
+                        placeholder={t('stockPage.pickupNotePlaceholder', 'Note & Remarque')} 
                         value={pickupForm.note}
                         onChange={e => setPickupForm(prev => ({ ...prev, note: e.target.value }))}
                         className="w-full bg-transparent outline-none border-0"
@@ -979,14 +985,14 @@ export default function StockEntryPage({ showNotification }) {
                       type="button"
                       disabled={pickupLoading}
                     >
-                      Annuler
+                      {t('stockPage.cancel', 'Annuler')}
                     </button>
                     <button 
                       className="kt-btn kt-btn-primary" 
                       type="submit"
                       disabled={pickupLoading || modalData.loading}
                     >
-                      {pickupLoading ? 'Enregistrement...' : 'Enregistrer'}
+                      {pickupLoading ? t('stockPage.pickupSaving', 'Enregistrement...') : t('stockPage.pickupSave', 'Enregistrer')}
                     </button>
                   </div>
                 </div>
@@ -1030,10 +1036,10 @@ export default function StockEntryPage({ showNotification }) {
                 </div>
                 <div>
                   <h3 className="kt-card-title text-base font-bold text-mono">
-                    Mouvement {selectedMovementForModal.reference}
+                    {t('stockPage.movementLabel', 'Mouvement')} {selectedMovementForModal.reference}
                   </h3>
                   <p className="text-xs text-secondary-foreground">
-                    Créé le {selectedMovementForModal.created_at || '-'}
+                    {t('stockPage.createdOn', 'Créé le')} {selectedMovementForModal.created_at || '-'}
                   </p>
                 </div>
               </div>
@@ -1051,33 +1057,33 @@ export default function StockEntryPage({ showNotification }) {
               {/* Status Badge */}
               {isSuperAdmin && (
                 <div className="flex items-center justify-between p-4 rounded-xl bg-accent/30 border border-border">
-                  <span className="text-xs font-semibold text-mono uppercase text-secondary-foreground">Statut du mouvement</span>
+                  <span className="text-xs font-semibold text-mono uppercase text-secondary-foreground">{t('stockPage.movementStatus', 'Statut du mouvement')}</span>
                   <span className={`kt-badge ${STATUS_BADGE[selectedMovementForModal.status] || 'kt-badge-warning'} kt-badge-outline rounded-[30px] px-3 py-1 text-xs font-bold`}>
                     <span className="kt-badge-dot size-2 me-1.5"></span>
-                    {STATUS_MAP[selectedMovementForModal.status] || selectedMovementForModal.status}
+                    {getStatusLabel(selectedMovementForModal.status)}
                   </span>
                 </div>
               )}
 
               {/* Items Table */}
               <div className="flex flex-col gap-2">
-                <h4 className="text-xs font-bold text-mono uppercase text-secondary-foreground">Variantes &amp; Quantités</h4>
+                <h4 className="text-xs font-bold text-mono uppercase text-secondary-foreground">{t('stockPage.variantsAndQty', 'Variantes & Quantités')}</h4>
                 {modalLoading ? (
                   <div className="py-8 text-center text-sm text-secondary-foreground flex items-center justify-center gap-2">
                     <i className="ki-filled ki-loading animate-spin text-primary text-base" />
-                    Chargement des détails...
+                    {t('stockPage.loadingDetails', 'Chargement des détails...')}
                   </div>
                 ) : (selectedMovementForModal.items || []).length === 0 ? (
-                  <div className="py-8 text-center text-sm text-secondary-foreground">Aucun article dans ce mouvement.</div>
+                  <div className="py-8 text-center text-sm text-secondary-foreground">{t('stockPage.noItemsInMovement', 'Aucun article dans ce mouvement.')}</div>
                 ) : (
                   <div className="kt-scrollable-x-auto border border-border rounded-xl">
                     <table className="kt-table table-auto kt-table-border w-full text-sm">
                       <thead>
                         <tr className="bg-muted/20">
-                          <th className="py-2.5 px-3">PRODUIT</th>
-                          <th className="py-2.5 px-3">VARIANTE</th>
-                          <th className="py-2.5 px-3">RÉF / CODE-BARRES</th>
-                          <th className="py-2.5 px-3 text-right">QUANTITÉ</th>
+                          <th className="py-2.5 px-3">{t('stockPage.colProductHeader', 'PRODUIT')}</th>
+                          <th className="py-2.5 px-3">{t('stockPage.colVariantHeader', 'VARIANTE')}</th>
+                          <th className="py-2.5 px-3">{t('stockPage.colRefBarcodeHeader', 'RÉF / CODE-BARRES')}</th>
+                          <th className="py-2.5 px-3 text-right">{t('stockPage.colQtyHeader', 'QUANTITÉ')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1103,7 +1109,7 @@ export default function StockEntryPage({ showNotification }) {
                 className="kt-btn kt-btn-outline cursor-pointer"
                 onClick={() => setDetailsModalOpen(false)}
               >
-                Fermer
+                {t('common.close', 'Fermer')}
               </button>
             </div>
 
@@ -1144,10 +1150,10 @@ export default function StockEntryPage({ showNotification }) {
                 </div>
                 <div>
                   <h3 className="kt-card-title text-base font-bold text-mono">
-                    Modifier le mouvement {selectedMovementForModal.reference}
+                    {t('stockPage.editMovementTitle', 'Modifier le mouvement')} {selectedMovementForModal.reference}
                   </h3>
                   <p className="text-xs text-secondary-foreground">
-                    Mettez à jour le statut et les quantités associées
+                    {t('stockPage.editMovementSubtitle', 'Mettez à jour le statut et les quantités associées')}
                   </p>
                 </div>
               </div>
@@ -1165,13 +1171,13 @@ export default function StockEntryPage({ showNotification }) {
               {/* Status Selection (Super Admin only) */}
               {isSuperAdmin && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="kt-form-label text-mono text-xs font-semibold">Statut du mouvement</label>
+                  <label className="kt-form-label text-mono text-xs font-semibold">{t('stockPage.movementStatus', 'Statut du mouvement')}</label>
                   <KtSelect
                     value={editStatus}
                     onChange={(val) => setEditStatus(val)}
-                    options={Object.entries(STATUS_MAP).map(([key, val]) => ({
+                    options={Object.keys(STATUS_BADGE).map((key) => ({
                       value: key,
-                      label: val
+                      label: getStatusLabel(key)
                     }))}
                     enableSearch={false}
                   />
@@ -1180,22 +1186,22 @@ export default function StockEntryPage({ showNotification }) {
 
               {/* Editable Items Table */}
               <div className="flex flex-col gap-2">
-                <label className="kt-form-label text-mono text-xs font-semibold">Quantités par variante</label>
+                <label className="kt-form-label text-mono text-xs font-semibold">{t('stockPage.qtyPerVariant', 'Quantités par variante')}</label>
                 {modalLoading ? (
                   <div className="py-8 text-center text-sm text-secondary-foreground flex items-center justify-center gap-2">
                     <i className="ki-filled ki-loading animate-spin text-primary text-base" />
-                    Chargement des données...
+                    {t('stockPage.loadingData', 'Chargement des données...')}
                   </div>
                 ) : (selectedMovementForModal.items || []).length === 0 ? (
-                  <div className="py-8 text-center text-sm text-secondary-foreground">Aucun article à modifier.</div>
+                  <div className="py-8 text-center text-sm text-secondary-foreground">{t('stockPage.noItemsToEdit', 'Aucun article à modifier.')}</div>
                 ) : (
                   <div className="kt-scrollable-x-auto border border-border rounded-xl">
                     <table className="kt-table table-auto kt-table-border w-full text-sm">
                       <thead>
                         <tr className="bg-muted/20">
-                          <th className="py-2.5 px-3">PRODUIT / VARIANTE</th>
-                          <th className="py-2.5 px-3">RÉF</th>
-                          <th className="py-2.5 px-3 w-[140px] text-right">QUANTITÉ</th>
+                          <th className="py-2.5 px-3">{t('stockPage.colProductVariantHeader', 'PRODUIT / VARIANTE')}</th>
+                          <th className="py-2.5 px-3">{t('stockPage.colRefTable', 'RÉF')}</th>
+                          <th className="py-2.5 px-3 w-[140px] text-right">{t('stockPage.colQtyHeader', 'QUANTITÉ')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1237,7 +1243,7 @@ export default function StockEntryPage({ showNotification }) {
                 onClick={() => setEditModalOpen(false)}
                 disabled={updating}
               >
-                Annuler
+                {t('stockPage.cancel', 'Annuler')}
               </button>
               <button 
                 type="button"
@@ -1246,7 +1252,7 @@ export default function StockEntryPage({ showNotification }) {
                 disabled={updating || modalLoading}
               >
                 {updating && <i className="ki-filled ki-loading animate-spin text-sm" />}
-                Enregistrer les modifications
+                {t('stockPage.saveChanges', 'Enregistrer les modifications')}
               </button>
             </div>
 

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import AuthLayout from '../../components/ui/AuthLayout';
 import ApiAlert from '../../components/ui/ApiAlert';
 import { authService } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/auth.css';
 
 export default function ForgotPasswordPage({ navigate }) {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -14,9 +16,9 @@ export default function ForgotPasswordPage({ navigate }) {
   const validateForm = () => {
     const tempErrors = {};
     if (!email) {
-      tempErrors.email = "L'adresse email est requise";
+      tempErrors.email = t('auth.emailReq', "L'adresse email est requise");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      tempErrors.email = "Veuillez entrer une adresse email valide";
+      tempErrors.email = t('auth.emailInvalid', "Veuillez entrer une adresse email valide");
     }
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -35,7 +37,7 @@ export default function ForgotPasswordPage({ navigate }) {
       sessionStorage.setItem('reset_email', email);
       sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       const data = await authService.forgotPassword(email);
-      setApiSuccess(data.message || 'Un e-mail de réinitialisation avec votre code à 6 chiffres a été envoyé avec succès.');
+      setApiSuccess(data.message || t('auth.resetEmailSent', 'Un e-mail de réinitialisation vous a été envoyé.'));
       setTimeout(() => {
         navigate('/reset-password/check-email');
       }, 1000);
@@ -44,7 +46,7 @@ export default function ForgotPasswordPage({ navigate }) {
       sessionStorage.setItem('reset_email', email);
       sessionStorage.setItem('reset_email_sent_time', Date.now().toString());
       setTimeout(() => {
-        setApiSuccess('Un e-mail de réinitialisation avec votre code à 6 chiffres a été envoyé avec succès.');
+        setApiSuccess(t('auth.resetEmailSent', 'Un e-mail de réinitialisation vous a été envoyé.'));
         setTimeout(() => {
           navigate('/reset-password/check-email');
         }, 1000);
@@ -54,8 +56,9 @@ export default function ForgotPasswordPage({ navigate }) {
 
   return (
     <AuthLayout
-      rightPaneTitle="Security First"
-      rightPaneDesc="Nous prenons la sécurité de vos données très au sérieux. Suivez les instructions envoyées par email pour récupérer l'accès à votre compte en toute sécurité."
+      docTitle={t('auth.pageTitleForgotPassword', 'Mot de Passe Oublié - LivrExpress')}
+      rightPaneTitle={t('auth.securePortalTitle', "Portail d'accès sécurisé")}
+      rightPaneDesc={t('auth.forgotPassDesc', "Saisissez votre adresse email et nous vous enverrons les instructions pour réinitialiser votre mot de passe.")}
     >
       <form onSubmit={handleSubmit} className="kt-card-content flex flex-col gap-5 p-10" id="forgot_password_form">
         
@@ -63,23 +66,20 @@ export default function ForgotPasswordPage({ navigate }) {
           <div className="flex justify-center mb-4">
             <img className="h-10 w-auto" src="/assets/media/app/mini-logo.svg" alt="LivrExpress Logo" />
           </div>
-          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">Mot de passe oublié</h3>
+          <h3 className="text-lg font-medium text-mono leading-none mb-2.5">{t('auth.forgotPassTitle', 'Mot de passe oublié ?')}</h3>
           <div className="flex items-center justify-center font-medium">
-            <span className="text-sm text-secondary-foreground me-1.5">Entrez votre e-mail pour réinitialiser</span>
+            <span className="text-sm text-secondary-foreground me-1.5">{t('auth.forgotPassDesc', 'Entrez votre e-mail pour réinitialiser')}</span>
           </div>
-        </div>
-        <div className="text-center -mt-2.5 mb-2.5">
-          <span className="text-xs text-secondary-foreground">Nous vous enverrons des instructions de réinitialisation</span>
         </div>
 
         <ApiAlert type="error" message={apiError} />
         <ApiAlert type="success" message={apiSuccess} />
 
         <div className="flex flex-col gap-1">
-          <label className="kt-form-label font-normal text-mono">Adresse email *</label>
+          <label className="kt-form-label font-normal text-mono">{t('auth.emailAddress', 'Adresse email *')}</label>
           <input 
             className="kt-input" 
-            placeholder="Adresse email" 
+            placeholder={t('auth.emailPlaceholder', 'contact@votre-entreprise.com')} 
             type="email" 
             required
             value={email}
@@ -93,7 +93,7 @@ export default function ForgotPasswordPage({ navigate }) {
         </div>
 
         <button type="submit" className="kt-btn kt-btn-primary flex justify-center grow" disabled={isLoading}>
-          {isLoading ? 'Envoi en cours...' : 'Continuer'}
+          {isLoading ? t('auth.sendingLink', 'Envoi en cours...') : t('auth.sendResetLink', 'Envoyer le lien de réinitialisation')}
           <i className="ki-filled ki-black-right ms-2"></i>
         </button>
 
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage({ navigate }) {
               navigate('/login');
             }}
           >
-            Retour à la page de connexion
+            {t('auth.backToLogin', 'Retour à la connexion')}
           </a>
         </div>
       </form>

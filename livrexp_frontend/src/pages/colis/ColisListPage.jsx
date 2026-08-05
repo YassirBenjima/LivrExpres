@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
-
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ColisListPage({ colisList = [], loading = false, refetchData, navigate, showNotification }) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEtat, setSelectedEtat] = useState('');
   const [selectedStatut, setSelectedStatut] = useState('');
@@ -40,18 +41,18 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
       const data = await res.json();
       if (res.ok && data.success) {
         if (showNotification) {
-          showNotification('success', data.message || 'Code OTP validé ! Le colis a été marqué comme Livré.');
+          showNotification('success', data.message || t('notifications.otpValidated', 'Code OTP validé ! Le colis a été marqué comme Livré.'));
         }
         setOtpModalOpen(false);
         setOtpTrackingCode('');
         setOtpInput('');
         if (refetchData) await refetchData();
       } else {
-        setOtpError(data.message || 'Code OTP invalide. Veuillez vérifier auprès du client.');
+        setOtpError(data.message || t('notifications.otpError', 'Code OTP invalide. Veuillez vérifier auprès du client.'));
       }
     } catch (err) {
       console.error(err);
-      setOtpError('Erreur de communication avec le serveur.');
+      setOtpError(t('notifications.serverError', 'Erreur de communication avec le serveur.'));
     } finally {
       setOtpLoading(false);
     }
@@ -77,12 +78,12 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
           await refetchData();
         }
         if (showNotification) {
-          showNotification('success', 'Colis supprimé avec succès.');
+          showNotification('success', t('notifications.colisDeleted', 'Colis supprimé avec succès.'));
         }
         setDeleteColis(null);
       } else {
         const data = await response.json();
-        const msg = data.message || 'Une erreur est survenue lors de la suppression.';
+        const msg = data.message || t('notifications.deleteError', 'Une erreur est survenue lors de la suppression.');
         if (showNotification) {
           showNotification('error', msg);
         } else {
@@ -101,18 +102,18 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
     }
   };
 
-  // Filter logic
+  // Filter calculations
   const filteredColis = colisList.filter(colis => {
-    const matchesSearch = 
-      colis.trackingCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      colis.productNature.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      colis.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      colis.city.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesEtat = selectedEtat ? colis.etatLabel === selectedEtat : true;
-    const matchesStatut = selectedStatut ? colis.statutLabel === selectedStatut : true;
-
-    return matchesSearch && matchesEtat && matchesStatut;
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q || (
+      (colis.trackingCode && colis.trackingCode.toLowerCase().includes(q)) ||
+      (colis.productNature && colis.productNature.toLowerCase().includes(q)) ||
+      (colis.address && colis.address.toLowerCase().includes(q)) ||
+      (colis.city && colis.city.toLowerCase().includes(q))
+    );
+    const matchEtat = !selectedEtat || colis.etatLabel === selectedEtat;
+    const matchStatut = !selectedStatut || colis.statutLabel === selectedStatut;
+    return matchSearch && matchEtat && matchStatut;
   });
 
   const totalColis = filteredColis.length;
@@ -152,12 +153,33 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
   }, [activeDropdownId]);
 
   // Pagination logic
-  const totalPages = Math.ceil(totalColis / perPage);
-  const paginatedColis = filteredColis.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const totalPages = Math.ceil(totalColis / perPage) || 1;
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedColis = filteredColis.slice((validPage - 1) * perPage, validPage * perPage);
 
   // Unique lists for filters
   const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
   const statutsPossibles = Array.from(new Set(colisList.map(c => c.statutLabel).filter(Boolean)));
+
+  const formatStatusLabel = (label) => {
+    if (!label) return label;
+    const map = {
+      'Créé': t('status.cree', 'Créé'),
+      'En attente': t('status.enAttente', 'En attente'),
+      'Expédié': t('status.expedie', 'Expédié'),
+      'Livré': t('status.livre', 'Livré'),
+      'Retourné': t('status.retourne', 'Retourné'),
+      'Annulé': t('status.annule', 'Annulé'),
+      'En préparation': t('status.enPreparation', 'En préparation'),
+      'Nouveau': t('status.nouveau', 'Nouveau'),
+      'En cours': t('status.enCours', 'En cours'),
+      'Terminé': t('status.termine', 'Terminé'),
+      'Reporté': t('status.reporte', 'Reporté'),
+      'Litige': t('status.litige', 'Litige'),
+      'Refusé': t('status.refuse', 'Refusé'),
+    };
+    return map[label] || label;
+  };
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -179,17 +201,17 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Liste des colis
+                {t('colisPage.colisListTitle', 'Liste des colis')}
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
                 <span className="text-base text-secondary-foreground">
-                  Total colis:
+                  {t('colisPage.totalParcels', 'Total colis')}:
                 </span>
                 <span className="text-base text-foreground font-medium me-2">
                   {totalColis}
                 </span>
                 <span className="text-base text-secondary-foreground">
-                  Montant total:
+                  {t('colisPage.totalAmount', 'Montant total')}:
                 </span>
                 <span className="text-base text-foreground font-medium">
                   {totalMontant.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
@@ -203,13 +225,13 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                 onClick={() => { setOtpTrackingCode(''); setOtpInput(''); setOtpError(''); setOtpModalOpen(true); }}
               >
                 <i className="ki-filled ki-shield-check text-base"></i>
-                Valider OTP WhatsApp
+                {t('colisPage.validateOtp', 'Valider OTP WhatsApp')}
               </button>
               <a className="kt-btn kt-btn-outline" href="/colis/import">
-                Importer un fichier Excel
+                {t('colisPage.importExcel', 'Importer un fichier Excel')}
               </a>
               <a className="kt-btn kt-btn-primary" href="/colis/new">
-                Ajouter un colis
+                {t('colisPage.addParcel', 'Ajouter un colis')}
               </a>
             </div>
           </div>
@@ -223,7 +245,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
               {/* Card Header & Filter Form */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {filteredColis.length} colis
+                  {t('dashboard.showing', 'Affichage de')} {filteredColis.length} {t('nav.parcels', 'colis')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -235,7 +257,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           setSearchQuery(e.target.value);
                           setCurrentPage(1);
                         }}
-                        placeholder="Rechercher un colis" 
+                        placeholder={t('colisPage.searchPlaceholder', 'Rechercher un colis')} 
                         type="text" 
                       />
                     </label>
@@ -244,30 +266,31 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                     <KtSelect
                       value={selectedEtat}
                       onChange={(val) => { setSelectedEtat(val); setCurrentPage(1); }}
-                      placeholder="État"
+                      placeholder={t('colisPage.etat', 'État')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les états' },
-                        ...etatsPossibles.map(e => ({ value: e, label: e }))
+                        { value: '', label: t('colisPage.allEtats', 'Tous les états') },
+                        ...etatsPossibles.map(e => ({ value: e, label: formatStatusLabel(e) }))
                       ]}
                     />
 
                     <KtSelect
                       value={selectedStatut}
                       onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
+                      placeholder={t('colisPage.statut', 'Statut')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les statuts' },
-                        ...statutsPossibles.map(s => ({ value: s, label: s }))
+                        { value: '', label: t('colisPage.allStatuts', 'Tous les statuts') },
+                        ...statutsPossibles.map(s => ({ value: s, label: formatStatusLabel(s) }))
                       ]}
                     />
 
                     <button
                       className="kt-btn kt-btn-outline"
                       onClick={handleResetFilters}
+
                     >
-                      Réinitialiser
+                      {t('common.reset', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -282,67 +305,67 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           <tr>
                             <th className="min-w-[150px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Code de suivi</span>
+                                <span className="kt-table-col-label">{t('colisPage.trackingCode', 'Code de suivi')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Nom du produit</span>
+                                <span className="kt-table-col-label">{t('colisPage.productName', 'Nom du produit')}</span>
                               </span>
                             </th>
                             <th className="min-w-[150px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Date de création</span>
+                                <span className="kt-table-col-label">{t('colisPage.creationDate', 'Date de création')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Adresse de livraison</span>
+                                <span className="kt-table-col-label">{t('colisPage.deliveryAddress', 'Adresse de livraison')}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">État</span>
+                                <span className="kt-table-col-label">{t('colisPage.etat', 'État')}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Statut</span>
+                                <span className="kt-table-col-label">{t('colisPage.statut', 'Statut')}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Livreur</span>
+                                <span className="kt-table-col-label">{t('colisPage.driver', 'Livreur')}</span>
                               </span>
                             </th>
                             <th className="min-w-[160px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Date de livraison</span>
+                                <span className="kt-table-col-label">{t('colisPage.deliveryDate', 'Date de livraison')}</span>
                               </span>
                             </th>
                             <th className="min-w-[140px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Ville</span>
+                                <span className="kt-table-col-label">{t('colisPage.city', 'Ville')}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Prix</span>
+                                <span className="kt-table-col-label">{t('colisPage.price', 'Prix')}</span>
                               </span>
                             </th>
                             <th className="min-w-[140px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Réclamation</span>
+                                <span className="kt-table-col-label">{t('colisPage.claim', 'Réclamation')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Commentaires</span>
+                                <span className="kt-table-col-label">{t('colisPage.comments', 'Commentaires')}</span>
                               </span>
                             </th>
                             <th className="w-[90px] text-center">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Actions</span>
+                                <span className="kt-table-col-label">{t('common.actions', 'Actions')}</span>
                               </span>
                             </th>
                           </tr>
@@ -386,13 +409,13 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                 <td>
                                   <span className={`kt-badge ${colis.etatBadgeClass} kt-badge-outline rounded-[30px]`}>
                                     <span className="kt-badge-dot size-1.5"></span>
-                                    {colis.etatLabel}
+                                    {formatStatusLabel(colis.etatLabel)}
                                   </span>
                                 </td>
                                 <td>
                                   <span className={`kt-badge ${colis.statutBadgeClass} kt-badge-outline rounded-[30px]`}>
                                     <span className="kt-badge-dot size-1.5"></span>
-                                    {colis.statutLabel}
+                                    {formatStatusLabel(colis.statutLabel)}
                                   </span>
                                 </td>
                                  <td className="text-foreground font-normal me-2 me-sm-0">{colis.assignedDriver || '-'}</td>
@@ -401,8 +424,9 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                 <td className="text-foreground font-medium">
                                   {colis.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD
                                 </td>
-                                <td className="text-foreground font-normal">Non</td>
+                                <td className="text-foreground font-normal">{colis.hasClaim ? t('common.yes', 'Oui') : t('common.no', 'Non')}</td>
                                 <td className="text-foreground font-normal">{colis.comment || '-'}</td>
+
                                   <td className="text-center relative">
                                     <div className="inline-block text-left">
                                       <button 
@@ -440,7 +464,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                               <span className="kt-menu-icon">
                                                 <i className="ki-filled ki-pencil"></i>
                                               </span>
-                                              <span className="kt-menu-title">Modifier</span>
+                                              <span className="kt-menu-title">{t('common.edit', 'Modifier')}</span>
                                             </button>
                                           </div>
                                           <div className="kt-menu-item">
@@ -455,7 +479,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                                               <span className="kt-menu-icon text-destructive">
                                                 <i className="ki-filled ki-trash"></i>
                                               </span>
-                                              <span className="kt-menu-title text-destructive">Supprimer</span>
+                                              <span className="kt-menu-title text-destructive">{t('common.delete', 'Supprimer')}</span>
                                             </button>
                                           </div>
                                         </div>,
@@ -468,7 +492,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                           ) : (
                             <tr>
                               <td colSpan={13} className="py-8 text-center text-secondary-foreground">
-                                Aucun colis correspondant
+                                {t('colisPage.noColisFound', 'Aucun colis correspondant')}
                               </td>
                             </tr>
                           )}
@@ -479,19 +503,21 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                     {/* Pagination Footer */}
                     <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                       <div className="flex items-center gap-2 order-2 md:order-1">
-                        Afficher
+                        {t('dashboard.display', 'Afficher')}
                         <KtSelect
                           value={String(perPage)}
                           onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                           className="w-16"
                           options={perPageOptions}
                         />
-                        par page
+                        {t('dashboard.perPage', 'par page')}
                       </div>
                       
                       <div className="flex items-center gap-4 order-1 md:order-2">
                         <span>
-                          Affichage de {Math.min(totalColis, (currentPage - 1) * perPage + 1)} à {Math.min(totalColis, currentPage * perPage)} sur {totalColis} colis
+                          {totalColis > 0
+                            ? `${t('dashboard.showing', 'Affichage de')} ${Math.min(totalColis, (currentPage - 1) * perPage + 1)} ${t('dashboard.to', 'à')} ${Math.min(totalColis, currentPage * perPage)} ${t('dashboard.of', 'sur')} ${totalColis} ${t('nav.parcels', 'colis')}`
+                            : t('dashboard.showingZero', 'Affichage de 0 sur 0 entrées')}
                         </span>
                         {totalPages > 1 && (
                           <div className="flex gap-1">
@@ -500,7 +526,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                               disabled={currentPage === 1}
                               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             >
-                              Précédent
+                              {t('dashboard.prev', 'Précédent')}
                             </button>
                             <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                             <button 
@@ -508,12 +534,13 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                               disabled={currentPage === totalPages}
                               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             >
-                              Suivant
+                              {t('dashboard.next', 'Suivant')}
                             </button>
                           </div>
                         )}
                       </div>
                     </div>
+
 
                   </div>
               </div>
@@ -554,7 +581,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
               className="flex items-center justify-between px-5 py-4 border-b"
               style={{ borderColor: 'var(--border)' }}
             >
-              <h3 className="text-base font-semibold text-foreground">Supprimer le colis</h3>
+              <h3 className="text-base font-semibold text-foreground">{t('colisPage.deleteParcelTitle', 'Supprimer le colis')}</h3>
               <button 
                 type="button"
                 onClick={() => setDeleteColis(null)}
@@ -576,7 +603,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
               >
                 <i className="ki-filled ki-information-2 text-red-600 text-xl shrink-0 mt-0.5"></i>
                 <div className="text-sm text-foreground leading-relaxed">
-                  Vous êtes sur le point de supprimer le colis <strong className="font-semibold text-foreground">{deleteColis.trackingCode}</strong>. Cette action est irréversible et supprimera définitivement le colis de la base de données.
+                  {t('colisPage.deleteParcelConfirm', 'Vous êtes sur le point de supprimer le colis')} <strong className="font-semibold text-foreground">{deleteColis.trackingCode}</strong>. {t('colisPage.irreversibleText', 'Cette action est irréversible et supprimera définitivement le colis de la base de données.')}
                 </div>
               </div>
 
@@ -587,14 +614,14 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                   className="kt-btn kt-btn-outline"
                   disabled={deleteLoading}
                 >
-                  Annuler
+                  {t('common.cancel', 'Annuler')}
                 </button>
                 <button 
                   type="submit" 
                   className="kt-btn kt-btn-destructive"
                   disabled={deleteLoading}
                 >
-                  {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                  {deleteLoading ? t('colisPage.deleting', 'Suppression...') : t('common.delete', 'Supprimer')}
                 </button>
               </div>
             </form>
@@ -626,7 +653,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
               <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                 <i className="ki-filled ki-shield-check text-green-600 text-lg"></i>
-                Validation OTP Livraison WhatsApp
+                {t('colisPage.otpModalTitle', 'Validation OTP Livraison WhatsApp')}
               </h3>
               <button 
                 type="button"
@@ -648,7 +675,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
 
               <div>
                 <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
-                  Code de suivi / N° de commande *
+                  {t('colisPage.otpTrackingLabel', 'Code de suivi / N° de commande *')}
                 </label>
                 <input
                   type="text"
@@ -662,7 +689,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
 
               <div>
                 <label className="text-xs font-semibold text-secondary-foreground mb-1 block">
-                  Code OTP WhatsApp (4 chiffres) *
+                  {t('colisPage.otpCodeLabel', 'Code OTP WhatsApp (4 chiffres) *')}
                 </label>
                 <input
                   type="text"
@@ -674,7 +701,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                   onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Ce code à 4 chiffres a été envoyé automatiquement au destinataire par WhatsApp.
+                  {t('colisPage.otpHint', 'Ce code à 4 chiffres a été envoyé automatiquement au destinataire par WhatsApp.')}
                 </p>
               </div>
 
@@ -685,14 +712,14 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
                   className="kt-btn kt-btn-outline"
                   disabled={otpLoading}
                 >
-                  Annuler
+                  {t('common.cancel', 'Annuler')}
                 </button>
                 <button 
                   type="submit" 
                   className="kt-btn kt-btn-primary bg-emerald-600 hover:bg-emerald-700 text-white"
                   disabled={otpLoading}
                 >
-                  {otpLoading ? 'Vérification...' : 'Valider & Marquer Livré'}
+                  {otpLoading ? t('colisPage.verifying', 'Vérification...') : t('colisPage.validateAndMarkDelivered', 'Valider & Marquer Livré')}
                 </button>
               </div>
             </form>
@@ -700,6 +727,7 @@ export default function ColisListPage({ colisList = [], loading = false, refetch
         </div>,
         document.body
       )}
+
     </DashboardLayout>
   );
 }

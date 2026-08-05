@@ -1,17 +1,63 @@
-.branded-bg {
-  background-image: url('https://keenthemes.com/metronic/tailwind/dist/assets/media/images/2600x1600/1.png');
+/* LivrExpress Modern Logistics Branded Background */
+.livrexpress-auth-bg {
+  background: linear-gradient(135deg, rgba(27, 132, 255, 0.06) 0%, rgba(0, 98, 204, 0.12) 50%, rgba(15, 23, 42, 0.03) 100%),
+              radial-gradient(circle at 85% 15%, rgba(27, 132, 255, 0.16) 0%, transparent 55%),
+              radial-gradient(circle at 15% 85%, rgba(0, 123, 255, 0.1) 0%, transparent 50%);
+  background-color: var(--card, #ffffff);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Fallback theme background to ensure page matches backend layout fully */
+.livrexpress-auth-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(27, 132, 255, 0.15) 1.2px, transparent 1.2px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dark .livrexpress-auth-bg {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 58, 138, 0.45) 50%, rgba(15, 23, 42, 0.98) 100%),
+              radial-gradient(circle at 85% 15%, rgba(27, 132, 255, 0.25) 0%, transparent 60%),
+              radial-gradient(circle at 15% 85%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+  background-color: #0f172a;
+}
+
+.dark .livrexpress-auth-bg::before {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+  opacity: 0.5;
+}
+
+/* Glowing Ambient Orbs */
+.glow-orb-primary {
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(27, 132, 255, 0.22) 0%, rgba(27, 132, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.glow-orb-secondary {
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0, 123, 255, 0.15) 0%, rgba(0, 123, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Fallback theme background */
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-}
-
-/* Ensure background is correctly loaded in dark mode */
-.dark .branded-bg {
-  background-image: url('https://keenthemes.com/metronic/tailwind/dist/assets/media/images/2600x1600/1-dark.png');
 }
 
 /* Alert styles for error/success inside the card */
@@ -34,12 +80,4 @@ body {
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.2);
   color: #22c55e;
-}
-
-.register-branded-bg {
-  background-image: url('https://keenthemes.com/metronic/tailwind/dist/assets/media/images/2600x1600/bg-2.png');
-}
-
-.dark .register-branded-bg {
-  background-image: url('https://keenthemes.com/metronic/tailwind/dist/assets/media/images/2600x1600/bg-2-dark.png');
 }

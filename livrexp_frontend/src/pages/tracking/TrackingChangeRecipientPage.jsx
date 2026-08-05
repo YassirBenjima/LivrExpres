@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function TrackingChangeRecipientPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [colisList, setColisList] = useState([]);
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('same'); // 'same' | 'newcity'
   const [selectedIds, setSelectedIds] = useState([]);
-  const [selectedCityData, setSelectedCityData] = useState({}); // id -> city string for dataset
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +26,28 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const formatStatutLabel = (statut) => {
+    if (!statut) return t('status.pending', 'En attente');
+    const clean = String(statut).trim().toLowerCase();
+    const map = {
+      'en attente': t('status.pending', 'En attente'),
+      'en cours': t('status.in_progress', 'En cours'),
+      'terminé': t('status.done', 'Terminé'),
+      'termine': t('status.done', 'Terminé'),
+      'reporté': t('status.postponed', 'Reporté'),
+      'reporte': t('status.postponed', 'Reporté'),
+      'échec': t('status.failed', 'Échec'),
+      'echec': t('status.failed', 'Échec'),
+      'livré': t('status.delivered', 'Livré'),
+      'livre': t('status.delivered', 'Livré'),
+      'annulé': t('status.cancelled', 'Annulé'),
+      'annule': t('status.cancelled', 'Annulé'),
+      'enregistré': t('status.registered', 'Enregistré'),
+      'enregistre': t('status.registered', 'Enregistré')
+    };
+    return map[clean] || statut;
+  };
 
   const fetchCities = async () => {
     try {
@@ -171,7 +194,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
 
       const data = await res.json();
       if (res.ok) {
-        showNotification?.('success', data.message || `${selectedIds.length} colis mis à jour.`);
+        showNotification?.('success', `${selectedIds.length} ${t('changeRecipient.updateSuccess', 'colis mis à jour.')}`);
         setBulkRecipient('');
         setBulkPhoneNumber('');
         setBulkCity('');
@@ -180,10 +203,10 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
         setSelectedIds([]);
         fetchColis();
       } else {
-        showNotification?.('error', data.message || 'Erreur lors de la mise à jour groupée.');
+        showNotification?.('error', data.message || t('changeRecipient.updateError', 'Erreur lors de la mise à jour groupée.'));
       }
     } catch (err) {
-      showNotification?.('error', 'Erreur de communication avec le serveur.');
+      showNotification?.('error', t('changeRecipient.serverError', 'Erreur de communication avec le serveur.'));
     } finally {
       setBulkSubmitting(false);
     }
@@ -247,9 +270,9 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Changement destinataire</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('changeRecipient.pageTitle', 'Changement destinataire')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total colis :</span>
+                <span className="text-base text-secondary-foreground">{t('changeRecipient.totalParcels', 'Total colis :')}</span>
                 <span className="text-base text-foreground font-medium">{totalColis}</span>
               </div>
             </div>
@@ -267,7 +290,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                   : 'border-transparent text-secondary-foreground hover:text-foreground'
               }`}
             >
-              Même ville
+              {t('changeRecipient.sameCity', 'Même ville')}
             </button>
             <button
               onClick={() => { setActiveTab('newcity'); setCurrentPage(1); }}
@@ -277,7 +300,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                   : 'border-transparent text-secondary-foreground hover:text-foreground'
               }`}
             >
-              Autre ville
+              {t('changeRecipient.otherCity', 'Autre ville')}
             </button>
           </div>
         </div>
@@ -289,23 +312,23 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="text-sm font-semibold text-foreground">Mise à jour groupée destinataire</div>
+                    <div className="text-sm font-semibold text-foreground">{t('changeRecipient.bulkUpdateTitle', 'Mise à jour groupée destinataire')}</div>
                     <span className="kt-badge kt-badge-info kt-badge-outline rounded-[30px]">
                       <span className="kt-badge-dot size-1.5"></span>
-                      <span>{selectedIds.length}</span>&nbsp;sélectionné(s)
+                      <span>{selectedIds.length}</span>&nbsp;{t('changeRecipient.selected', 'sélectionné(s)')}
                     </span>
                   </div>
                   <div className="text-2sm text-secondary-foreground">
-                    Sélectionnez des colis puis mettez à jour les informations du destinataire.
+                    {t('changeRecipient.bulkInstruction', 'Sélectionnez des colis puis mettez à jour les informations du destinataire.')}
                   </div>
                 </div>
 
                 <form className="flex flex-wrap items-end gap-3" onSubmit={handleBulkSubmit}>
                   <div className="flex flex-col gap-1">
-                    <label className="text-2sm text-secondary-foreground font-medium">Destinataire</label>
+                    <label className="text-2sm text-secondary-foreground font-medium">{t('changeRecipient.recipient', 'Destinataire')}</label>
                     <input 
                       className="kt-input w-56" 
-                      placeholder="Nom du destinataire" 
+                      placeholder={t('changeRecipient.recipientPlaceholder', 'Nom du destinataire')} 
                       type="text"
                       value={bulkRecipient}
                       onChange={(e) => setBulkRecipient(e.target.value)}
@@ -313,10 +336,10 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-2sm text-secondary-foreground font-medium">Téléphone</label>
+                    <label className="text-2sm text-secondary-foreground font-medium">{t('changeRecipient.phone', 'Téléphone')}</label>
                     <input 
                       className="kt-input w-44" 
-                      placeholder="Numéro de téléphone" 
+                      placeholder={t('changeRecipient.phonePlaceholder', 'Numéro de téléphone')} 
                       type="text"
                       value={bulkPhoneNumber}
                       onChange={(e) => setBulkPhoneNumber(e.target.value)}
@@ -324,26 +347,26 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-2sm text-secondary-foreground font-medium">Ville</label>
+                    <label className="text-2sm text-secondary-foreground font-medium">{t('changeRecipient.city', 'Ville')}</label>
                     <KtSelect
                       value={bulkCity}
                       onChange={(val) => setBulkCity(val)}
-                      placeholder="Choisir une ville"
+                      placeholder={t('changeRecipient.selectCity', 'Choisir une ville')}
                       enableSearch
-                      searchPlaceholder="Chercher une ville..."
+                      searchPlaceholder={t('changeRecipient.searchCity', 'Chercher une ville...')}
                       className="w-56"
                       options={[
-                        { value: '', label: 'Choisir une ville' },
+                        { value: '', label: t('changeRecipient.selectCity', 'Choisir une ville') },
                         ...cities.map(c => ({ value: c, label: c }))
                       ]}
                     />
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-2sm text-secondary-foreground font-medium">Adresse</label>
+                    <label className="text-2sm text-secondary-foreground font-medium">{t('changeRecipient.address', 'Adresse')}</label>
                     <input 
                       className="kt-input w-72" 
-                      placeholder="Adresse" 
+                      placeholder={t('changeRecipient.addressPlaceholder', 'Adresse')} 
                       type="text"
                       value={bulkAddress}
                       onChange={(e) => setBulkAddress(e.target.value)}
@@ -351,10 +374,10 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-2sm text-secondary-foreground font-medium">Quartier</label>
+                    <label className="text-2sm text-secondary-foreground font-medium">{t('changeRecipient.neighborhood', 'Quartier')}</label>
                     <input 
                       className="kt-input w-44" 
-                      placeholder="Quartier" 
+                      placeholder={t('changeRecipient.neighborhoodPlaceholder', 'Quartier')} 
                       type="text"
                       value={bulkNeighborhood}
                       onChange={(e) => setBulkNeighborhood(e.target.value)}
@@ -367,7 +390,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                     disabled={selectedIds.length === 0 || bulkSubmitting}
                   >
                     <i className="ki-filled ki-user-edit"></i>
-                    {bulkSubmitting ? 'Mise à jour...' : 'Mettre à jour'}
+                    {bulkSubmitting ? t('changeRecipient.updatingBtn', 'Mise à jour...') : t('changeRecipient.updateBtn', 'Mettre à jour')}
                   </button>
                 </form>
               </div>
@@ -382,7 +405,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
               
               {/* Table Header Filter */}
               <div className="kt-card-header flex-wrap gap-2">
-                <h3 className="kt-card-title text-sm">Affichage de {filteredColis.length} colis</h3>
+                <h3 className="kt-card-title text-sm">{t('changeRecipient.showingCount', 'Affichage de')} {filteredColis.length} {t('changeRecipient.parcelsCount', 'colis')}</h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
                     <label className="kt-input">
@@ -390,7 +413,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                       <input
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                        placeholder="Code de suivi, destinataire, ville..."
+                        placeholder={t('changeRecipient.searchPlaceholder', 'Code de suivi, destinataire, ville...')}
                         type="text"
                       />
                     </label>
@@ -399,12 +422,12 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                     <KtSelect
                       value={filterCity}
                       onChange={(val) => { setFilterCity(val); setCurrentPage(1); }}
-                      placeholder="Choisir une ville"
+                      placeholder={t('changeRecipient.selectCity', 'Choisir une ville')}
                       enableSearch
-                      searchPlaceholder="Chercher une ville..."
+                      searchPlaceholder={t('changeRecipient.searchCity', 'Chercher une ville...')}
                       className="w-56"
                       options={[
-                        { value: '', label: 'Choisir une ville' },
+                        { value: '', label: t('changeRecipient.selectCity', 'Choisir une ville') },
                         ...cities.map(c => ({ value: c, label: c }))
                       ]}
                     />
@@ -418,7 +441,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                         setCurrentPage(1);
                       }}
                     >
-                      Réinitialiser
+                      {t('changeRecipient.resetBtn', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -438,14 +461,14 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                             onChange={handleSelectAll}
                           />
                         </th>
-                        <th className="min-w-[150px]">Code de suivi</th>
-                        <th className="min-w-[180px]">Nom du produit</th>
-                        <th className="min-w-[160px]">Date de ramassage</th>
-                        <th className="min-w-[180px]">Destinataire</th>
-                        <th className="min-w-[120px]">Statut</th>
-                        <th className="min-w-[140px]">Ville</th>
-                        <th className="min-w-[120px]">Prix</th>
-                        <th className="min-w-[220px]">Commentaire</th>
+                        <th className="min-w-[150px]">{t('changeRecipient.colTrackingCode', 'Code de suivi')}</th>
+                        <th className="min-w-[180px]">{t('changeRecipient.colProductName', 'Nom du produit')}</th>
+                        <th className="min-w-[160px]">{t('changeRecipient.colPickupDate', 'Date de ramassage')}</th>
+                        <th className="min-w-[180px]">{t('changeRecipient.colRecipient', 'Destinataire')}</th>
+                        <th className="min-w-[120px]">{t('changeRecipient.colStatus', 'Statut')}</th>
+                        <th className="min-w-[140px]">{t('changeRecipient.colCity', 'Ville')}</th>
+                        <th className="min-w-[120px]">{t('changeRecipient.colPrice', 'Prix')}</th>
+                        <th className="min-w-[220px]">{t('changeRecipient.colComment', 'Commentaire')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -454,17 +477,18 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                       ) : paginatedColis.length === 0 ? (
                         <tr>
                           <td colSpan={9} className="text-center text-secondary-foreground py-8">
-                            Aucun enregistrement correspondant
+                            {t('changeRecipient.noRecordFound', 'Aucun enregistrement correspondant')}
                           </td>
                         </tr>
                       ) : (
                         paginatedColis.map((colis) => {
                           const isChecked = selectedIds.includes(colis.id);
-                          const statutLabel = colis.statutLabel || colis.statut || 'En attente';
-                          const statutBadgeClass = statutLabel === 'Terminé' ? 'kt-badge-success'
-                            : statutLabel === 'En cours' ? 'kt-badge-primary'
-                            : statutLabel === 'Reporté' ? 'kt-badge-info'
-                            : statutLabel === 'Échec' ? 'kt-badge-destructive'
+                          const rawStatut = colis.statutLabel || colis.statut || 'En attente';
+                          const displayStatut = formatStatutLabel(rawStatut);
+                          const statutBadgeClass = rawStatut === 'Terminé' || rawStatut === 'Livré' ? 'kt-badge-success'
+                            : rawStatut === 'En cours' ? 'kt-badge-primary'
+                            : rawStatut === 'Reporté' ? 'kt-badge-info'
+                            : rawStatut === 'Échec' ? 'kt-badge-destructive'
                             : 'kt-badge-warning';
 
                           return (
@@ -484,7 +508,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                               <td>
                                 <span className={`kt-badge ${statutBadgeClass} kt-badge-outline rounded-[30px]`}>
                                   <span className="kt-badge-dot size-1.5"></span>
-                                  {statutLabel}
+                                  {displayStatut}
                                 </span>
                               </td>
                               <td className="text-foreground font-normal">{colis.city}</td>
@@ -503,19 +527,19 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                 {/* Table Footer / Pagination */}
                 <div className="kt-card-footer justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    Afficher
+                    {t('changeRecipient.show', 'Afficher')}
                     <KtSelect
                       value={String(itemsPerPage)}
                       onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
                       className="w-16"
                       options={perPageOptions}
                     />
-                    par page
+                    {t('changeRecipient.perPage', 'par page')}
                   </div>
                   
                   <div className="flex items-center gap-4">
                     <span>
-                      Affichage de {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} à {Math.min(totalColis, currentPage * itemsPerPage)} sur {totalColis} colis
+                      {t('changeRecipient.showing', 'Affichage de')} {totalColis === 0 ? 0 : Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} {t('changeRecipient.to', 'à')} {Math.min(totalColis, currentPage * itemsPerPage)} {t('changeRecipient.of', 'sur')} {totalColis} {t('changeRecipient.parcelsCount', 'colis')}
                     </span>
                     {totalPages > 1 && (
                       <div className="flex gap-1">
@@ -524,7 +548,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                           disabled={currentPage === 1}
                           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         >
-                          Précédent
+                          {t('changeRecipient.previous', 'Précédent')}
                         </button>
                         <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                         <button 
@@ -532,7 +556,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
                           disabled={currentPage === totalPages}
                           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         >
-                          Suivant
+                          {t('changeRecipient.next', 'Suivant')}
                         </button>
                       </div>
                     )}

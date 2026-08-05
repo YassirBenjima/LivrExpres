@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function AffiliatePage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [data, setData] = useState({
     next_payment: 0,
     total_referred: 0,
@@ -41,7 +43,7 @@ export default function AffiliatePage({ navigate, showNotification }) {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedLink(type);
-    if (showNotification) showNotification('success', 'Lien copié dans le presse-papier !');
+    if (showNotification) showNotification('success', t('affiliate.copiedToast', 'Lien copié dans le presse-papier !'));
     setTimeout(() => setCopiedLink(''), 2000);
   };
 
@@ -53,9 +55,9 @@ export default function AffiliatePage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Affiliate</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('affiliate.title', 'Affiliate')}</h1>
               <span className="text-sm text-secondary-foreground">
-                Parrainez des clients et gagnez des commissions sur chaque livraison.
+                {t('affiliate.subtitle', 'Parrainez des clients et gagnez des commissions sur chaque livraison.')}
               </span>
             </div>
           </div>
@@ -76,11 +78,11 @@ export default function AffiliatePage({ navigate, showNotification }) {
                     <span className="text-2xl font-semibold text-mono">
                       {loading ? '...' : `${data.next_payment} DH`}
                     </span>
-                    <span className="inline-flex items-center" title="Montant de votre prochain virement mensuel des commissions d'affiliation.">
+                    <span className="inline-flex items-center" title={t('affiliate.nextPaymentTooltip', 'Montant de votre prochain virement mensuel des commissions d\'affiliation.')}>
                       <i className="ki-filled ki-information-2 text-sm text-secondary-foreground cursor-help"></i>
                     </span>
                   </div>
-                  <span className="text-xs text-secondary-foreground font-medium">Prochain paiement</span>
+                  <span className="text-xs text-secondary-foreground font-medium">{t('affiliate.nextPayment', 'Prochain paiement')}</span>
                 </div>
               </div>
             </div>
@@ -95,7 +97,7 @@ export default function AffiliatePage({ navigate, showNotification }) {
                   <span className="text-2xl font-semibold text-mono">
                     {loading ? '...' : data.total_referred}
                   </span>
-                  <span className="text-xs text-secondary-foreground font-medium">Total référencé</span>
+                  <span className="text-xs text-secondary-foreground font-medium">{t('affiliate.totalReferred', 'Total référencé')}</span>
                 </div>
               </div>
             </div>
@@ -110,7 +112,7 @@ export default function AffiliatePage({ navigate, showNotification }) {
                   <span className="text-2xl font-semibold text-mono">
                     {loading ? '...' : `${data.total_earnings} DH`}
                   </span>
-                  <span className="text-xs text-secondary-foreground font-medium">Total des gains reçus</span>
+                  <span className="text-xs text-secondary-foreground font-medium">{t('affiliate.totalEarnings', 'Total des gains reçus')}</span>
                 </div>
               </div>
             </div>
@@ -122,20 +124,19 @@ export default function AffiliatePage({ navigate, showNotification }) {
         <div className="kt-container-fixed mb-5">
           <div className="kt-card">
             <div className="kt-card-header">
-              <h3 className="kt-card-title text-sm">Vos liens d'affiliation</h3>
+              <h3 className="kt-card-title text-sm">{t('affiliate.linksTitle', 'Vos liens d\'affiliation')}</h3>
             </div>
             <div className="kt-card-content flex flex-col gap-5">
               <p className="text-sm text-secondary-foreground leading-relaxed">
-                Les liens d'affiliation sont des URL uniques qui vous permettent de gagner une commission en référant des clients.
-                Partagez votre lien long ou court avec d'autres personnes et gagnez un pourcentage.
+                {t('affiliate.linksDesc', 'Les liens d\'affiliation sont des URL uniques qui vous permettent de gagner une commission en référant des clients. Partagez votre lien long ou court avec d\'autres personnes et gagnez un pourcentage.')}
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 
                 {/* Full Link */}
                 <div className="border border-border rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-foreground">Lien complet</span>
-                    <span className="kt-badge kt-badge-primary kt-badge-outline rounded-[30px] text-xs">Full</span>
+                    <span className="text-sm font-medium text-foreground">{t('affiliate.fullLink', 'Lien complet')}</span>
+                    <span className="kt-badge kt-badge-primary kt-badge-outline rounded-[30px] text-xs">{t('affiliate.badgeFull', 'Full')}</span>
                   </div>
                   <div className="kt-input bg-muted/30">
                     <input
@@ -151,15 +152,15 @@ export default function AffiliatePage({ navigate, showNotification }) {
                     onClick={() => copyToClipboard(data.full_link, 'full')}
                   >
                     <i className={`ki-filled ${copiedLink === 'full' ? 'ki-check' : 'ki-copy'}`}></i>
-                    {copiedLink === 'full' ? 'Copié !' : 'Copier'}
+                    {copiedLink === 'full' ? t('affiliate.copiedBtn', 'Copié !') : t('affiliate.copyBtn', 'Copier')}
                   </button>
                 </div>
 
                 {/* Short Link */}
                 <div className="border border-border rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-foreground">Lien court</span>
-                    <span className="kt-badge kt-badge-success kt-badge-outline rounded-[30px] text-xs">Short</span>
+                    <span className="text-sm font-medium text-foreground">{t('affiliate.shortLink', 'Lien court')}</span>
+                    <span className="kt-badge kt-badge-success kt-badge-outline rounded-[30px] text-xs">{t('affiliate.badgeShort', 'Short')}</span>
                   </div>
                   <div className="kt-input bg-muted/30">
                     <input
@@ -175,7 +176,7 @@ export default function AffiliatePage({ navigate, showNotification }) {
                     onClick={() => copyToClipboard(data.short_link, 'short')}
                   >
                     <i className={`ki-filled ${copiedLink === 'short' ? 'ki-check' : 'ki-copy'}`}></i>
-                    {copiedLink === 'short' ? 'Copié !' : 'Copier'}
+                    {copiedLink === 'short' ? t('affiliate.copiedBtn', 'Copié !') : t('affiliate.copyBtn', 'Copier')}
                   </button>
                 </div>
 
@@ -193,34 +194,33 @@ export default function AffiliatePage({ navigate, showNotification }) {
                   <i className="ki-filled ki-percentage text-xl text-violet-600"></i>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h3 className="text-base font-semibold text-foreground">Gagnez 3% sur chaque livraison</h3>
-                  <p class="text-sm text-secondary-foreground leading-relaxed">
-                    Chaque colis livré par vos références vous rapporte 3% des frais de livraison.
-                    Vous pouvez utiliser cet argent pour livrer ou le recevoir chaque mois en paiement.
+                  <h3 className="text-base font-semibold text-foreground">{t('affiliate.bannerTitle', 'Gagnez 3% sur chaque livraison')}</h3>
+                  <p className="text-sm text-secondary-foreground leading-relaxed">
+                    {t('affiliate.bannerDesc', 'Chaque colis livré par vos références vous rapporte 3% des frais de livraison. Vous pouvez utiliser cet argent pour livrer ou le recevoir chaque mois en paiement.')}
                   </p>
                 </div>
               </div>
 
               <div className="border-t border-border pt-5">
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <h4 className="text-sm font-semibold text-foreground">Comment ça marche ?</h4>
+                  <h4 className="text-sm font-semibold text-foreground">{t('affiliate.howItWorksTitle', 'Comment ça marche ?')}</h4>
                   <span className="kt-badge kt-badge-success kt-badge-outline rounded-[30px] text-xs">
                     <span className="kt-badge-dot size-1.5"></span>
-                    Facile et Rapide
+                    {t('affiliate.easyAndFastBadge', 'Facile et Rapide')}
                   </span>
                 </div>
                 <ol className="flex flex-col gap-4">
                   <li className="flex items-start gap-3">
                     <span className="flex shrink-0 size-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">1</span>
-                    <span className="text-sm text-secondary-foreground pt-1">Partagez votre lien de parrainage avec vos amis, collègues ou sur les réseaux sociaux.</span>
+                    <span className="text-sm text-secondary-foreground pt-1">{t('affiliate.step1', 'Partagez votre lien de parrainage avec vos amis, collègues ou sur les réseaux sociaux.')}</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="flex shrink-0 size-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">2</span>
-                    <span className="text-sm text-secondary-foreground pt-1">Dès qu'ils livrent, vous gagnez plus de 3% sur chaque livraison.</span>
+                    <span className="text-sm text-secondary-foreground pt-1">{t('affiliate.step2', 'Dès qu\'ils livrent, vous gagnez plus de 3% sur chaque livraison.')}</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="flex shrink-0 size-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">3</span>
-                    <span className="text-sm text-secondary-foreground pt-1">Utilisez cet argent pour vos propres envois ou recevez-le chaque mois en paiement.</span>
+                    <span className="text-sm text-secondary-foreground pt-1">{t('affiliate.step3', 'Utilisez cet argent pour vos propres envois ou recevez-le chaque mois en paiement.')}</span>
                   </li>
                 </ol>
               </div>

@@ -63,7 +63,7 @@ final class RetourController extends AbstractController
     }
 
     #[Route('/bons/{id}/download', name: 'app_retour_bons_download', methods: ['GET'])]
-    public function bonsDownload(ReturnRequest $demande, BonRetourPdfGenerator $pdfGenerator): Response
+    public function bonsDownload(ReturnRequest $demande, BonRetourPdfGenerator $pdfGenerator, Request $request): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -84,7 +84,8 @@ final class RetourController extends AbstractController
         }
 
         try {
-            return $pdfGenerator->generateDownloadResponse($demande);
+            $lang = (string) $request->query->get('lang', 'fr');
+            return $pdfGenerator->generateDownloadResponse($demande, $lang);
         } catch (\Throwable) {
             $this->addFlash('error', 'Document non disponible');
 

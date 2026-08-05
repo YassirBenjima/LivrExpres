@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RamassagePlanningPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [events, setEvents]   = useState([]);
   const [stats, setStats]     = useState({ total: 0, pending: 0, confirmed: 0, picked_up: 0, cancelled: 0 });
   const [loading, setLoading] = useState(true);
@@ -47,8 +49,18 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
   const month = currentDate.getMonth();
 
   const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    t('colisPage.months.january', 'Janvier'),
+    t('colisPage.months.february', 'Février'),
+    t('colisPage.months.march', 'Mars'),
+    t('colisPage.months.april', 'Avril'),
+    t('colisPage.months.may', 'Mai'),
+    t('colisPage.months.june', 'Juin'),
+    t('colisPage.months.july', 'Juillet'),
+    t('colisPage.months.august', 'Août'),
+    t('colisPage.months.september', 'Septembre'),
+    t('colisPage.months.october', 'Octobre'),
+    t('colisPage.months.november', 'Novembre'),
+    t('colisPage.months.december', 'Décembre')
   ];
 
   const prevPeriod = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -105,23 +117,27 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
     switch (status) {
       case 'confirmed':
         return { 
-          label: 'Confirmé', 
-          style: { backgroundColor: '#1b84ff', color: '#ffffff', borderColor: '#1b84ff' }
+          label: t('status.confirmed', 'Confirmé'), 
+          style: { backgroundColor: '#1b84ff', color: '#ffffff', borderColor: '#1b84ff' },
+          bg: 'bg-blue-500/10 text-blue-600 border-blue-500/20'
         };
       case 'picked_up':
         return { 
-          label: 'Ramassé', 
-          style: { backgroundColor: '#17c653', color: '#ffffff', borderColor: '#17c653' }
+          label: t('status.pickedUp', 'Ramassé'), 
+          style: { backgroundColor: '#17c653', color: '#ffffff', borderColor: '#17c653' },
+          bg: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
         };
       case 'cancelled':
         return { 
-          label: 'Annulé', 
-          style: { backgroundColor: '#f8285a', color: '#ffffff', borderColor: '#f8285a' }
+          label: t('status.cancelled', 'Annulé'), 
+          style: { backgroundColor: '#f8285a', color: '#ffffff', borderColor: '#f8285a' },
+          bg: 'bg-red-500/10 text-red-600 border-red-500/20'
         };
       default:
         return { 
-          label: 'En attente', 
-          style: { backgroundColor: '#f6c000', color: '#181c32', borderColor: '#f6c000' }
+          label: t('status.pending', 'En attente'), 
+          style: { backgroundColor: '#f6c000', color: '#181c32', borderColor: '#f6c000' },
+          bg: 'bg-amber-500/10 text-amber-600 border-amber-500/20'
         };
     }
   };
@@ -134,9 +150,13 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Planification des ramassages</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">
+                {t('colisPage.planningTitle', 'Planification des ramassages')}
+              </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total événements:</span>
+                <span className="text-base text-secondary-foreground">
+                  {t('colisPage.totalEvents', 'Total événements')}:
+                </span>
                 <span className="text-base text-foreground font-medium">{events.length}</span>
               </div>
             </div>
@@ -147,7 +167,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                 onClick={() => navigate('/ramassage')}
               >
                 <i className="ki-filled ki-menu text-sm"></i>
-                Voir la liste
+                {t('colisPage.viewList', 'Voir la liste')}
               </button>
               <button 
                 type="button"
@@ -155,7 +175,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                 onClick={() => navigate('/ramassage/new')}
               >
                 <i className="ki-filled ki-plus text-sm"></i>
-                Nouvelle demande
+                {t('colisPage.newRequest', 'Nouvelle demande')}
               </button>
             </div>
           </div>
@@ -177,7 +197,9 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               <div className="kt-card-content p-5 flex flex-col justify-between h-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Total demandes</span>
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">
+                      {t('colisPage.totalRequests', 'Total demandes')}
+                    </span>
                     <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.total || 0}</span>
                   </div>
                   <div 
@@ -205,7 +227,9 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               <div className="kt-card-content p-5 flex flex-col justify-between h-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">En attente</span>
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">
+                      {t('status.pending', 'En attente')}
+                    </span>
                     <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.pending || 0}</span>
                   </div>
                   <div 
@@ -236,7 +260,9 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               <div className="kt-card-content p-5 flex flex-col justify-between h-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Confirmés</span>
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">
+                      {t('status.confirmed', 'Confirmés')}
+                    </span>
                     <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.confirmed || 0}</span>
                   </div>
                   <div 
@@ -267,7 +293,9 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               <div className="kt-card-content p-5 flex flex-col justify-between h-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">Ramassés</span>
+                    <span className="text-[11px] font-bold tracking-wider text-secondary-foreground uppercase">
+                      {t('status.pickedUp', 'Ramassés')}
+                    </span>
                     <span className="text-3xl font-extrabold text-mono text-foreground tracking-tight">{stats.picked_up || 0}</span>
                   </div>
                   <div 
@@ -310,7 +338,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                     className="px-3 py-1 text-xs font-semibold text-foreground hover:bg-card rounded-md transition-colors"
                     onClick={todayPeriod}
                   >
-                    Aujourd'hui
+                    {t('colisPage.today', 'Aujourd\'hui')}
                   </button>
                   <button 
                     type="button" 
@@ -334,7 +362,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                     onClick={() => setStatusFilter('all')}
                     className="text-xs text-primary hover:underline mr-2"
                   >
-                    Effacer le filtre
+                    {t('colisPage.clearFilter', 'Effacer le filtre')}
                   </button>
                 )}
                 <div className="inline-flex rounded-lg border border-border p-1 bg-muted/30">
@@ -345,7 +373,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                     }`}
                     onClick={() => setViewMode('month')}
                   >
-                    Grille Mois
+                    {t('colisPage.gridMonth', 'Grille Mois')}
                   </button>
                   <button 
                     type="button"
@@ -354,7 +382,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                     }`}
                     onClick={() => setViewMode('list')}
                   >
-                    Liste ({filteredEvents.length})
+                    {t('colisPage.listMode', 'Liste')} ({filteredEvents.length})
                   </button>
                 </div>
               </div>
@@ -366,14 +394,14 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               {loading ? (
                 <div className="py-16 text-center text-secondary-foreground">
                   <i className="ki-filled ki-loading text-3xl animate-spin text-primary mb-3 block"></i>
-                  <span>Chargement du planning...</span>
+                  <span>{t('colisPage.loadingPlanning', 'Chargement du planning...')}</span>
                 </div>
               ) : viewMode === 'list' ? (
                 /* List View Cards */
                 filteredEvents.length === 0 ? (
                   <div className="py-16 text-center text-secondary-foreground">
                     <i className="ki-filled ki-calendar-remove text-4xl mb-3 text-muted-foreground/50 block"></i>
-                    <p className="text-sm font-medium">Aucun événement ne correspond à vos critères.</p>
+                    <p className="text-sm font-medium">{t('colisPage.noEventFound', 'Aucun événement ne correspond à vos critères.')}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -397,12 +425,12 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                             <h4 className="text-base font-bold text-foreground">{evt.title}</h4>
                             <p className="text-xs text-secondary-foreground flex items-center gap-1.5">
                               <i className="ki-filled ki-geolocation text-xs text-muted-foreground"></i>
-                              {evt.extendedProps?.address || 'Adresse non spécifiée'}
+                              {evt.extendedProps?.address || t('colisPage.noAddressSpecified', 'Adresse non spécifiée')}
                             </p>
                           </div>
                           <div className="flex items-center justify-between text-xs pt-2.5 border-t border-border/60 text-muted-foreground">
-                            <span>Tél: {evt.extendedProps?.phone || '-'}</span>
-                            <span>Chauffeur: {evt.extendedProps?.assignedDriver || 'Non assigné'}</span>
+                            <span>{t('colisPage.phone', 'Tél')}: {evt.extendedProps?.phone || '-'}</span>
+                            <span>{t('colisPage.driver', 'Chauffeur')}: {evt.extendedProps?.assignedDriver || t('colisPage.unassigned', 'Non assigné')}</span>
                           </div>
                         </div>
                       );
@@ -414,13 +442,13 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                 <div>
                   {/* Header Days */}
                   <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-muted-foreground uppercase py-2 border-b border-border mb-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
-                    <div>Lun</div>
-                    <div>Mar</div>
-                    <div>Mer</div>
-                    <div>Jeu</div>
-                    <div>Ven</div>
-                    <div>Sam</div>
-                    <div>Dim</div>
+                    <div>{t('colisPage.days.mon', 'Lun')}</div>
+                    <div>{t('colisPage.days.tue', 'Mar')}</div>
+                    <div>{t('colisPage.days.wed', 'Mer')}</div>
+                    <div>{t('colisPage.days.thu', 'Jeu')}</div>
+                    <div>{t('colisPage.days.fri', 'Ven')}</div>
+                    <div>{t('colisPage.days.sat', 'Sam')}</div>
+                    <div>{t('colisPage.days.sun', 'Dim')}</div>
                   </div>
 
                   {/* Day Grid Cells */}
@@ -454,7 +482,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                         e.preventDefault();
                         if (isPast) {
                           if (showNotification) {
-                            showNotification('Impossible de replanifier vers une date passée', 'warning');
+                            showNotification('warning', t('colisPage.cannotReschedulePast', 'Impossible de replanifier vers une date passée'));
                           }
                           return;
                         }
@@ -482,10 +510,10 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                           });
 
                           if (res.ok) {
-                            if (showNotification) showNotification('Ramassage replanifié avec succès', 'success');
+                            if (showNotification) showNotification('success', t('colisPage.rescheduledSuccess', 'Ramassage replanifié avec succès'));
                           } else {
                             fetchPlanningData();
-                            if (showNotification) showNotification('Erreur lors de la replanification', 'error');
+                            if (showNotification) showNotification('error', t('colisPage.rescheduleError', 'Erreur lors de la replanification'));
                           }
                         } catch (err) {
                           console.error(err);
@@ -543,7 +571,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                                   }}
                                   style={badge.style}
                                   className="fc-daygrid-event text-[11px] leading-tight p-1.5 rounded border cursor-grab active:cursor-grabbing hover:opacity-90 transition-opacity"
-                                  title={`Glisser-déposer pour replanifier: ${evt.title}`}
+                                  title={`${t('colisPage.dragToReschedule', 'Glisser-déposer pour replanifier')}: ${evt.title}`}
                                 >
                                   <strong className="block truncate font-bold text-[11px] leading-tight">{evt.title}</strong>
                                   {phone && (
@@ -556,7 +584,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                             })}
                             {dayEvents.length > 2 && (
                               <span className="text-[10px] text-muted-foreground font-semibold px-1">
-                                +{dayEvents.length - 2} de plus
+                                +{dayEvents.length - 2} {t('colisPage.more', 'de plus')}
                               </span>
                             )}
                           </div>
@@ -578,7 +606,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
               <div className="flex items-center justify-between pb-4 border-b border-border">
                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <i className="ki-filled ki-information text-primary text-xl"></i>
-                  Détails de la demande
+                  {t('colisPage.requestDetailsTitle', 'Détails de la demande')}
                 </h3>
                 <button 
                   type="button"
@@ -591,22 +619,30 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
 
               <div className="py-4 flex flex-col gap-3">
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">Titre / Client</label>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    {t('colisPage.titleClientLabel', 'Titre / Client')}
+                  </label>
                   <p className="text-base font-semibold text-foreground">{selectedEvent.title}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">Adresse</label>
+                  <label className="text-xs text-muted-foreground font-medium">
+                    {t('colisPage.address', 'Adresse')}
+                  </label>
                   <p className="text-sm text-foreground">{selectedEvent.extendedProps?.address || '-'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="text-xs text-muted-foreground font-medium">Téléphone</label>
+                    <label className="text-xs text-muted-foreground font-medium">
+                      {t('colisPage.phone', 'Téléphone')}
+                    </label>
                     <p className="text-sm font-medium text-foreground">{selectedEvent.extendedProps?.phone || '-'}</p>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground font-medium">Statut</label>
+                    <label className="text-xs text-muted-foreground font-medium">
+                      {t('colisPage.statut', 'Statut')}
+                    </label>
                     <p className="text-sm font-medium text-primary">
-                      {selectedEvent.extendedProps?.statusLabel || selectedEvent.extendedProps?.status || 'En attente'}
+                      {getStatusBadge(selectedEvent.extendedProps?.status).label}
                     </p>
                   </div>
                 </div>
@@ -618,7 +654,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                   className="kt-btn kt-btn-outline text-sm"
                   onClick={() => setSelectedEvent(null)}
                 >
-                  Fermer
+                  {t('common.close', 'Fermer')}
                 </button>
                 <button 
                   type="button"
@@ -628,7 +664,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                     navigate('/ramassage');
                   }}
                 >
-                  Voir dans la liste
+                  {t('colisPage.viewInList', 'Voir dans la liste')}
                 </button>
               </div>
             </div>

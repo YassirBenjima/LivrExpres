@@ -66,8 +66,9 @@ final class BonLivraisonController extends AbstractController
     }
 
     #[Route('/{id}/download', name: 'app_bon_livraison_download', methods: ['GET'])]
-    public function download(BonLivraison $bon, BonLivraisonPdfGenerator $pdfGenerator): Response
+    public function download(Request $request, BonLivraison $bon, BonLivraisonPdfGenerator $pdfGenerator): Response
     {
+        $lang = (string) $request->query->get('lang', 'fr');
         if (trim((string) $bon->getReference()) === '') {
             $this->addFlash('error', 'Document non disponible');
 
@@ -75,7 +76,7 @@ final class BonLivraisonController extends AbstractController
         }
 
         try {
-            return $pdfGenerator->generateDownloadResponse($bon);
+            return $pdfGenerator->generateDownloadResponse($bon, $lang);
         } catch (\Throwable) {
             $this->addFlash('error', 'Document non disponible');
 
@@ -92,6 +93,7 @@ final class BonLivraisonController extends AbstractController
             return $this->redirectToRoute('app_bon_livraison_index');
         }
 
+        $bon->clearColis();
         $entityManager->remove($bon);
         $entityManager->flush();
 

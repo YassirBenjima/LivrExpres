@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LivreurListPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [livreurs, setLivreurs]       = useState([]);
   const [stats, setStats]             = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -18,8 +20,8 @@ export default function LivreurListPage({ navigate, showNotification }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const headers = () => {
-    const t = localStorage.getItem('auth_token');
-    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+    const token = localStorage.getItem('auth_token');
+    return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   };
 
   const loadData = useCallback(async () => {
@@ -67,19 +69,24 @@ export default function LivreurListPage({ navigate, showNotification }) {
       const r = await fetch(`/api/livreurs/${deleteTarget.id}`, { method: 'DELETE', headers: headers(), credentials: 'include' });
       const d = await r.json();
       if (d.success) {
-        showNotification?.('success', d.message);
+        const deleteMsg = t('drivers.driverDeletedSuccess', `Livreur ${deleteTarget.name} supprimé.`).replace('{name}', deleteTarget.name);
+        showNotification?.('success', deleteMsg);
         setDeleteTarget(null);
         loadData();
       } else {
-        showNotification?.('error', d.message || 'Erreur lors de la suppression.');
+        showNotification?.('error', d.message || t('drivers.deleteError', 'Erreur lors de la suppression.'));
       }
-    } catch { showNotification?.('error', 'Erreur de connexion.'); }
+    } catch { showNotification?.('error', t('drivers.connError', 'Erreur de connexion.')); }
     finally { setDeleteLoading(false); }
   };
 
   const cities = [...new Set(livreurs.map(l => l.city).filter(Boolean))].sort();
-  const cityOptions = [{ value: '', label: 'Toutes les villes' }, ...cities.map(c => ({ value: c, label: c }))];
-  const dispoOptions = [{ value: '', label: 'Disponibilité' }, { value: '1', label: 'Disponible' }, { value: '0', label: 'Indisponible' }];
+  const cityOptions = [{ value: '', label: t('drivers.allCities', 'Toutes les villes') }, ...cities.map(c => ({ value: c, label: c }))];
+  const dispoOptions = [
+    { value: '', label: t('drivers.availability', 'Disponibilité') },
+    { value: '1', label: t('drivers.available', 'Disponible') },
+    { value: '0', label: t('drivers.unavailable', 'Indisponible') }
+  ];
 
   const filtered = livreurs.filter(l => {
     const q = search.toLowerCase();
@@ -101,13 +108,13 @@ export default function LivreurListPage({ navigate, showNotification }) {
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Gestion des Livreurs</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('drivers.title', 'Gestion des Livreurs')}</h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium">
-                <span className="text-base text-secondary-foreground">Total:</span>
-                <span className="text-base text-foreground font-medium me-2">{filtered.length} livreur{filtered.length !== 1 ? 's' : ''}</span>
+                <span className="text-base text-secondary-foreground">{t('drivers.total', 'Total :')}</span>
+                <span className="text-base text-foreground font-medium me-2">{filtered.length} {t('drivers.drivers', 'livreurs')}</span>
                 {stats && (
                   <>
-                    <span className="text-base text-secondary-foreground">Disponibles:</span>
+                    <span className="text-base text-secondary-foreground">{t('drivers.availableCount', 'Disponibles :')}</span>
                     <span className="text-base text-foreground font-medium">{stats.disponibles}</span>
                   </>
                 )}
@@ -119,14 +126,14 @@ export default function LivreurListPage({ navigate, showNotification }) {
                 className="kt-btn kt-btn-outline"
                 onClick={() => navigate('/livreurs/auto-assign')}
               >
-                <i className="ki-filled ki-technology-2 text-base" /> Attribution Auto
+                <i className="ki-filled ki-technology-2 text-base me-1" /> {t('drivers.autoAssign', 'Attribution Auto')}
               </button>
               <button
                 type="button"
                 className="kt-btn kt-btn-primary"
                 onClick={() => navigate('/livreurs/new')}
               >
-                Ajouter un livreur
+                {t('drivers.addDriver', 'Ajouter un livreur')}
               </button>
             </div>
           </div>
@@ -140,7 +147,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
               {/* Card Header & Filters */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {filtered.length} livreur{filtered.length !== 1 ? 's' : ''}
+                  {t('drivers.showingCount', 'Affichage de')} {filtered.length} {t('drivers.driversCount', 'livreur(s)')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -149,7 +156,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
                       <input
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        placeholder="Rechercher un livreur"
+                        placeholder={t('drivers.searchPlaceholder', 'Rechercher un livreur...')}
                         type="text"
                       />
                     </label>
@@ -158,19 +165,19 @@ export default function LivreurListPage({ navigate, showNotification }) {
                     <KtSelect
                       value={filterCity}
                       onChange={(val) => { setFilterCity(val); setCurrentPage(1); }}
-                      placeholder="Ville"
+                      placeholder={t('drivers.allCities', 'Toutes les villes')}
                       className="w-40"
                       options={cityOptions}
                     />
                     <KtSelect
                       value={filterDispo}
                       onChange={(val) => { setFilterDispo(val); setCurrentPage(1); }}
-                      placeholder="Disponibilité"
+                      placeholder={t('drivers.availability', 'Disponibilité')}
                       className="w-40"
                       options={dispoOptions}
                     />
                     <button className="kt-btn kt-btn-outline" onClick={handleReset}>
-                      Réinitialiser
+                      {t('drivers.resetBtn', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -184,28 +191,28 @@ export default function LivreurListPage({ navigate, showNotification }) {
                       <thead>
                         <tr>
                           <th className="min-w-[200px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Livreur</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colDriver', 'Livreur')}</span></span>
                           </th>
                           <th className="min-w-[120px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Ville</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colCity', 'Ville')}</span></span>
                           </th>
                           <th className="min-w-[110px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Disponibilité</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colAvailability', 'Disponibilité')}</span></span>
                           </th>
                           <th className="min-w-[90px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Colis</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colParcels', 'Colis')}</span></span>
                           </th>
                           <th className="min-w-[110px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Taux Livr.</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colDeliveryRate', 'Taux Livr.')}</span></span>
                           </th>
                           <th className="min-w-[120px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Commission</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colCommission', 'Commission')}</span></span>
                           </th>
                           <th className="min-w-[90px]">
-                            <span className="kt-table-col"><span className="kt-table-col-label">GPS</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colGps', 'GPS')}</span></span>
                           </th>
                           <th className="w-[90px] text-center">
-                            <span className="kt-table-col"><span className="kt-table-col-label">Actions</span></span>
+                            <span className="kt-table-col"><span className="kt-table-col-label">{t('drivers.colActions', 'Actions')}</span></span>
                           </th>
                         </tr>
                       </thead>
@@ -253,13 +260,13 @@ export default function LivreurListPage({ navigate, showNotification }) {
                                 <td>
                                   <span className={`kt-badge ${l.disponible ? 'kt-badge-success' : 'kt-badge-secondary'} kt-badge-outline rounded-[30px]`}>
                                     <span className="kt-badge-dot size-1.5" />
-                                    {l.disponible ? 'Disponible' : 'Indisponible'}
+                                    {l.disponible ? t('drivers.available', 'Disponible') : t('drivers.unavailable', 'Indisponible')}
                                   </span>
                                 </td>
                                 {/* Colis */}
                                 <td>
                                   <span className="text-foreground font-medium">{l.stats?.total ?? 0}</span>
-                                  <div className="text-xs text-secondary-foreground">{l.stats?.enCours ?? 0} en cours</div>
+                                  <div className="text-xs text-secondary-foreground">{l.stats?.enCours ?? 0} {t('drivers.inProgress', 'en cours')}</div>
                                 </td>
                                 {/* Taux */}
                                 <td>
@@ -279,7 +286,9 @@ export default function LivreurListPage({ navigate, showNotification }) {
                                       <span className="kt-badge-dot size-1.5" />Live
                                     </span>
                                   ) : (
-                                    <span className="text-xs text-secondary-foreground">{l.lastSeen}</span>
+                                    <span className="text-xs text-secondary-foreground">
+                                      {l.lastSeen === "À l'instant" ? t('drivers.justNow', "À l'instant") : l.lastSeen}
+                                    </span>
                                   )}
                                 </td>
                                 {/* Actions */}
@@ -300,13 +309,13 @@ export default function LivreurListPage({ navigate, showNotification }) {
                                         <div className="kt-menu-item">
                                           <button type="button" className="kt-menu-link text-start w-full" onClick={() => { setActiveDropdownId(null); navigate(`/livreurs/${l.id}`); }}>
                                             <span className="kt-menu-icon"><i className="ki-filled ki-eye" /></span>
-                                            <span className="kt-menu-title">Voir la fiche</span>
+                                            <span className="kt-menu-title">{t('drivers.viewProfile', 'Voir la fiche')}</span>
                                           </button>
                                         </div>
                                         <div className="kt-menu-item">
                                           <button type="button" className="kt-menu-link text-start w-full" onClick={() => { setActiveDropdownId(null); navigate(`/livreurs/${l.id}/tournee`); }}>
                                             <span className="kt-menu-icon"><i className="ki-filled ki-route" /></span>
-                                            <span className="kt-menu-title">Tournée du jour</span>
+                                            <span className="kt-menu-title">{t('drivers.dailyRoute', 'Tournée du jour')}</span>
                                           </button>
                                         </div>
                                         <div className="kt-menu-separator" />
@@ -317,7 +326,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
                                             onClick={() => { setActiveDropdownId(null); setDeleteTarget({ id: l.id, name: l.fullName }); }}
                                           >
                                             <span className="kt-menu-icon text-destructive"><i className="ki-filled ki-trash" /></span>
-                                            <span className="kt-menu-title text-destructive">Supprimer</span>
+                                            <span className="kt-menu-title text-destructive">{t('drivers.deleteBtn', 'Supprimer')}</span>
                                           </button>
                                         </div>
                                       </div>,
@@ -331,7 +340,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
                         ) : (
                           <tr>
                             <td colSpan={8} className="py-8 text-center text-secondary-foreground">
-                              Aucun livreur correspondant
+                              {t('drivers.noDriverFound', 'Aucun livreur correspondant')}
                             </td>
                           </tr>
                         )}
@@ -342,24 +351,24 @@ export default function LivreurListPage({ navigate, showNotification }) {
                   {/* Pagination Footer */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('drivers.show', 'Afficher')}
                       <KtSelect
                         value={String(perPage)}
                         onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                         className="w-16"
                         options={[{ value: '5', label: '5' }, { value: '10', label: '10' }, { value: '20', label: '20' }]}
                       />
-                      par page
+                      {t('drivers.perPage', 'par page')}
                     </div>
                     <div className="flex items-center gap-4 order-1 md:order-2">
                       <span>
-                        Affichage de {Math.min(filtered.length, (currentPage - 1) * perPage + 1)} à {Math.min(filtered.length, currentPage * perPage)} sur {filtered.length} livreurs
+                        {t('drivers.showing', 'Affichage de')} {filtered.length === 0 ? 0 : Math.min(filtered.length, (currentPage - 1) * perPage + 1)} {t('drivers.to', 'à')} {Math.min(filtered.length, currentPage * perPage)} {t('drivers.of', 'sur')} {filtered.length} {t('drivers.drivers', 'livreurs')}
                       </span>
                       {totalPages > 1 && (
                         <div className="flex gap-1">
-                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}>Précédent</button>
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}>{t('drivers.previous', 'Précédent')}</button>
                           <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
-                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}>Suivant</button>
+                          <button className="kt-btn kt-btn-sm kt-btn-outline px-2" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}>{t('drivers.next', 'Suivant')}</button>
                         </div>
                       )}
                     </div>
@@ -375,7 +384,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
       {deleteTarget && createPortal(
         <div
           className="fixed flex items-center justify-center p-4"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 99999 }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', itemsCenter: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 99999 }}
           onClick={() => !deleteLoading && setDeleteTarget(null)}
         >
           <div
@@ -384,7 +393,7 @@ export default function LivreurListPage({ navigate, showNotification }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
-              <h3 className="text-base font-semibold text-foreground">Supprimer le livreur</h3>
+              <h3 className="text-base font-semibold text-foreground">{t('drivers.deleteTitle', 'Supprimer le livreur')}</h3>
               <button type="button" onClick={() => setDeleteTarget(null)} className="text-muted-foreground hover:text-foreground" disabled={deleteLoading}>
                 <i className="ki-filled ki-cross text-lg" />
               </button>
@@ -393,13 +402,13 @@ export default function LivreurListPage({ navigate, showNotification }) {
               <div className="flex gap-3 border rounded-lg p-4 mb-5" style={{ backgroundColor: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.2)' }}>
                 <i className="ki-filled ki-information-2 text-red-600 text-xl shrink-0 mt-0.5" />
                 <div className="text-sm text-foreground leading-relaxed">
-                  Vous êtes sur le point de supprimer le livreur <strong className="font-semibold">{deleteTarget.name}</strong>. Cette action est irréversible.
+                  {t('drivers.deleteConfirm', 'Vous êtes sur le point de supprimer le livreur')} <strong className="font-semibold">{deleteTarget.name}</strong>{t('drivers.irreversibleText', '. Cette action est irréversible.')}
                 </div>
               </div>
               <div className="flex items-center justify-end gap-2.5">
-                <button type="button" onClick={() => setDeleteTarget(null)} className="kt-btn kt-btn-outline" disabled={deleteLoading}>Annuler</button>
+                <button type="button" onClick={() => setDeleteTarget(null)} className="kt-btn kt-btn-outline" disabled={deleteLoading}>{t('drivers.cancel', 'Annuler')}</button>
                 <button type="submit" className="kt-btn kt-btn-destructive" disabled={deleteLoading}>
-                  {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                  {deleteLoading ? t('drivers.deleting', 'Suppression...') : t('drivers.deleteBtn', 'Supprimer')}
                 </button>
               </div>
             </form>

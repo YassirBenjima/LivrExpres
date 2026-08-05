@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function LivrExpressAiSuitePage({ navigate, showNotification, defaultTab = 'predictions', activeMenu = 'ai_predictions' }) {
+  const { t } = useLanguage();
+
   const getInitialTab = () => {
     const path = window.location.pathname;
     if (path.includes('anomalies')) return 'anomalies';
@@ -63,10 +66,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'bot',
-      text: "Bonjour ! Je suis votre Assistant IA Livreur. Posez-moi une question sur vos commandes réelles ou votre tournée.",
+      text: t('aiSuite.initialBotMsg', "Bonjour ! Je suis votre Assistant IA Livreur. Posez-moi une question sur vos commandes réelles ou votre tournée."),
       quick_actions: [
-        { label: "📍 Voir ma tournée optimisée", action: "OPEN_ROUTE" },
-        { label: "⚠️ Colis à risque de retour", action: "CHECK_RISK" }
+        { label: t('aiSuite.quickActionRoute', "📍 Voir ma tournée optimisée"), action: "OPEN_ROUTE" },
+        { label: t('aiSuite.quickActionRisk', "⚠️ Colis à risque de retour"), action: "CHECK_RISK" }
       ]
     }
   ]);
@@ -169,7 +172,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
     } catch (e) {
       setChatMessages(prev => [
         ...prev,
-        { sender: 'bot', text: "Erreur de connexion avec l'IA." }
+        { sender: 'bot', text: t('aiSuite.chatAiError', "Erreur de connexion avec l'IA.") }
       ]);
     } finally {
       setIsChatSending(false);
@@ -206,6 +209,22 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
   const totalAnomalyPages = Math.ceil(filteredAnomalies.length / anomalyPerPage) || 1;
   const paginatedAnomalies = filteredAnomalies.slice((anomalyPage - 1) * anomalyPerPage, anomalyPage * anomalyPerPage);
 
+  const getRiskLabel = (riskLevel) => {
+    if (riskLevel === 'Élevé') return t('aiSuite.riskHigh', 'Élevé');
+    if (riskLevel === 'Moyen') return t('aiSuite.riskMedium', 'Moyen');
+    if (riskLevel === 'Faible') return t('aiSuite.riskLow', 'Faible');
+    return riskLevel;
+  };
+
+  const getAnomalyTitle = (title) => {
+    if (!title) return '';
+    if (title.includes('Ramassage')) return t('aiSuite.pickupDelay', 'Retard Ramassage');
+    if (title.includes('Inactivité')) return t('aiSuite.prolongedInactivity', 'Inactivité prolongée');
+    if (title.includes('Livraison')) return t('aiSuite.deliveryIssue', 'Problème Livraison');
+    if (title.includes('Attention')) return t('aiSuite.aiAttentionPoint', "Point d'Attention IA");
+    return title;
+  };
+
   return (
     <DashboardLayout activeMenu={activeMenu}>
       <main className="grow pt-5 dashboard-content-shift" id="content" role="content">
@@ -216,10 +235,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono flex items-center gap-2">
                 <i className="ki-filled ki-technology-4 text-primary text-2xl" />
-                LivrExpress PRO - Suite Logistique
+                {t('aiSuite.title', 'LivrExpress PRO - Suite Logistique')}
               </h1>
               <div className="flex items-center flex-wrap gap-1.5 font-medium text-sm text-secondary-foreground">
-                Analyse en temps réel de vos commandes réelles enregistrées
+                {t('aiSuite.subtitle', 'Analyse en temps réel de vos commandes réelles enregistrées')}
               </div>
             </div>
             <div className="flex items-center gap-2.5">
@@ -231,9 +250,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                   if (activeTab === 'route') fetchRouteOptimization();
                 }}
                 className="kt-btn kt-btn-outline"
+                disabled={loading}
               >
                 <i className="ki-filled ki-arrows-loop text-sm me-1" />
-                Recalculer IA
+                {loading ? t('aiSuite.recalculatingBtn', 'Recalcul en cours...') : t('aiSuite.recalculateBtn', 'Recalculer IA')}
               </button>
             </div>
           </div>
@@ -248,7 +268,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 {/* Card Header & Filter Bar */}
                 <div className="kt-card-header flex-wrap gap-2">
                   <h3 className="kt-card-title text-sm">
-                    Affichage de {filteredPredictions.length} prédictions colis
+                    {t('aiSuite.showingPredictions', 'Affichage de {count} prédictions colis').replace('{count}', filteredPredictions.length)}
                   </h3>
                   <div className="flex flex-wrap gap-2 lg:gap-5">
                     <div className="flex">
@@ -260,7 +280,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                             setSearchQuery(e.target.value);
                             setCurrentPage(1);
                           }}
-                          placeholder="Rechercher par code ou client..."
+                          placeholder={t('aiSuite.searchPredictionPlaceholder', 'Rechercher par code ou client...')}
                           type="text"
                         />
                       </label>
@@ -269,20 +289,20 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       <KtSelect
                         value={selectedRisk}
                         onChange={(val) => { setSelectedRisk(val); setCurrentPage(1); }}
-                        placeholder="Niveau de risque"
+                        placeholder={t('aiSuite.riskLevelPlaceholder', 'Niveau de risque')}
                         className="w-40"
                         options={[
-                          { value: '', label: 'Tous les risques' },
-                          { value: 'Élevé', label: 'Risque Élevé' },
-                          { value: 'Moyen', label: 'Risque Moyen' },
-                          { value: 'Faible', label: 'Risque Faible' }
+                          { value: '', label: t('aiSuite.allRisks', 'Tous les risques') },
+                          { value: 'Élevé', label: t('aiSuite.riskHigh', 'Risque Élevé') },
+                          { value: 'Moyen', label: t('aiSuite.riskMedium', 'Risque Moyen') },
+                          { value: 'Faible', label: t('aiSuite.riskLow', 'Risque Faible') }
                         ]}
                       />
                       <button
                         className="kt-btn kt-btn-outline"
                         onClick={() => { setSearchQuery(''); setSelectedRisk(''); setCurrentPage(1); }}
                       >
-                        Réinitialiser
+                        {t('aiSuite.resetBtn', 'Réinitialiser')}
                       </button>
                     </div>
                   </div>
@@ -297,37 +317,37 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                           <tr>
                             <th className="min-w-[140px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Code Colis</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colParcelCode', 'Code Colis')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Destinataire & Ville</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colRecipientCity', 'Destinataire & Ville')}</span>
                               </span>
                             </th>
                             <th className="min-w-[130px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Montant CRBT</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colCodAmount', 'Montant CRBT')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px] text-center">
                               <span className="kt-table-col justify-center">
-                                <span className="kt-table-col-label">Score de Risque IA</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colAiRiskScore', 'Score de Risque IA')}</span>
                               </span>
                             </th>
                             <th className="min-w-[240px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Facteurs Détectés</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colDetectedFactors', 'Facteurs Détectés')}</span>
                               </span>
                             </th>
                             <th className="min-w-[220px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Recommandation IA</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colAiRecommendation', 'Recommandation IA')}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px] text-right">
                               <span className="kt-table-col justify-end">
-                                <span className="kt-table-col-label">Action</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colAction', 'Action')}</span>
                               </span>
                             </th>
                           </tr>
@@ -338,14 +358,14 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                               <td colSpan={7} className="text-center py-8 text-muted-foreground">
                                 <div className="flex items-center justify-center gap-2">
                                   <div className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
-                                  Analyse prédictive des colis en cours...
+                                  {t('aiSuite.analyzingPredictions', 'Analyse prédictive des colis en cours...')}
                                 </div>
                               </td>
                             </tr>
                           ) : paginatedPredictions.length === 0 ? (
                             <tr>
                               <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                                Aucun colis trouvé correspondant à vos critères de recherche.
+                                {t('aiSuite.noPredictionsFound', 'Aucun colis trouvé correspondant à vos critères de recherche.')}
                               </td>
                             </tr>
                           ) : (
@@ -367,7 +387,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                   </td>
                                   <td className="text-center">
                                     <span className={`kt-badge kt-badge-${pred.badge_color || 'primary'} kt-badge-outline rounded-full text-[11px]`}>
-                                      {pred.risk_score}% ({pred.risk_level})
+                                      {pred.risk_score}% ({getRiskLabel(pred.risk_level)})
                                     </span>
                                   </td>
                                   <td>
@@ -384,11 +404,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        if (showNotification) showNotification('success', `Appel de pré-livraison lancé pour ${p.destinataire}`);
+                                        if (showNotification) showNotification('success', t('aiSuite.preDeliveryCallToast', 'Appel de pré-livraison lancé pour {name}').replace('{name}', p.destinataire));
                                       }}
                                       className="kt-btn kt-btn-xs kt-btn-outline"
                                     >
-                                      📞 Confirmer
+                                      {t('aiSuite.confirmBtn', '📞 Confirmer')}
                                     </button>
                                   </td>
                                 </tr>
@@ -404,7 +424,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 {/* Card Footer & Pagination */}
                 <div className="kt-card-footer justify-between md:justify-between flex-col md:flex-row gap-5">
                   <div className="flex items-center gap-2 text-sm text-secondary-foreground">
-                    Affichage de {filteredPredictions.length > 0 ? (currentPage - 1) * perPage + 1 : 0} à {Math.min(currentPage * perPage, filteredPredictions.length)} sur {filteredPredictions.length} éléments
+                    {t('aiSuite.showingRange', 'Affichage de {start} à {end} sur {total} éléments')
+                      .replace('{start}', filteredPredictions.length > 0 ? (currentPage - 1) * perPage + 1 : 0)
+                      .replace('{end}', Math.min(currentPage * perPage, filteredPredictions.length))
+                      .replace('{total}', filteredPredictions.length)}
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -413,10 +436,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
                     >
-                      Précédent
+                      {t('aiSuite.previousBtn', 'Précédent')}
                     </button>
                     <span className="text-xs font-semibold px-2">
-                      Page {currentPage} / {totalPages}
+                      {t('aiSuite.pageText', 'Page {current} / {total}').replace('{current}', currentPage).replace('{total}', totalPages)}
                     </span>
                     <button
                       type="button"
@@ -424,7 +447,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
                     >
-                      Suivant
+                      {t('aiSuite.nextBtn', 'Suivant')}
                     </button>
                   </div>
                 </div>
@@ -443,7 +466,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 {/* Card Header & Filter Bar */}
                 <div className="kt-card-header flex-wrap gap-2">
                   <h3 className="kt-card-title text-sm">
-                    Affichage de {filteredAnomalies.length} colis en anomalie
+                    {t('aiSuite.showingAnomalies', 'Affichage de {count} colis en anomalie').replace('{count}', filteredAnomalies.length)}
                   </h3>
                   <div className="flex flex-wrap gap-2 lg:gap-5">
                     <div className="flex">
@@ -455,7 +478,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                             setAnomalySearchQuery(e.target.value);
                             setAnomalyPage(1);
                           }}
-                          placeholder="Rechercher un colis"
+                          placeholder={t('aiSuite.searchParcelPlaceholder', 'Rechercher un colis')}
                           type="text"
                         />
                       </label>
@@ -464,13 +487,13 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       <KtSelect
                         value={selectedAnomalyType}
                         onChange={(val) => { setSelectedAnomalyType(val); setAnomalyPage(1); }}
-                        placeholder="Type d'anomalie"
+                        placeholder={t('aiSuite.anomalyTypePlaceholder', "Type d'anomalie")}
                         className="w-40"
                         options={[
-                          { value: '', label: 'Toutes les anomalies' },
-                          { value: 'Ramassage', label: 'Retard Ramassage' },
-                          { value: 'Inactivité', label: 'Inactivité prolongée' },
-                          { value: 'Livraison', label: 'Problème Livraison' }
+                          { value: '', label: t('aiSuite.allAnomalies', 'Toutes les anomalies') },
+                          { value: 'Ramassage', label: t('aiSuite.pickupDelay', 'Retard Ramassage') },
+                          { value: 'Inactivité', label: t('aiSuite.prolongedInactivity', 'Inactivité prolongée') },
+                          { value: 'Livraison', label: t('aiSuite.deliveryIssue', 'Problème Livraison') }
                         ]}
                       />
 
@@ -478,7 +501,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                         className="kt-btn kt-btn-outline"
                         onClick={() => { setAnomalySearchQuery(''); setSelectedAnomalyType(''); setAnomalyPage(1); }}
                       >
-                        Réinitialiser
+                        {t('aiSuite.resetBtn', 'Réinitialiser')}
                       </button>
                     </div>
                   </div>
@@ -493,37 +516,37 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                           <tr>
                             <th className="min-w-[140px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Code Colis</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colParcelCode', 'Code Colis')}</span>
                               </span>
                             </th>
                             <th className="min-w-[180px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Destinataire & Ville</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colRecipientCity', 'Destinataire & Ville')}</span>
                               </span>
                             </th>
                             <th className="min-w-[170px] text-center">
                               <span className="kt-table-col justify-center">
-                                <span className="kt-table-col-label">Type d'Anomalie</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colAnomalyType', "Type d'Anomalie")}</span>
                               </span>
                             </th>
                             <th className="min-w-[120px] text-center">
                               <span className="kt-table-col justify-center">
-                                <span className="kt-table-col-label">Inactivité</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colInactivity', 'Inactivité')}</span>
                               </span>
                             </th>
                             <th className="min-w-[240px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Description & Impact</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colDescriptionImpact', 'Description & Impact')}</span>
                               </span>
                             </th>
                             <th className="min-w-[200px]">
                               <span className="kt-table-col">
-                                <span className="kt-table-col-label">Action Recommandée</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colRecommendedAction', 'Action Recommandée')}</span>
                               </span>
                             </th>
                             <th className="min-w-[110px] text-right">
                               <span className="kt-table-col justify-end">
-                                <span className="kt-table-col-label">Action</span>
+                                <span className="kt-table-col-label">{t('aiSuite.colAction', 'Action')}</span>
                               </span>
                             </th>
                           </tr>
@@ -534,14 +557,14 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                               <td colSpan={7} className="text-center py-8 text-muted-foreground">
                                 <div className="flex items-center justify-center gap-2">
                                   <div className="animate-spin size-4 border-2 border-primary border-t-transparent rounded-full" />
-                                  Analyse du flux logistique et détection des anomalies...
+                                  {t('aiSuite.analyzingAnomalies', 'Analyse du flux logistique et détection des anomalies...')}
                                 </div>
                               </td>
                             </tr>
                           ) : paginatedAnomalies.length === 0 ? (
                             <tr>
                               <td colSpan={7} className="text-center py-8 text-success font-semibold">
-                                🎉 Aucune anomalie détectée pour les critères sélectionnés !
+                                {t('aiSuite.noAnomaliesFound', '🎉 Aucune anomalie détectée pour les critères sélectionnés !')}
                               </td>
                             </tr>
                           ) : (
@@ -558,7 +581,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                 </td>
                                 <td className="text-center">
                                   <span className={`kt-badge ${an.badge_class || 'kt-badge-warning'} rounded-full text-[11px]`}>
-                                    {an.title}
+                                    {getAnomalyTitle(an.title)}
                                   </span>
                                 </td>
                                 <td className="text-center font-mono text-xs font-bold text-foreground">
@@ -574,11 +597,11 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      if (showNotification) showNotification('success', `Relance réseau effectuée pour ${an.tracking_code}`);
+                                      if (showNotification) showNotification('success', t('aiSuite.relaunchToast', 'Relance réseau effectuée pour {code}').replace('{code}', an.tracking_code));
                                     }}
                                     className="kt-btn kt-btn-xs kt-btn-primary"
                                   >
-                                    Résoudre
+                                    {t('aiSuite.resolveBtn', 'Résoudre')}
                                   </button>
                                 </td>
                               </tr>
@@ -593,7 +616,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                 {/* Card Footer & Pagination */}
                 <div className="kt-card-footer justify-between md:justify-between flex-col md:flex-row gap-5">
                   <div className="flex items-center gap-2 text-sm text-secondary-foreground">
-                    Affichage de {filteredAnomalies.length > 0 ? (anomalyPage - 1) * anomalyPerPage + 1 : 0} à {Math.min(anomalyPage * anomalyPerPage, filteredAnomalies.length)} sur {filteredAnomalies.length} éléments
+                    {t('aiSuite.showingRange', 'Affichage de {start} à {end} sur {total} éléments')
+                      .replace('{start}', filteredAnomalies.length > 0 ? (anomalyPage - 1) * anomalyPerPage + 1 : 0)
+                      .replace('{end}', Math.min(anomalyPage * anomalyPerPage, filteredAnomalies.length))
+                      .replace('{total}', filteredAnomalies.length)}
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -602,10 +628,10 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       onClick={() => setAnomalyPage(prev => Math.max(1, prev - 1))}
                       className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
                     >
-                      Précédent
+                      {t('aiSuite.previousBtn', 'Précédent')}
                     </button>
                     <span className="text-xs font-semibold px-2">
-                      Page {anomalyPage} / {totalAnomalyPages}
+                      {t('aiSuite.pageText', 'Page {current} / {total}').replace('{current}', anomalyPage).replace('{total}', totalAnomalyPages)}
                     </span>
                     <button
                       type="button"
@@ -613,7 +639,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                       onClick={() => setAnomalyPage(prev => Math.min(totalAnomalyPages, prev + 1))}
                       className="kt-btn kt-btn-sm kt-btn-outline disabled:opacity-40"
                     >
-                      Suivant
+                      {t('aiSuite.nextBtn', 'Suivant')}
                     </button>
                   </div>
                 </div>
@@ -631,33 +657,33 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
               {/* Route Summary Metrics */}
               <div className="lg:col-span-1 flex flex-col gap-4">
                 <div className="kt-card border border-border p-5 flex flex-col gap-3">
-                  <h3 className="font-bold text-base text-foreground">Métriques de Tournée Réelle</h3>
+                  <h3 className="font-bold text-base text-foreground">{t('aiSuite.routeMetricsTitle', 'Métriques de Tournée Réelle')}</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
-                      <span className="text-[11px] text-muted-foreground">Nombre d'arrêt</span>
-                      <span className="text-xl font-bold text-foreground">{routeMetrics.total_stops} colis</span>
+                      <span className="text-[11px] text-muted-foreground">{t('aiSuite.stopCountLabel', "Nombre d'arrêt")}</span>
+                      <span className="text-xl font-bold text-foreground">{t('aiSuite.stopsCount', '{count} colis').replace('{count}', routeMetrics.total_stops)}</span>
                     </div>
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
-                      <span className="text-[11px] text-muted-foreground">Distance Estimée</span>
+                      <span className="text-[11px] text-muted-foreground">{t('aiSuite.estimatedDistanceLabel', 'Distance Estimée')}</span>
                       <span className="text-xl font-bold text-primary">{routeMetrics.estimated_distance_km} km</span>
                     </div>
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
-                      <span className="text-[11px] text-muted-foreground">Distance Économisée</span>
+                      <span className="text-[11px] text-muted-foreground">{t('aiSuite.distanceSavedLabel', 'Distance Économisée')}</span>
                       <span className="text-xl font-bold text-success">-{routeMetrics.distance_saved_km} km</span>
                     </div>
                     <div className="p-3 bg-accent/40 rounded-lg flex flex-col">
-                      <span className="text-[11px] text-muted-foreground">Économie Carburant</span>
+                      <span className="text-[11px] text-muted-foreground">{t('aiSuite.fuelSavedLabel', 'Économie Carburant')}</span>
                       <span className="text-xl font-bold text-amber-500">{routeMetrics.fuel_saved_percent}%</span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      if (showNotification) showNotification('success', 'Itinéraire synchronisé avec l\'application livreur !');
+                      if (showNotification) showNotification('success', t('aiSuite.gpsSyncedToast', 'Itinéraire synchronisé avec l\'application livreur !'));
                     }}
                     className="kt-btn kt-btn-primary w-full mt-2"
                   >
-                    🗺️ Lancer le GPS & Navigation
+                    {t('aiSuite.launchGpsBtn', '🗺️ Lancer le GPS & Navigation')}
                   </button>
                 </div>
               </div>
@@ -665,9 +691,9 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
               {/* Stop Sequence */}
               <div className="lg:col-span-2">
                 <div className="kt-card border border-border p-5">
-                  <h3 className="font-bold text-base text-foreground mb-3">Ordre Optimal des Livraisons Réelles (IA)</h3>
+                  <h3 className="font-bold text-base text-foreground mb-3">{t('aiSuite.optimalRouteTitle', 'Ordre Optimal des Livraisons Réelles (IA)')}</h3>
                   {routeStops.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">Aucun colis à planifier pour le moment.</div>
+                    <div className="text-center py-8 text-muted-foreground">{t('aiSuite.noStopsToPlan', 'Aucun colis à planifier pour le moment.')}</div>
                   ) : (
                     <div className="divide-y divide-border">
                       {routeStops.map((stop) => (
@@ -703,9 +729,9 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
               <div className="p-4 border-b border-border bg-accent/20 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <i className="ki-filled ki-messages text-primary text-xl" />
-                  <h3 className="font-bold text-sm text-foreground">Assistant IA Livreur (Terrain & Colis Réels)</h3>
+                  <h3 className="font-bold text-sm text-foreground">{t('aiSuite.chatbotTitle', 'Assistant IA Livreur (Terrain & Colis Réels)')}</h3>
                 </div>
-                <span className="kt-badge kt-badge-success kt-badge-outline rounded-full">En ligne</span>
+                <span className="kt-badge kt-badge-success kt-badge-outline rounded-full">{t('aiSuite.onlineBadge', 'En ligne')}</span>
               </div>
 
               {/* Chat Messages */}
@@ -747,7 +773,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                   value={inputMsg}
                   onChange={(e) => setInputMsg(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                  placeholder="Posez une question ou entrez un numéro de commande réel..."
+                  placeholder={t('aiSuite.chatInputPlaceholder', 'Posez une question ou entrez un numéro de commande réel...')}
                   className="kt-input grow"
                 />
                 <button
@@ -756,7 +782,7 @@ export default function LivrExpressAiSuitePage({ navigate, showNotification, def
                   disabled={isChatSending}
                   className="kt-btn kt-btn-primary"
                 >
-                  {isChatSending ? '...' : 'Envoyer'}
+                  {isChatSending ? t('aiSuite.sendingBtn', '...') : t('aiSuite.sendBtn', 'Envoyer')}
                 </button>
               </div>
             </div>

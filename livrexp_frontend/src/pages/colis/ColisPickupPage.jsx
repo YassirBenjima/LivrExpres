@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 const mockPickupColis = [
   { id: 10, trackingCode: 'F-20260623-0010', productNature: 'Montre Homme', createdAt: '23/06/2026 11:45', address: 'Bvd Zero, N 5', etatLabel: 'En attente', etatBadgeClass: 'kt-badge-warning', statutLabel: 'Nouveau', statutBadgeClass: 'kt-badge-primary', city: 'Casablanca', price: 890.00, comment: '-' },
@@ -8,6 +9,7 @@ const mockPickupColis = [
 ];
 
 export default function ColisPickupPage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [colisList, setColisList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -83,17 +85,16 @@ export default function ColisPickupPage({ navigate, showNotification }) {
         body: JSON.stringify({ ids: selectedIds })
       });
       if (response.ok) {
-        const msgText = 'Demande de ramassage envoyée avec succès pour les colis sélectionnés !';
+        const msgText = t('notifications.pickupSent', 'Demande de ramassage envoyée avec succès pour les colis sélectionnés !');
         if (showNotification) {
           showNotification('success', msgText);
         } else {
           setSuccessMsg(msgText);
         }
-        // Remove from list
         setColisList(prev => prev.filter(c => !selectedIds.includes(c.id)));
         setSelectedIds([]);
       } else {
-        const demoMsg = 'Demande de ramassage (Simulée) envoyée avec succès !';
+        const demoMsg = t('notifications.pickupDemo', 'Demande de ramassage (Simulée) envoyée avec succès !');
         if (showNotification) {
           showNotification('success', demoMsg);
         } else {
@@ -103,7 +104,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
         setSelectedIds([]);
       }
     } catch (err) {
-      const demoMsg = 'Demande de ramassage (Simulée) envoyée avec succès !';
+      const demoMsg = t('notifications.pickupDemo', 'Demande de ramassage (Simulée) envoyée avec succès !');
       if (showNotification) {
         showNotification('success', demoMsg);
       } else {
@@ -131,7 +132,6 @@ export default function ColisPickupPage({ navigate, showNotification }) {
   const totalColis = filteredColis.length;
   const totalMontant = filteredColis.reduce((sum, item) => sum + item.price, 0);
 
-  // Filter options: always keep 5 and 10, enable 20 if >10, enable 50 if >=50
   const perPageOptions = [
     { value: '5', label: '5' },
     { value: '10', label: '10' },
@@ -144,7 +144,6 @@ export default function ColisPickupPage({ navigate, showNotification }) {
   }
 
   useEffect(() => {
-    // If current perPage is no longer in the allowed options list, fallback to 10
     const exists = perPageOptions.some(opt => Number(opt.value) === perPage);
     if (!exists) {
       setPerPage(10);
@@ -153,12 +152,32 @@ export default function ColisPickupPage({ navigate, showNotification }) {
   }, [totalColis, perPage]);
 
   // Pagination logic
-  const totalPages = Math.ceil(totalColis / perPage);
+  const totalPages = Math.ceil(totalColis / perPage) || 1;
   const paginatedColis = filteredColis.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   // Unique lists for filters
   const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
   const statutsPossibles = Array.from(new Set(colisList.map(c => c.statutLabel).filter(Boolean)));
+
+  const formatStatusLabel = (label) => {
+    if (!label) return label;
+    const map = {
+      'Créé': t('status.cree', 'Créé'),
+      'En attente': t('status.enAttente', 'En attente'),
+      'Expédié': t('status.expedie', 'Expédié'),
+      'Livré': t('status.livre', 'Livré'),
+      'Retourné': t('status.retourne', 'Retourné'),
+      'Annulé': t('status.annule', 'Annulé'),
+      'En préparation': t('status.enPreparation', 'En préparation'),
+      'Nouveau': t('status.nouveau', 'Nouveau'),
+      'En cours': t('status.enCours', 'En cours'),
+      'Terminé': t('status.termine', 'Terminé'),
+      'Reporté': t('status.reporte', 'Reporté'),
+      'Litige': t('status.litige', 'Litige'),
+      'Refusé': t('status.refuse', 'Refusé'),
+    };
+    return map[label] || label;
+  };
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -176,14 +195,14 @@ export default function ColisPickupPage({ navigate, showNotification }) {
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Liste colis en attente de ramassage
+                {t('colisPage.pickupTitle', 'Colis pour Ramassage')}
               </h1>
               <div className="flex items-center flex-wrap gap-3 font-medium text-sm">
                 <span className="text-secondary-foreground">
-                  Total colis: <span className="text-foreground font-semibold">{totalColis}</span>
+                  {t('colisPage.totalParcels', 'Total colis')}: <span className="text-foreground font-semibold">{totalColis}</span>
                 </span>
                 <span className="text-secondary-foreground border-s border-input ps-3">
-                  Montant total: <span className="text-foreground font-semibold">{totalMontant.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
+                  {t('colisPage.totalAmount', 'Montant total')}: <span className="text-foreground font-semibold">{totalMontant.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} MAD</span>
                 </span>
               </div>
             </div>
@@ -193,14 +212,15 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                 onClick={handleBulkPickupRequest}
                 disabled={selectedIds.length === 0}
               >
-                Demander un ramassage ({selectedIds.length})
+                {t('colisPage.requestPickup', 'Demander le ramassage')} ({selectedIds.length})
               </button>
               <a className="kt-btn kt-btn-primary" href="/colis/new">
-                Ajouter un colis
+                {t('colisPage.addParcel', 'Ajouter un colis')}
               </a>
             </div>
           </div>
         </div>
+
 
         {/* Content Container */}
         <div className="kt-container-fixed">
@@ -217,7 +237,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
               {/* Header with Search and Filters */}
               <div className="kt-card-header flex-wrap gap-2">
                 <h3 className="kt-card-title text-sm">
-                  Affichage de {filteredColis.length} colis
+                  {t('colisPage.showing', 'Affichage de')} {filteredColis.length} {t('colisPage.parcels', 'colis')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
                   <div className="flex">
@@ -229,7 +249,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                           setSearchQuery(e.target.value);
                           setCurrentPage(1);
                         }}
-                        placeholder="Rechercher un colis" 
+                        placeholder={t('colisPage.searchPlaceholder', 'Rechercher un colis')} 
                         type="text" 
                       />
                     </label>
@@ -238,22 +258,22 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                     <KtSelect
                       value={selectedEtat}
                       onChange={(val) => { setSelectedEtat(val); setCurrentPage(1); }}
-                      placeholder="État"
+                      placeholder={t('colisPage.filterEtat', 'État')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les états' },
-                        ...etatsPossibles.map(e => ({ value: e, label: e }))
+                        { value: '', label: t('colisPage.allEtats', 'Tous les états') },
+                        ...etatsPossibles.map(e => ({ value: e, label: formatStatusLabel(e) }))
                       ]}
                     />
 
                     <KtSelect
                       value={selectedStatut}
                       onChange={(val) => { setSelectedStatut(val); setCurrentPage(1); }}
-                      placeholder="Statut"
+                      placeholder={t('colisPage.filterStatut', 'Statut')}
                       className="w-36"
                       options={[
-                        { value: '', label: 'Tous les statuts' },
-                        ...statutsPossibles.map(s => ({ value: s, label: s }))
+                        { value: '', label: t('colisPage.allStatuts', 'Tous les statuts') },
+                        ...statutsPossibles.map(s => ({ value: s, label: formatStatusLabel(s) }))
                       ]}
                     />
 
@@ -261,7 +281,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                       className="kt-btn kt-btn-outline"
                       onClick={handleResetFilters}
                     >
-                      Réinitialiser
+                      {t('colisPage.reset', 'Réinitialiser')}
                     </button>
                   </div>
                 </div>
@@ -282,15 +302,15 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                               checked={paginatedColis.length > 0 && selectedIds.length === paginatedColis.length}
                             />
                           </th>
-                          <th className="w-[150px]">Code de suivi</th>
-                          <th className="w-[180px]">Nom du produit</th>
-                          <th className="w-[150px]">Date de création</th>
-                          <th className="w-[180px]">Adresse de livraison</th>
-                          <th className="w-[130px]">État</th>
-                          <th className="w-[130px]">Statut</th>
-                          <th className="w-[140px]">Ville</th>
-                          <th className="w-[120px]">Prix</th>
-                          <th className="w-[185px]">Commentaires</th>
+                          <th className="w-[150px]">{t('colisPage.colTrackingCode', 'Code de suivi')}</th>
+                          <th className="w-[180px]">{t('colisPage.colProduct', 'Nom du produit')}</th>
+                          <th className="w-[150px]">{t('colisPage.colCreatedAt', 'Date de création')}</th>
+                          <th className="w-[180px]">{t('colisPage.colAddress', 'Adresse de livraison')}</th>
+                          <th className="w-[130px]">{t('colisPage.colEtat', 'État')}</th>
+                          <th className="w-[130px]">{t('colisPage.colStatut', 'Statut')}</th>
+                          <th className="w-[140px]">{t('colisPage.colCity', 'Ville')}</th>
+                          <th className="w-[120px]">{t('colisPage.colPrice', 'Prix')}</th>
+                          <th className="w-[185px]">{t('colisPage.colComments', 'Commentaires')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -331,12 +351,12 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                               <td className="text-foreground font-normal text-sm">{colis.address}</td>
                               <td>
                                 <span className={`kt-badge ${colis.etatBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
-                                  {colis.etatLabel}
+                                  {formatStatusLabel(colis.etatLabel)}
                                 </span>
                               </td>
                               <td>
                                 <span className={`kt-badge ${colis.statutBadgeClass} kt-badge-outline rounded-[30px] px-2 py-0.5`}>
-                                  {colis.statutLabel}
+                                  {formatStatusLabel(colis.statutLabel)}
                                 </span>
                               </td>
                               <td className="text-foreground font-normal">{colis.city}</td>
@@ -349,7 +369,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                         ) : (
                           <tr>
                             <td colSpan={10} className="py-8 text-center text-secondary-foreground">
-                              Aucun colis en attente de ramassage
+                              {t('colisPage.emptyPickup', 'Aucun colis en attente de ramassage')}
                             </td>
                           </tr>
                         )}
@@ -360,19 +380,19 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                   {/* Pagination Footer */}
                   <div className="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium py-4">
                     <div className="flex items-center gap-2 order-2 md:order-1">
-                      Afficher
+                      {t('colisPage.show', 'Afficher')}
                       <KtSelect
                         value={String(perPage)}
                         onChange={(val) => { setPerPage(Number(val)); setCurrentPage(1); }}
                         className="w-16"
                         options={perPageOptions}
                       />
-                      par page
+                      {t('colisPage.perPage', 'par page')}
                     </div>
                     
                     <div className="flex items-center gap-4 order-1 md:order-2">
                       <span>
-                        Affichage de {Math.min(totalColis, (currentPage - 1) * perPage + 1)} à {Math.min(totalColis, currentPage * perPage)} sur {totalColis} colis
+                        {t('colisPage.showingRange', 'Affichage de')} {Math.min(totalColis, (currentPage - 1) * perPage + 1)} {t('colisPage.to', 'à')} {Math.min(totalColis, currentPage * perPage)} {t('colisPage.of', 'sur')} {totalColis} {t('colisPage.parcels', 'colis')}
                       </span>
                       {totalPages > 1 && (
                         <div className="flex gap-1">
@@ -381,7 +401,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                           >
-                            Précédent
+                            {t('colisPage.previous', 'Précédent')}
                           </button>
                           <span className="px-3 py-1 bg-accent/40 rounded text-foreground font-semibold">{currentPage} / {totalPages}</span>
                           <button 
@@ -389,7 +409,7 @@ export default function ColisPickupPage({ navigate, showNotification }) {
                             disabled={currentPage === totalPages}
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                           >
-                            Suivant
+                            {t('colisPage.next', 'Suivant')}
                           </button>
                         </div>
                       )}

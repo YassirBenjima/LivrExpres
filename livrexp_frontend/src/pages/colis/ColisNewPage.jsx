@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ColisNewPage({ navigate, colisList = [], showNotification }) {
+  const { t } = useLanguage();
   const [orderNumber, setOrderNumber] = useState('');
   const [type, setType] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -98,23 +100,21 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
     new Set(
       colisList
         .filter(c => {
-          const etat = (c.etatLabel || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-          const statut = (c.statutLabel || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-          return (etat === 'livre' && statut === 'termine');
+          const e = (c.etatLabel || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const s = (c.statutLabel || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          return e === 'livre' && s === 'termine';
         })
         .map(c => c.orderNumber)
         .filter(Boolean)
     )
-  );
-
-  const typeOptions = [
-    { value: 'Colis Simple', label: 'Colis Simple' },
-    { value: 'Colis du stock', label: 'Colis du stock' }
+  );  const typeOptions = [
+    { value: 'Colis Simple', label: t('colisForm.standardParcel', 'Colis Simple') },
+    { value: 'Colis du stock', label: t('colisForm.stockParcel', 'Colis du stock') }
   ];
 
   const packageOptionOptions = [
-    { value: 'Ne pas ouvrir le colis', label: 'Ne pas ouvrir le colis' },
-    { value: 'Ouvrir le colis', label: 'Ouvrir le colis' }
+    { value: 'Ne pas ouvrir le colis', label: t('colisForm.doNotOpen', 'Ne pas ouvrir le colis') },
+    { value: 'Ouvrir le colis', label: t('colisForm.openPackage', 'Ouvrir le colis') }
   ];
 
   const cityOptions = cities.map(c => {
@@ -176,9 +176,9 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
 
       if (response.ok) {
         if (showNotification) {
-          showNotification('success', 'Colis ajouté avec succès !');
+          showNotification('success', t('notifications.colisAdded', 'Colis ajouté avec succès !'));
         } else {
-          setSuccessMsg('Colis ajouté avec succès !');
+          setSuccessMsg(t('notifications.colisAdded', 'Colis ajouté avec succès !'));
         }
         // Reset form
         setOrderNumber('');
@@ -199,7 +199,6 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
         setUseCarton(false);
         setCartonOption('');
         
-        // Redirect to colis list after a short delay so they can see the success message
         setTimeout(() => {
           if (navigate) {
             navigate('/colis');
@@ -236,10 +235,10 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
               <h1 className="text-xl font-medium leading-none text-mono">
-                Ajouter un colis
+                {t('colisPage.newParcelTitle', 'Ajouter un colis')}
               </h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Ajoutez tous vos colis en un clic
+                {t('colisPage.newParcelSubtitle', 'Créez un nouveau colis à expédier.')}
               </div>
             </div>
             <div className="flex items-center gap-2.5">
@@ -249,10 +248,10 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                 onClick={handleFillTestFields}
                 style={{ borderColor: '#e4e6ef', backgroundColor: '#f5f8fa', color: '#3f4254' }}
               >
-                Remplir (Test)
+                {t('colisPage.quickFillTest', 'Remplir (Test)')}
               </button>
               <a className="kt-btn kt-btn-outline" href="/colis">
-                Retour à la liste
+                {t('colisForm.backToList', 'Retour à la liste')}
               </a>
               <button 
                 className="kt-btn kt-btn-primary" 
@@ -260,7 +259,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                 type="submit"
                 disabled={loading}
               >
-                {loading ? 'Ajout en cours...' : 'Ajouter le colis'}
+                {loading ? t('common.loading', 'Ajout en cours...') : t('colisPage.saveParcel', 'Ajouter le colis')}
               </button>
             </div>
           </div>
@@ -291,25 +290,25 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 md:gap-10 p-2.5">
                     <div className="flex flex-col items-start gap-3 w-full lg:max-w-[60%]">
                       <h2 className="text-xl font-semibold text-mono">
-                        Informations
+                        {t('colisForm.infoHeading', 'Informations')}
                       </h2>
                       <div className="grid grid-cols-1 gap-2 w-full">
                         <div className="flex items-start gap-1.5 lg:pe-7.5">
                           <i className="ki-filled ki-check-circle text-base text-green-500"></i>
                           <span className="text-sm text-mono">
-                            Pour assurer une livraison rapide de vos commandes, veuillez inclure l'adresse complète ou le quartier du client à l'intérieur du colis.
+                            {t('colisForm.infoBullet1', "Pour assurer une livraison rapide de vos commandes, veuillez inclure l'adresse complète ou le quartier du client à l'intérieur du colis.")}
                           </span>
                         </div>
                         <div className="flex items-start gap-1.5 lg:pe-7.5">
                           <i className="ki-filled ki-check-circle text-base text-green-500"></i>
                           <span className="text-sm text-mono">
-                            Pour les colis d'un poids supérieur à 5 kg ou d'une longueur excédant 30 cm, des frais supplémentaires seront ajoutés.
+                            {t('colisForm.infoBullet2', "Pour les colis d'un poids supérieur à 5 kg ou d'une longueur excédant 30 cm, des frais supplémentaires seront ajoutés.")}
                           </span>
                         </div>
                         <div className="flex items-start gap-1.5 lg:pe-7.5">
                           <i className="ki-filled ki-check-circle text-base text-green-500"></i>
                           <span className="text-sm text-mono">
-                            Pour les colis stockés, vous pouvez ajouter des cartons, sachets ou papier bulle pour une meilleure protection.
+                            {t('colisForm.infoBullet3', "Pour les colis stockés, vous pouvez ajouter des cartons, sachets ou papier bulle pour une meilleure protection.")}
                           </span>
                         </div>
                       </div>
@@ -330,18 +329,18 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                 <div className="col-span-1">
                   <div className="kt-card min-w-full">
                     <div className="kt-card-header">
-                      <h3 className="kt-card-title">Informations du colis</h3>
+                      <h3 className="kt-card-title">{t('colisForm.parcelInfo', 'Informations du colis')}</h3>
                     </div>
                     <div className="kt-card-table pb-3" style={{ overflow: 'visible' }}>
                       <table className="kt-table align-middle text-sm text-muted-foreground">
                         <tbody>
                           <tr>
-                            <td className="py-2 min-w-36 text-secondary-foreground font-normal">№ Commande</td>
+                            <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('colisForm.orderNoLabel', '№ Commande')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="№ Commande"
+                                placeholder={t('colisForm.orderNoPlaceholder', '№ Commande')}
                                 value={orderNumber}
                                 onChange={(e) => setOrderNumber(e.target.value.replace(/[^0-9]/g, ''))}
                                 required
@@ -349,26 +348,26 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Type</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.typeLabel', 'Type')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <KtSelect
                                 value={type}
                                 onChange={setType}
-                                placeholder="Choisir un type"
+                                placeholder={t('colisForm.chooseType', 'Choisir un type')}
                                 options={typeOptions}
                                 className="w-full"
                                 enableSearch={true}
-                                searchPlaceholder="Rechercher un type..."
+                                searchPlaceholder={t('colisForm.searchType', 'Rechercher un type...')}
                               />
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Destinataire</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.recipientLabel', 'Destinataire')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Destinataire"
+                                placeholder={t('colisForm.recipientPlaceholder', 'Destinataire')}
                                 value={recipient}
                                 onChange={(e) => setRecipient(e.target.value)}
                                 required
@@ -376,26 +375,26 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Ville</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.cityLabel', 'Ville')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <KtSelect
                                 value={city}
                                 onChange={setCity}
-                                placeholder="Choisir une ville"
+                                placeholder={t('colisForm.chooseCity', 'Choisir une ville')}
                                 options={cityOptions}
                                 className="w-full"
                                 enableSearch={true}
-                                searchPlaceholder="Rechercher une ville..."
+                                searchPlaceholder={t('colisForm.searchCity', 'Rechercher une ville...')}
                               />
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Adresse</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.addressLabel', 'Adresse')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Adresse"
+                                placeholder={t('colisForm.addressPlaceholder', 'Adresse')}
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 required
@@ -403,12 +402,12 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Prix</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.priceLabel', 'Prix')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="number"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Prix"
+                                placeholder={t('colisForm.pricePlaceholder', 'Prix')}
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                                 required
@@ -425,9 +424,9 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                 <div className="col-span-1">
                   <div className="kt-card min-w-full">
                     <div className="kt-card-header flex justify-between items-center">
-                      <h3 className="kt-card-title">Informations complementaires</h3>
+                      <h3 className="kt-card-title">{t('colisForm.additionalInfo', 'Informations complementaires')}</h3>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm text-secondary-foreground font-normal">Colis a remplacer</span>
+                        <span className="text-sm text-secondary-foreground font-normal">{t('colisForm.replaceColisToggle', 'Colis a remplacer')}</span>
                         <label className="relative inline-flex items-center cursor-pointer select-none">
                           <input 
                             type="checkbox"
@@ -469,22 +468,22 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                         <tbody>
                           {replacePackage && (
                             <tr id="old-colis-row">
-                              <td className="py-2 text-secondary-foreground font-normal">Colis a remplacer</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.replaceColisToggle', 'Colis a remplacer')}</td>
                               <td className="py-2 text-foreground font-normal text-sm" id="old-colis-cell">
                                 <KtSelect
                                   value={oldColis}
                                   onChange={setOldColis}
-                                  placeholder="Choisir un ancien colis"
+                                  placeholder={t('colisForm.chooseOldColis', 'Choisir un ancien colis')}
                                   options={oldColisChoices.map(c => ({ value: c, label: c }))}
                                   className="w-full"
                                   enableSearch={true}
-                                  searchPlaceholder="Rechercher un colis..."
+                                  searchPlaceholder={t('colisForm.searchOldColis', 'Rechercher un colis...')}
                                 />
                               </td>
                             </tr>
                           )}
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Colis</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.packageOptionLabel', 'Colis')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <KtSelect
                                 value={packageOption}
@@ -492,17 +491,17 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                                 options={packageOptionOptions}
                                 className="w-full"
                                 enableSearch={true}
-                                searchPlaceholder="Rechercher une option..."
+                                searchPlaceholder={t('common.search', 'Rechercher une option...')}
                               />
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Numero de telephone</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.phoneLabel', 'Numero de telephone')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="tel"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Numero de telephone"
+                                placeholder={t('colisForm.phonePlaceholder', 'Numero de telephone')}
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                 required
@@ -510,24 +509,24 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Quartier</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.neighborhoodLabel', 'Quartier')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Quartier"
+                                placeholder={t('colisForm.neighborhoodPlaceholder', 'Quartier')}
                                 value={neighborhood}
                                 onChange={(e) => setNeighborhood(e.target.value)}
                               />
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Nature de produit</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.productNatureLabel', 'Nature de produit')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Nature de produit"
+                                placeholder={t('colisForm.productNaturePlaceholder', 'Nature de produit')}
                                 value={productNature}
                                 onChange={(e) => setProductNature(e.target.value)}
                                 required
@@ -535,12 +534,12 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </td>
                           </tr>
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Commentaire</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('colisForm.commentLabel', 'Commentaire')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <input 
                                 type="text"
                                 className="kt-input h-8 text-sm w-full"
-                                placeholder="Commentaire"
+                                placeholder={t('colisForm.commentPlaceholder', 'Commentaire')}
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                               />
@@ -559,7 +558,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
             <div className="col-span-1">
               <div className="kt-card">
                 <div className="kt-card-header">
-                  <h3 className="kt-card-title">Options de colis</h3>
+                  <h3 className="kt-card-title">{t('colisForm.parcelOptionsHeading', 'Options de colis')}</h3>
                 </div>
                 <div className="kt-card-content pb-7.5 px-4 sm:px-6">
                   <div className="grid gap-2.5">
@@ -578,7 +577,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
-                          Colis fragile
+                          {t('colisForm.fragileLabel', 'Colis fragile')}
                         </span>
                       </div>
                       <button 
@@ -606,7 +605,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
-                          Je souhaite definir tous mes colis comme fragiles
+                          {t('colisForm.allFragileLabel', 'Je souhaite definir tous mes colis comme fragiles')}
                         </span>
                       </div>
                       <button 
@@ -634,7 +633,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                           </div>
                         </div>
                         <span className="text-mono text-sm font-medium break-words leading-5">
-                          Je veux utiliser un carton
+                          {t('colisForm.useCartonLabel', 'Je veux utiliser un carton')}
                         </span>
                       </div>
                       <button 
@@ -658,7 +657,7 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
               <div className="col-span-1" id="carton-options-card">
                 <div className="kt-card">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Options carton</h3>
+                    <h3 className="kt-card-title">{t('colisForm.cartonOptionsHeading', 'Options carton')}</h3>
                   </div>
                   <div className="kt-card-content pb-7.5 px-4 sm:px-6">
                     <div className="grid gap-2.5">
@@ -672,9 +671,9 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-mono text-sm font-medium">Petit carton (S)</span>
-                            <span className="text-xs text-secondary-foreground">Avec frais: 1.5 DH</span>
-                            <span className="text-xs text-secondary-foreground">Carton box de petite taille.</span>
+                            <span className="text-mono text-sm font-medium">{t('colisForm.smallCartonTitle', 'Petit carton (S)')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.smallCartonFee', 'Avec frais: 1.5 DH')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.smallCartonDesc', 'Carton box de petite taille.')}</span>
                           </div>
                         </div>
                         <button 
@@ -697,9 +696,9 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-mono text-sm font-medium">Carton moyen (M)</span>
-                            <span className="text-xs text-secondary-foreground">Avec frais: 2.5 DH</span>
-                            <span className="text-xs text-secondary-foreground">Carton box de moyenne taille.</span>
+                            <span className="text-mono text-sm font-medium">{t('colisForm.mediumCartonTitle', 'Carton moyen (M)')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.mediumCartonFee', 'Avec frais: 2.5 DH')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.mediumCartonDesc', 'Carton box de moyenne taille.')}</span>
                           </div>
                         </div>
                         <button 
@@ -722,9 +721,9 @@ export default function ColisNewPage({ navigate, colisList = [], showNotificatio
                             </svg>
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-mono text-sm font-medium">Grand carton (L)</span>
-                            <span className="text-xs text-secondary-foreground">Avec frais: 3 DH</span>
-                            <span className="text-xs text-secondary-foreground">Carton box de grande taille.</span>
+                            <span className="text-mono text-sm font-medium">{t('colisForm.largeCartonTitle', 'Grand carton (L)')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.largeCartonFee', 'Avec frais: 3 DH')}</span>
+                            <span className="text-xs text-secondary-foreground">{t('colisForm.largeCartonDesc', 'Carton box de grande taille.')}</span>
                           </div>
                         </div>
                         <button 

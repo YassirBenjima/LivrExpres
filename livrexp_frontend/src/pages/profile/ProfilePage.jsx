@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ProfilePage({ navigate, showNotification }) {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({});
   const [cities, setCities] = useState([]);
@@ -71,10 +73,10 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification('success', data.message || 'Champ mis à jour avec succès.');
+        if (showNotification) showNotification('success', data.message || t('profile.fieldUpdatedSuccess', 'Champ mis à jour avec succès.'));
         fetchProfile();
       } else {
-        if (showNotification) showNotification('danger', data.message || 'Erreur lors de la mise à jour.');
+        if (showNotification) showNotification('danger', data.message || t('profile.updateError', 'Erreur lors de la mise à jour.'));
       }
     } catch (err) {
       console.error('Erreur sauvegarde profil:', err);
@@ -101,10 +103,10 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification('success', data.message);
+        if (showNotification) showNotification('success', data.message || t('profile.avatarSuccess', 'Avatar mis à jour.'));
         fetchProfile();
       } else {
-        if (showNotification) showNotification('danger', data.message || 'Erreur téléversement avatar.');
+        if (showNotification) showNotification('danger', data.message || t('profile.avatarUploadError', 'Erreur téléversement avatar.'));
       }
     } catch (err) {
       console.error('Erreur avatar:', err);
@@ -138,21 +140,21 @@ export default function ProfilePage({ navigate, showNotification }) {
     setPasswordError('');
 
     if (!passwordState.current_password) {
-      const msg = 'Veuillez saisir votre mot de passe actuel.';
+      const msg = t('profile.passCurrentReq', 'Veuillez saisir votre mot de passe actuel.');
       setPasswordError(msg);
       if (showNotification) showNotification('danger', msg);
       return;
     }
 
     if (!passwordState.new_password || passwordState.new_password.length < 8) {
-      const msg = 'Le nouveau mot de passe doit comporter au moins 8 caractères.';
+      const msg = t('profile.passMinChars', 'Le nouveau mot de passe doit comporter au moins 8 caractères.');
       setPasswordError(msg);
       if (showNotification) showNotification('danger', msg);
       return;
     }
 
     if (passwordState.new_password !== passwordState.confirm_password) {
-      const msg = 'Les nouveaux mots de passe ne correspondent pas.';
+      const msg = t('profile.passMismatch', 'Les nouveaux mots de passe ne correspondent pas.');
       setPasswordError(msg);
       if (showNotification) showNotification('danger', msg);
       return;
@@ -172,16 +174,16 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       const data = await res.json();
       if (res.ok) {
-        if (showNotification) showNotification('success', data.message || 'Mot de passe mis à jour avec succès.');
+        if (showNotification) showNotification('success', data.message || t('profile.passUpdatedSuccess', 'Mot de passe mis à jour avec succès.'));
         setPasswordState({ current_password: '', new_password: '', confirm_password: '' });
       } else {
-        const errMsg = data.message || 'Erreur lors de la mise à jour du mot de passe.';
+        const errMsg = data.message || t('profile.passUpdateError', 'Erreur lors de la mise à jour du mot de passe.');
         setPasswordError(errMsg);
         if (showNotification) showNotification('danger', errMsg);
       }
     } catch (err) {
       console.error('Erreur mot de passe:', err);
-      if (showNotification) showNotification('danger', 'Une erreur réseau est survenue.');
+      if (showNotification) showNotification('danger', t('profile.networkError', 'Une erreur réseau est survenue.'));
     } finally {
       setPasswordLoading(false);
     }
@@ -192,7 +194,7 @@ export default function ProfilePage({ navigate, showNotification }) {
       <DashboardLayout activeMenu="profile">
         <main className="grow pt-5 profile-content-shift" id="content" role="content">
           <div className="kt-container-fixed py-10 text-center">
-            <span className="text-secondary-foreground text-sm">Chargement du profil...</span>
+            <span className="text-secondary-foreground text-sm">{t('profile.loadingProfile', 'Chargement du profil...')}</span>
           </div>
         </main>
       </DashboardLayout>
@@ -209,23 +211,22 @@ export default function ProfilePage({ navigate, showNotification }) {
     <DashboardLayout activeMenu="profile">
       <main className="grow pt-5 profile-content-shift" id="content" role="content">
 
-
         {/* Header Title */}
         <div className="kt-container-fixed">
           <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
             <div className="flex flex-col justify-center gap-2">
-              <h1 className="text-xl font-medium leading-none text-mono">Mon Profil</h1>
+              <h1 className="text-xl font-medium leading-none text-mono">{t('profile.title', 'Mon Profil')}</h1>
               <div className="flex items-center gap-2 text-sm font-normal text-secondary-foreground">
-                Gérez vos informations et paramètres de compte
+                {t('profile.subtitle', 'Gérez vos informations et paramètres de compte')}
               </div>
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
                 <button className="kt-btn kt-btn-outline" onClick={fetchProfile} type="button">
-                  Cancel
+                  {t('profile.cancelBtn', 'Cancel')}
                 </button>
                 <button className="kt-btn kt-btn-primary" onClick={fetchProfile} type="button">
-                  Enregistrer
+                  {t('profile.saveBtn', 'Enregistrer')}
                 </button>
               </div>
             </div>
@@ -243,7 +244,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 1. Personal Info Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Informations Personnelles</h3>
+                    <h3 className="kt-card-title">{t('profile.personalInfoTitle', 'Informations Personnelles')}</h3>
                   </div>
                   <div className="kt-card-table pb-3 overflow-visible">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
@@ -251,8 +252,8 @@ export default function ProfilePage({ navigate, showNotification }) {
                         
                         {/* Avatar Input */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Photo</td>
-                          <td className="py-2 text-secondary-foreground font-normal text-sm">Image JPEG, PNG 150x150px</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.photoLabel', 'Photo')}</td>
+                          <td className="py-2 text-secondary-foreground font-normal text-sm">{t('profile.photoSpecs', 'Image JPEG, PNG 150x150px')}</td>
                           <td className="py-2 text-center">
                             <div className="relative inline-block">
                               <label className="cursor-pointer inline-flex items-center justify-center size-16 rounded-full bg-primary/10 text-primary font-bold text-lg overflow-hidden border-2 border-input hover:border-primary transition-colors">
@@ -270,7 +271,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                                   type="button"
                                   onClick={handleRemoveAvatar}
                                   className="absolute -top-1 -right-1 bg-danger text-white rounded-full size-5 flex items-center justify-center text-xs shadow"
-                                  title="Supprimer la photo"
+                                  title={t('profile.avatarDeleteTitle', 'Supprimer la photo')}
                                 >
                                   <i className="ki-filled ki-cross"></i>
                                 </button>
@@ -281,12 +282,13 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Full Name */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Nom complet *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.fullNameLabel', 'Nom complet *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
                               required
+                              placeholder={t('profile.fullNamePlaceholder', 'Nom complet')}
                               value={formData.fullName || ''}
                               onChange={e => handleChange('fullName', e.target.value)}
                             />
@@ -304,12 +306,13 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Personal Phone */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Numéro de téléphone personnel *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.personalPhoneLabel', 'Numéro de téléphone personnel *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
                               required
+                              placeholder={t('profile.personalPhonePlaceholder', 'Téléphone personnel')}
                               value={formData.personalPhone || ''}
                               onChange={e => handleChange('personalPhone', e.target.value)}
                             />
@@ -327,12 +330,13 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Email */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Adresse email *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.emailLabel', 'Adresse email *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="email"
                               required
+                              placeholder={t('profile.emailPlaceholder', 'Adresse email')}
                               value={formData.email || ''}
                               onChange={e => handleChange('email', e.target.value)}
                             />
@@ -350,14 +354,14 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* City */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Ville *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.cityLabel', 'Ville *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <select
                               className="kt-select text-sm h-8"
                               value={formData.city || ''}
                               onChange={e => handleChange('city', e.target.value)}
                             >
-                              <option value="" disabled>Choisir une ville</option>
+                              <option value="" disabled>{t('profile.selectCityPlaceholder', 'Choisir une ville')}</option>
                               {cities.map(c => (
                                 <option key={c} value={c}>{c}</option>
                               ))}
@@ -376,12 +380,12 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Address */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Adresse *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.addressLabel', 'Adresse *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
-                              placeholder="Aucune adresse definie"
+                              placeholder={t('profile.noAddressDefined', 'Aucune adresse définie')}
                               value={formData.address || ''}
                               onChange={e => handleChange('address', e.target.value)}
                             />
@@ -405,7 +409,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 2. Delivery Preferences Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Préférences de Livraison</h3>
+                    <h3 className="kt-card-title">{t('profile.deliveryPrefsTitle', 'Préférences de Livraison')}</h3>
                   </div>
                   <div className="kt-card-table pb-3 overflow-visible">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
@@ -413,12 +417,12 @@ export default function ProfilePage({ navigate, showNotification }) {
                         
                         {/* Label Message */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Votre message sur étiquette</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.labelMsgLabel', 'Votre message sur étiquette')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
-                              placeholder="Ajouter un message"
+                              placeholder={t('profile.addMsgPlaceholder', 'Ajouter un message')}
                               value={formData.labelMessage || ''}
                               onChange={e => handleChange('labelMessage', e.target.value)}
                             />
@@ -436,15 +440,15 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Package Option */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Colis</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.packageLabel', 'Colis')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <select
                               className="kt-select text-sm h-8"
                               value={formData.packageOption || 'Ne pas ouvrir le colis'}
                               onChange={e => handleChange('packageOption', e.target.value)}
                             >
-                              <option value="Ne pas ouvrir le colis">Ne pas ouvrir le colis</option>
-                              <option value="Ouvrir le colis">Ouvrir le colis</option>
+                              <option value="Ne pas ouvrir le colis">{t('profile.packageDoNotOpen', 'Ne pas ouvrir le colis')}</option>
+                              <option value="Ouvrir le colis">{t('profile.packageOpen', 'Ouvrir le colis')}</option>
                             </select>
                           </td>
                           <td className="py-2 text-center">
@@ -466,14 +470,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 3. Password Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header flex items-center justify-between">
-                    <h3 className="kt-card-title">Mot de passe</h3>
+                    <h3 className="kt-card-title">{t('profile.passwordTitle', 'Mot de passe')}</h3>
                     <button
                       className="kt-btn kt-btn-primary"
                       onClick={handlePasswordSubmit}
                       disabled={passwordLoading}
                       type="button"
                     >
-                      {passwordLoading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
+                      {passwordLoading ? t('profile.updatingPasswordBtn', 'Mise à jour...') : t('profile.updatePasswordBtn', 'Mettre à jour le mot de passe')}
                     </button>
                   </div>
 
@@ -490,13 +494,13 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Current Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Ancien mot de passe *</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.currentPassLabel', 'Ancien mot de passe *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <div className="relative">
                               <input
                                 className="kt-input h-8 text-sm pe-8"
                                 type={showCurrentPassword ? 'text' : 'password'}
-                                placeholder="Ancien mot de passe"
+                                placeholder={t('profile.currentPassPlaceholder', 'Ancien mot de passe')}
                                 required
                                 value={passwordState.current_password}
                                 onChange={e => setPasswordState(prev => ({ ...prev, current_password: e.target.value }))}
@@ -514,13 +518,13 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* New Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nouveau mot de passe *</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.newPassLabel', 'Nouveau mot de passe *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <div className="relative">
                               <input
                                 className="kt-input h-8 text-sm pe-8"
                                 type={showNewPassword ? 'text' : 'password'}
-                                placeholder="Nouveau mot de passe (min. 8 caractères)"
+                                placeholder={t('profile.newPassPlaceholder', 'Nouveau mot de passe (min. 8 caractères)')}
                                 minLength={8}
                                 required
                                 value={passwordState.new_password}
@@ -539,7 +543,7 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Confirm Password */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Re-taper le nouveau mot de passe *</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.confirmPassLabel', 'Re-taper le nouveau mot de passe *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <div className="relative">
                               <input
@@ -549,7 +553,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                                     : ''
                                 }`}
                                 type={showConfirmPassword ? 'text' : 'password'}
-                                placeholder="Confirmer le nouveau mot de passe"
+                                placeholder={t('profile.confirmPassPlaceholder', 'Confirmer le nouveau mot de passe')}
                                 minLength={8}
                                 required
                                 value={passwordState.confirm_password}
@@ -569,12 +573,12 @@ export default function ProfilePage({ navigate, showNotification }) {
                               passwordState.confirm_password === passwordState.new_password ? (
                                 <div className="flex items-center gap-1.5 text-xs text-green-500 mt-1 font-medium">
                                   <i className="ki-solid ki-check-circle text-sm"></i>
-                                  <span>Les mots de passe correspondent</span>
+                                  <span>{t('profile.passwordsMatch', 'Les mots de passe correspondent')}</span>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-medium">
                                   <i className="ki-solid ki-cross-circle text-sm"></i>
-                                  <span>Les mots de passe ne correspondent pas</span>
+                                  <span>{t('profile.passwordsDoNotMatch', 'Les mots de passe ne correspondent pas')}</span>
                                 </div>
                               )
                             )}
@@ -596,7 +600,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 4. Business Info Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Informations de l'Entreprise</h3>
+                    <h3 className="kt-card-title">{t('profile.businessInfoTitle', "Informations de l'Entreprise")}</h3>
                   </div>
                   <div className="kt-card-table pb-3 overflow-visible">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
@@ -604,7 +608,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                         
                         {/* Business Name */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nom du business *</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.businessNameLabel', 'Nom du business *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
@@ -627,7 +631,7 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Business Phone */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Numéro de téléphone du business *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.businessPhoneLabel', 'Numéro de téléphone du business *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
@@ -650,14 +654,14 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Client Type */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Type de client *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.clientTypeLabel', 'Type de client *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <select
                               className="kt-select text-sm h-8"
                               value={formData.clientType || ''}
                               onChange={e => handleChange('clientType', e.target.value)}
                             >
-                              <option value="" disabled>Choisir un type</option>
+                              <option value="" disabled>{t('profile.selectTypePlaceholder', 'Choisir un type')}</option>
                               <option value="E-commerce">E-commerce</option>
                               <option value="Auto Entrepreneur">Auto Entrepreneur</option>
                               <option value="SARL">SARL</option>
@@ -678,12 +682,12 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* ICE */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">I.C.E</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.iceLabel', 'I.C.E')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
-                              placeholder="Non renseigné"
+                              placeholder={t('profile.notSpecified', 'Non renseigné')}
                               value={formData.ice || ''}
                               onChange={e => handleChange('ice', e.target.value)}
                             />
@@ -701,12 +705,12 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* RC */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">R.C</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.rcLabel', 'R.C')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
-                              placeholder="Non renseigné"
+                              placeholder={t('profile.notSpecified', 'Non renseigné')}
                               value={formData.rc || ''}
                               onChange={e => handleChange('rc', e.target.value)}
                             />
@@ -724,12 +728,12 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Website */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">Web site</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.websiteLabel', 'Web site')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
                               type="text"
-                              placeholder="Non renseigné"
+                              placeholder={t('profile.notSpecified', 'Non renseigné')}
                               value={formData.website || ''}
                               onChange={e => handleChange('website', e.target.value)}
                             />
@@ -753,7 +757,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 5. Bank Info Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Informations bancaires</h3>
+                    <h3 className="kt-card-title">{t('profile.bankInfoTitle', 'Informations bancaires')}</h3>
                   </div>
                   <div className="kt-card-table pb-3 overflow-visible">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
@@ -761,14 +765,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                         
                         {/* Bank Name */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Nom du banque *</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.bankNameLabel', 'Nom de la banque *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <select
                               className="kt-select text-sm h-8"
                               value={formData.bankName || ''}
                               onChange={e => handleChange('bankName', e.target.value)}
                             >
-                              <option value="" disabled>Choisir une banque</option>
+                              <option value="" disabled>{t('profile.selectBankPlaceholder', 'Choisir une banque')}</option>
                               {moroccanBanks.map(b => (
                                 <option key={b} value={b}>{b}</option>
                               ))}
@@ -787,7 +791,7 @@ export default function ProfilePage({ navigate, showNotification }) {
 
                         {/* Bank RIB */}
                         <tr>
-                          <td className="py-2 text-secondary-foreground font-normal">RIB (24 Numéro) *</td>
+                          <td className="py-2 text-secondary-foreground font-normal">{t('profile.bankRibLabel', 'RIB (24 Numéros) *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <input
                               className="kt-input h-8 text-sm"
@@ -817,7 +821,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                 {/* 6. Return Address Card */}
                 <div className="kt-card min-w-full">
                   <div className="kt-card-header">
-                    <h3 className="kt-card-title">Adresse de retour</h3>
+                    <h3 className="kt-card-title">{t('profile.returnAddressTitle', 'Adresse de retour')}</h3>
                   </div>
                   <div className="kt-card-table pb-3 overflow-visible">
                     <table className="kt-table align-middle text-sm text-muted-foreground">
@@ -825,7 +829,7 @@ export default function ProfilePage({ navigate, showNotification }) {
                         
                         {/* Reception Mode */}
                         <tr>
-                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">Réception colis retournés</td>
+                          <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.receptionModeLabel', 'Réception colis retournés')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
                             <select
                               className="kt-select text-sm h-8"
@@ -835,8 +839,8 @@ export default function ProfilePage({ navigate, showNotification }) {
                                 handleSaveField('return_reception', e.target.value);
                               }}
                             >
-                              <option value="En ramassage">En ramassage</option>
-                              <option value="En Agence">En Agence</option>
+                              <option value="En ramassage">{t('profile.pickupMode', 'En ramassage')}</option>
+                              <option value="En Agence">{t('profile.agencyMode', 'En Agence')}</option>
                             </select>
                           </td>
                           <td className="py-2 text-center">
@@ -853,16 +857,16 @@ export default function ProfilePage({ navigate, showNotification }) {
                         {/* Agency Dropdown (if En Agence) */}
                         {returnReceptionMode === 'En Agence' && (
                           <tr>
-                            <td className="py-2 text-secondary-foreground font-normal">Agence</td>
+                            <td className="py-2 text-secondary-foreground font-normal">{t('profile.agencyLabel', 'Agence')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
                               <select
                                 className="kt-select text-sm h-8"
                                 value={formData.returnAgency || ''}
                                 onChange={e => handleChange('returnAgency', e.target.value)}
                               >
-                                <option value="" disabled>Toutes nos agences</option>
-                                <option value="Agence Principale">Agence Principale</option>
-                                <option value="Agence Secondaire">Agence Secondaire</option>
+                                <option value="" disabled>{t('profile.allAgencies', 'Toutes nos agences')}</option>
+                                <option value="Agence Principale">{t('profile.mainAgency', 'Agence Principale')}</option>
+                                <option value="Agence Secondaire">{t('profile.secondaryAgency', 'Agence Secondaire')}</option>
                               </select>
                             </td>
                             <td className="py-2 text-center">
@@ -881,12 +885,12 @@ export default function ProfilePage({ navigate, showNotification }) {
                         {returnReceptionMode === 'En ramassage' && (
                           <>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Téléphone</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('profile.phoneLabel', 'Téléphone')}</td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm"
                                   type="text"
-                                  placeholder={formData.businessPhone || 'Notre téléphone'}
+                                  placeholder={formData.businessPhone || t('profile.ourPhonePlaceholder', 'Notre téléphone')}
                                   value={formData.returnPhone || ''}
                                   onChange={e => handleChange('returnPhone', e.target.value)}
                                 />
@@ -902,14 +906,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Ville</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('profile.cityLabel', 'Ville')}</td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <select
                                   className="kt-select text-sm h-8"
                                   value={formData.returnCity || ''}
                                   onChange={e => handleChange('returnCity', e.target.value)}
                                 >
-                                  <option value="" disabled>Choisir une ville</option>
+                                  <option value="" disabled>{t('profile.selectCityPlaceholder', 'Choisir une ville')}</option>
                                   {cities.map(c => (
                                     <option key={c} value={c}>{c}</option>
                                   ))}
@@ -926,12 +930,12 @@ export default function ProfilePage({ navigate, showNotification }) {
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-2 text-secondary-foreground font-normal">Quartier</td>
+                              <td className="py-2 text-secondary-foreground font-normal">{t('profile.neighborhoodLabel', 'Quartier')}</td>
                               <td className="py-2 text-foreground font-normal text-sm">
                                 <input
                                   className="kt-input h-8 text-sm"
                                   type="text"
-                                  placeholder="Quartier"
+                                  placeholder={t('profile.neighborhoodPlaceholder', 'Quartier')}
                                   value={formData.returnNeighborhood || ''}
                                   onChange={e => handleChange('returnNeighborhood', e.target.value)}
                                 />
