@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import SafeAvatar from '../../components/ui/SafeAvatar';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function ClientListPage({ navigate, showNotification }) {
+export default function ClientListPage({ showNotification }) {
   const { t, language } = useLanguage();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,120 +34,38 @@ export default function ClientListPage({ navigate, showNotification }) {
     tarifReturn: 15
   });
 
-  const DEFAULT_CLIENTS = [
-    {
-      id: 1,
-      businessName: 'Boutique Casa Chic',
-      fullName: 'Yassine El Amrani',
-      email: 'contact@casachic.ma',
-      phone: '0661928301',
-      city: 'Casablanca',
-      ice: '00281902000039',
-      colisCount: 142,
-      tarifSameCity: 30.00,
-      tarifOtherCity: 40.00,
-      tarifReturn: 15.00,
-      creditLimit: 10000.00,
-      currentBalance: 3200.00,
-      isCreditExceeded: false,
-      contractRef: 'CTR-2026-0001',
-      contractStatus: 'ACTIF',
-      contractDate: '10/01/2026',
-      status: 'ACTIF'
-    },
-    {
-      id: 2,
-      businessName: 'Maroc Tech Express',
-      fullName: 'Sarah Benjeloun',
-      email: 'sarah@maroctech.ma',
-      phone: '0650982103',
-      city: 'Rabat',
-      ice: '00192837100045',
-      colisCount: 89,
-      tarifSameCity: 35.00,
-      tarifOtherCity: 45.00,
-      tarifReturn: 15.00,
-      creditLimit: 5000.00,
-      currentBalance: 5800.00,
-      isCreditExceeded: true,
-      contractRef: 'CTR-2026-0002',
-      contractStatus: 'ACTIF',
-      contractDate: '15/01/2026',
-      status: 'ACTIF'
-    },
-    {
-      id: 3,
-      businessName: 'Atlas Mode & Beauty',
-      fullName: 'Karim Tazi',
-      email: 'k.tazi@atlasmode.ma',
-      phone: '0677112233',
-      city: 'Marrakech',
-      ice: '00381920100088',
-      colisCount: 54,
-      tarifSameCity: 35.00,
-      tarifOtherCity: 50.00,
-      tarifReturn: 20.00,
-      creditLimit: 3000.00,
-      currentBalance: 950.00,
-      isCreditExceeded: false,
-      contractRef: 'CTR-2026-0003',
-      contractStatus: 'NEGOCIATION',
-      contractDate: '01/02/2026',
-      status: 'EN_ATTENTE'
-    },
-    {
-      id: 4,
-      businessName: 'Electro Rabat',
-      fullName: 'Omar Bennani',
-      email: 'omar@electrorabat.ma',
-      phone: '0611223344',
-      city: 'Rabat',
-      ice: '00492810200012',
-      colisCount: 210,
-      tarifSameCity: 25.00,
-      tarifOtherCity: 35.00,
-      tarifReturn: 12.00,
-      creditLimit: 15000.00,
-      currentBalance: 12400.00,
-      isCreditExceeded: false,
-      contractRef: 'CTR-2026-0004',
-      contractStatus: 'ACTIF',
-      contractDate: '05/01/2026',
-      status: 'ACTIF'
-    }
-  ];
-
-  const fetchClients = useCallback(async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/clients', {
-        headers: {
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.clients && data.clients.length > 0) {
-          setClients(data.clients);
-        } else {
-          setClients(DEFAULT_CLIENTS);
-        }
-      } else {
-        setClients(DEFAULT_CLIENTS);
-      }
-    } catch (err) {
-      console.error('Erreur chargement clients:', err);
-      setClients(DEFAULT_CLIENTS);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchClients = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/clients', {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setClients(data.clients || data.data || []);
+        } else {
+          if (isMounted) setClients([]);
+        }
+      } catch (err) {
+        console.error('Erreur chargement clients:', err);
+        if (isMounted) setClients([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     fetchClients();
-  }, [fetchClients]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Handle Toggle Status (Active / Suspendu)
   const handleToggleStatus = async (clientItem) => {
