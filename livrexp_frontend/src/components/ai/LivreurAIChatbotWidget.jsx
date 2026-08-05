@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 /* ─── helpers ─────────────────────────────────────────────────── */
@@ -18,12 +18,22 @@ const mapsUrl = (address, city) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 };
 
+const WELCOME_MESSAGE = {
+  id: 'welcome',
+  sender: 'ai',
+  text: '👋 **Bonjour livreur !**\n\nJe suis votre **Assistant IA Terrain**. Lancez votre tournée ou cherchez un colis par son code (ex: `CMD-900021`).',
+  quick_actions: [
+    { label: '📦 Ma tournée du jour' },
+    { label: '🔍 Chercher un colis' },
+  ]
+};
+
 /* ─── component ────────────────────────────────────────────────── */
 export default function LivreurAIChatbotWidget() {
   const { isLivreur } = useAuth();
 
   const [isOpen, setIsOpen]           = useState(false);
-  const [messages, setMessages]       = useState([]);
+  const [messages, setMessages]       = useState([WELCOME_MESSAGE]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading]         = useState(false);
 
@@ -33,23 +43,6 @@ export default function LivreurAIChatbotWidget() {
   const [tourMode, setTourMode]       = useState(false);  // are we in tour mode?
 
   const chatEndRef = useRef(null);
-
-  if (!isLivreur) return null;
-
-  /* welcome on first open */
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([{
-        id: 'welcome',
-        sender: 'ai',
-        text: '👋 **Bonjour livreur !**\n\nJe suis votre **Assistant IA Terrain**. Lancez votre tournée ou cherchez un colis par son code (ex: `CMD-900021`).',
-        quick_actions: [
-          { label: '📦 Ma tournée du jour' },
-          { label: '🔍 Chercher un colis' },
-        ]
-      }]);
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -229,6 +222,8 @@ export default function LivreurAIChatbotWidget() {
   };
 
   /* ─── RENDER ─────────────────────────────────────────────────── */
+  if (!isLivreur) return null;
+
   return (
     <div
       id="livreur-ai-chatbot-container"
@@ -289,7 +284,7 @@ export default function LivreurAIChatbotWidget() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
               <button
                 className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                onClick={() => { setMessages([]); setTourMode(false); setTourStops([]); setTourIndex(0); }}
+                onClick={() => { setMessages([WELCOME_MESSAGE]); setTourMode(false); setTourStops([]); setTourIndex(0); }}
                 title="Réinitialiser"
               >
                 <i className="ki-filled ki-arrows-loop" style={{ fontSize: '14px' }} />

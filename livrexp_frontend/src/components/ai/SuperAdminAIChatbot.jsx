@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+
+let msgIdCounter = 0;
+const generateMsgId = () => `msg_${Date.now()}_${msgIdCounter++}`;
 
 export default function SuperAdminAIChatbot() {
   const { user, isLivreur, isClient } = useAuth();
@@ -9,35 +12,8 @@ export default function SuperAdminAIChatbot() {
   const [loading, setLoading] = useState(false);
   const [activeColis, setActiveColis] = useState(null);
   const [showDirectModifications, setShowDirectModifications] = useState(false);
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [editForm, setEditForm] = useState({
-    recipient: '',
-    phoneNumber: '',
-    city: '',
-    price: ''
-  });
 
   const chatEndRef = useRef(null);
-
-  const getEtatColor = (etat) => {
-    switch (etat) {
-      case 'Livré': return { bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', border: 'rgba(16, 185, 129, 0.3)' };
-      case 'Retourné': return { bg: 'rgba(244, 63, 94, 0.15)', text: '#fb7185', border: 'rgba(244, 63, 94, 0.3)' };
-      case 'Expédié': return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.3)' };
-      case 'En préparation': return { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.3)' };
-      default: return { bg: 'rgba(148, 163, 184, 0.15)', text: '#cbd5e1', border: 'rgba(148, 163, 184, 0.3)' };
-    }
-  };
-
-  const getStatutColor = (statut) => {
-    switch (statut) {
-      case 'Terminé': return { bg: 'rgba(20, 184, 166, 0.15)', text: '#2dd4bf', border: 'rgba(20, 184, 166, 0.3)' };
-      case 'En cours': return { bg: 'rgba(14, 165, 233, 0.15)', text: '#38bdf8', border: 'rgba(14, 165, 233, 0.3)' };
-      case 'Reporté': return { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.3)' };
-      case 'Échec': return { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', border: 'rgba(239, 68, 68, 0.3)' };
-      default: return { bg: 'rgba(148, 163, 184, 0.15)', text: '#cbd5e1', border: 'rgba(148, 163, 184, 0.3)' };
-    }
-  };
 
   // Helper to resolve user's full name or display name
   const getUserDisplayName = () => {
@@ -50,7 +26,9 @@ export default function SuperAdminAIChatbot() {
           return `${parsed.firstName || ''} ${parsed.lastName || ''}`.trim();
         }
       }
-    } catch (_) {}
+    } catch {
+      // Ignore session storage / JSON parse error
+    }
 
     if (user?.fullName) return user.fullName;
     if (user?.name) return user.name;
@@ -64,14 +42,10 @@ export default function SuperAdminAIChatbot() {
     return '{getUserDisplayName()}';
   };
 
-  // Hide for livreurs and clients — chatbot is admin/superviseur only
-  if (isLivreur || isClient) {
-    return null;
-  }
-
-  // Initialize welcome message when opened for the first time (do NOT auto load any parcel)
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
+  // Handle opening the chatbot and initializing the welcome message
+  const handleOpenChat = () => {
+    setIsOpen(true);
+    if (messages.length === 0) {
       const displayName = getUserDisplayName();
       setMessages([
         {
@@ -84,7 +58,22 @@ export default function SuperAdminAIChatbot() {
       ]);
       setActiveColis(null);
     }
-  }, [isOpen]);
+  };
+
+  const handleResetChat = () => {
+    const displayName = getUserDisplayName();
+    setMessages([
+      {
+        id: 'welcome',
+        sender: 'ai',
+        text: `👋 **Bonjour ${displayName} !**\n\nJe suis votre **Assistant IA Livraison**. Veuillez me donner un code de suivi (ex: \`CMD-84920\`) pour consulter et modifier un colis.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        showQuickActions: true
+      }
+    ]);
+    setActiveColis(null);
+    setShowDirectModifications(false);
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -108,34 +97,7 @@ export default function SuperAdminAIChatbot() {
     };
   }, [isOpen]);
 
-  const fetchRecentParcels = async () => {
-    try {
-      const response = await fetch('/api/admin/ai-assistant/recent-parcels', {
-        headers: { 'Accept': 'application/json' },
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.parcels?.length > 0) {
-          setActiveColis(data.parcels[0]);
-        }
-      }
-    } catch (e) {
-      // Fallback local demo parcel if backend unreachable
-      setActiveColis({
-        id: 1,
-        orderNumber: 'CMD-84920',
-        trackingCode: 'F-20260730-84920',
-        recipient: 'Sofia Bennani',
-        phoneNumber: '0611223344',
-        city: 'Casablanca',
-        address: 'Boulevard d\'Anfa, N° 45',
-        price: 350,
-        etat: 'Expédié',
-        statut: 'En livraison'
-      });
-    }
-  };
+
 
   const handleSendMessage = async (customText = null) => {
     const textToSend = customText || inputMessage.trim();
@@ -146,7 +108,7 @@ export default function SuperAdminAIChatbot() {
     }
 
     // Append user message
-    const userMsgId = Date.now();
+    const userMsgId = generateMsgId();
     const newMessages = [
       ...messages,
       {
@@ -180,12 +142,6 @@ export default function SuperAdminAIChatbot() {
         if (data.success) {
           if (data.colis) {
             setActiveColis(data.colis);
-            setEditForm({
-              recipient: data.colis.recipient || '',
-              phoneNumber: data.colis.phoneNumber || '',
-              city: data.colis.city || '',
-              price: data.colis.price || ''
-            });
           }
           // Notify other pages to refresh data in real time
           window.dispatchEvent(new CustomEvent('ai:ramassage-updated'));
@@ -193,7 +149,7 @@ export default function SuperAdminAIChatbot() {
           setMessages(prev => [
             ...prev,
             {
-              id: Date.now() + 1,
+              id: generateMsgId(),
               sender: 'ai',
               text: data.message,
               colis: data.colis || activeColis,
@@ -204,7 +160,7 @@ export default function SuperAdminAIChatbot() {
           setMessages(prev => [
             ...prev,
             {
-              id: Date.now() + 1,
+              id: generateMsgId(),
               sender: 'ai',
               text: data.message || "⚠️ Une erreur s'est produite lors du traitement.",
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -214,7 +170,7 @@ export default function SuperAdminAIChatbot() {
       } else {
         simulateLocalAiResponse(textToSend);
       }
-    } catch (err) {
+    } catch {
       simulateLocalAiResponse(textToSend);
     } finally {
       setLoading(false);
@@ -230,7 +186,7 @@ export default function SuperAdminAIChatbot() {
       setMessages(prev => [
         ...prev,
         {
-          id: Date.now() + 1,
+          id: generateMsgId(),
           sender: 'ai',
           text: `🔎 **Veuillez me donner un numéro de colis** (ex: \`CMD-84920\` ou \`CMD-466134\`) pour afficher ses informations et accéder aux choix de modification.`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -267,7 +223,7 @@ export default function SuperAdminAIChatbot() {
         setMessages(prev => [
           ...prev,
           {
-            id: Date.now() + 1,
+            id: generateMsgId(),
             sender: 'ai',
             text: `🚫 **${updated.orderNumber}** : Impossible de créer une demande de ramassage. Ce colis est déjà dans un état final (État: **${updated.etat}** | Statut: **${updated.statut}**). Aucune action n'est requise.`,
             colis: updated,
@@ -279,7 +235,7 @@ export default function SuperAdminAIChatbot() {
         setMessages(prev => [
           ...prev,
           {
-            id: Date.now() + 1,
+            id: generateMsgId(),
             sender: 'ai',
             text: `⚠️ **${updated.orderNumber}** : Ce colis fait DÉJÀ l'objet d'une demande de ramassage (État: En préparation | Statut: ${updated.statut}).`,
             colis: updated,
@@ -349,7 +305,7 @@ export default function SuperAdminAIChatbot() {
     setMessages(prev => [
       ...prev,
       {
-        id: Date.now() + 1,
+        id: generateMsgId(),
         sender: 'ai',
         text: replyText,
         colis: updated,
@@ -372,7 +328,7 @@ export default function SuperAdminAIChatbot() {
           statut: newStatut || activeColis.statut
         })
       });
-    } catch (e) {
+    } catch {
       // Ignored offline fallback
     }
 
@@ -390,7 +346,7 @@ export default function SuperAdminAIChatbot() {
     setMessages(prev => [
       ...prev,
       {
-        id: Date.now(),
+        id: generateMsgId(),
         sender: 'ai',
         text: `⚡ **Statut mis à jour directement !**\n${newEtat ? `• État: **${newEtat}**\n` : ''}${newStatut ? `• Statut: **${newStatut}**` : ''}`,
         colis: updated,
@@ -399,50 +355,10 @@ export default function SuperAdminAIChatbot() {
     ]);
   };
 
-  const handleSaveInfoForm = async (e) => {
-    e.preventDefault();
-    if (!activeColis) return;
-
-    setLoading(true);
-    const updated = {
-      ...activeColis,
-      recipient: editForm.recipient || activeColis.recipient,
-      phoneNumber: editForm.phoneNumber || activeColis.phoneNumber,
-      city: editForm.city || activeColis.city,
-      price: editForm.price || activeColis.price
-    };
-
-    try {
-      await fetch('/api/admin/ai-assistant/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trackingCode: activeColis.orderNumber,
-          recipient: editForm.recipient,
-          phoneNumber: editForm.phoneNumber,
-          city: editForm.city,
-          price: editForm.price
-        })
-      });
-    } catch (err) {
-      // Ignored
-    }
-
-    setActiveColis(updated);
-    setIsEditingInfo(false);
-    setLoading(false);
-
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        sender: 'ai',
-        text: `📝 **Informations du colis ${updated.orderNumber} modifiées avec succès !**\n• Destinataire: **${updated.recipient}**\n• Tél: **${updated.phoneNumber}**\n• Ville: **${updated.city}**\n• Prix: **${updated.price} DH**`,
-        colis: updated,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-  };
+  // Hide for livreurs and clients — chatbot is admin/superviseur only
+  if (isLivreur || isClient) {
+    return null;
+  }
 
   return (
     <div
@@ -453,7 +369,7 @@ export default function SuperAdminAIChatbot() {
       {!isOpen && (
         <button
           id="btn-open-super-admin-ai"
-          onClick={() => setIsOpen(true)}
+          onClick={handleOpenChat}
           title="Assistant IA LivrExpress"
           style={{
             position: 'relative',
@@ -511,7 +427,7 @@ export default function SuperAdminAIChatbot() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
               <button
                 className="kt-btn kt-btn-sm kt-btn-icon kt-btn-ghost"
-                onClick={() => { setMessages([]); setActiveColis(null); setShowDirectModifications(false); }}
+                onClick={handleResetChat}
                 title="Réinitialiser"
               >
                 <i className="ki-filled ki-arrows-loop" style={{ fontSize: '14px' }}></i>
