@@ -15,7 +15,7 @@ export function getStoredUser() {
   try {
     const raw = localStorage.getItem('user') || sessionStorage.getItem('user') || sessionStorage.getItem('user_profile');
     if (raw) return JSON.parse(raw);
-  } catch (_) {
+  } catch {
     // corrupted storage – ignore
   }
   return null;
