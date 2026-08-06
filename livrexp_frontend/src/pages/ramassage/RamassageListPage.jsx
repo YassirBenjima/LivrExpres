@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -51,13 +51,13 @@ export default function RamassageListPage({ navigate, showNotification }) {
     }
   };
 
-  const headers = { 'Accept': 'application/json' };
-  const token = localStorage.getItem('auth_token');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const fetchPickups = async () => {
-    setLoading(true);
+  const fetchPickups = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
+      const headers = { 'Accept': 'application/json' };
+      const token = localStorage.getItem('auth_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/ramassage', { headers });
       if (res.ok) {
         const json = await res.json();
@@ -68,19 +68,28 @@ export default function RamassageListPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPickups();
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) {
+        await fetchPickups();
+      }
+    };
+    load();
 
-    const handleAiUpdate = () => fetchPickups();
+    const handleAiUpdate = () => {
+      if (isMounted) fetchPickups();
+    };
     window.addEventListener('ai:ramassage-updated', handleAiUpdate);
     window.addEventListener('ai:colis-updated', handleAiUpdate);
     return () => {
+      isMounted = false;
       window.removeEventListener('ai:ramassage-updated', handleAiUpdate);
       window.removeEventListener('ai:colis-updated', handleAiUpdate);
     };
-  }, [statusFilter]);
+  }, [fetchPickups, statusFilter]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -96,17 +105,18 @@ export default function RamassageListPage({ navigate, showNotification }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchPickups();
+    fetchPickups(true);
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('auth_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`/api/ramassage/${id}/status`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        },
+        headers,
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) {
@@ -206,7 +216,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                   {t('colisPage.showingPickups', 'Affichage de')} {filtered.length} {t('colisPage.pickupsCount', 'ramassage(s)')}
                 </h3>
                 <div className="flex flex-wrap gap-2 lg:gap-5">
-                  <div className="flex">
+                  <form onSubmit={handleSearchSubmit} className="flex">
                     <label className="kt-input">
                       <i className="ki-filled ki-magnifier"></i>
                       <input 
@@ -216,7 +226,7 @@ export default function RamassageListPage({ navigate, showNotification }) {
                         type="text" 
                       />
                     </label>
-                  </div>
+                  </form>
                   <div className="flex flex-wrap gap-2.5">
                     <KtSelect
                       value={statusFilter}

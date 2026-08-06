@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
@@ -9,16 +9,28 @@ export default function RamassageNewPage({ navigate, showNotification }) {
   const [loadingCities, setLoadingCities] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [form, setForm] = useState({
-    phone: '',
-    supplier_phone: '',
-    city: '',
-    neighborhood: '',
-    address: '',
-    product_name: '',
-    type: 'simple',
-    note: '',
-    has_labels: true
+  const [form, setForm] = useState(() => {
+    let u = {};
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        u = JSON.parse(userStr);
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+
+    return {
+      phone: u.phone || '',
+      supplier_phone: '',
+      city: u.city || '',
+      neighborhood: '',
+      address: u.address || '',
+      product_name: '',
+      type: 'simple',
+      note: '',
+      has_labels: true
+    };
   });
 
   const headers = { 'Accept': 'application/json' };
@@ -26,20 +38,6 @@ export default function RamassageNewPage({ navigate, showNotification }) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   useEffect(() => {
-    // Populate form with stored user info if available
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        setForm(prev => ({
-          ...prev,
-          city: u.city || '',
-          address: u.address || '',
-          phone: u.phone || ''
-        }));
-      }
-    } catch (e) {}
-
     // Fetch cities
     const fetchCities = async () => {
       setLoadingCities(true);
@@ -130,7 +128,9 @@ export default function RamassageNewPage({ navigate, showNotification }) {
         try {
           const errData = await res.json();
           if (errData.message) msg = errData.message;
-        } catch (err) {}
+        } catch {
+          // Ignore JSON parse failure for error response body
+        }
         if (showNotification) showNotification('error', msg);
       }
     } catch (err) {

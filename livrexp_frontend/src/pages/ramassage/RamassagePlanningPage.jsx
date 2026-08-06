@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -12,12 +12,13 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const headers = { 'Accept': 'application/json' };
-  const token = localStorage.getItem('auth_token');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const getAuthToken = () => localStorage.getItem('auth_token');
 
-  const fetchPlanningData = async () => {
-    setLoading(true);
+  const fetchPlanningData = useCallback(async () => {
+    const headers = { 'Accept': 'application/json' };
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     try {
       const [eventsRes, statsRes] = await Promise.all([
         fetch('/api/ramassage/calendar/events', { headers }),
@@ -38,11 +39,20 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPlanningData();
-  }, []);
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) {
+        await fetchPlanningData();
+      }
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchPlanningData]);
 
   // Date navigation helpers
   const year = currentDate.getFullYear();
@@ -499,6 +509,7 @@ export default function RamassagePlanningPage({ navigate, showNotification }) {
                         }));
 
                         try {
+                          const token = localStorage.getItem('auth_token');
                           const res = await fetch(`/api/ramassage/${eventId}/calendar-move`, {
                             method: 'POST',
                             headers: {
