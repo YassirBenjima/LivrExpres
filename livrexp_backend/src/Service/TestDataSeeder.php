@@ -507,15 +507,20 @@ class TestDataSeeder
             ],
         ];
 
+        $client = $this->userRepository->findOneBy(['email' => self::CLIENT_EMAIL]);
+
         $map = [];
         foreach ($scenarios as $key => $data) {
             $existing = $this->colisRepository->findOneBy(['orderNumber' => 'CMD-' . $data['order']]);
             if ($existing instanceof Colis) {
+                if (!$existing->getCreatedBy() && $client) {
+                    $existing->setCreatedBy($client);
+                }
                 $map[$key] = $existing;
                 continue;
             }
 
-            $colis = $this->buildColis($data, $city);
+            $colis = $this->buildColis($data, $city, $client);
             $this->entityManager->persist($colis);
             $map[$key] = $colis;
         }
@@ -526,9 +531,12 @@ class TestDataSeeder
     /**
      * @param array<string, mixed> $data
      */
-    private function buildColis(array $data, string $city): Colis
+    private function buildColis(array $data, string $city, ?User $client = null): Colis
     {
         $colis = new Colis();
+        if ($client) {
+            $colis->setCreatedBy($client);
+        }
         $colis->setOrderNumber('CMD-' . $data['order']);
         $colis->setType($data['type']);
         $colis->setCity($data['city'] ?? $city);

@@ -847,10 +847,21 @@ final class StockApiController extends AbstractController
     #[Route('/api/stock/colis', name: 'api_stock_colis_list', methods: ['GET'])]
     public function stockColis(ColisRepository $repo): JsonResponse
     {
-        $colisList = $repo->findBy([
-            'statut' => Colis::STATUT_EN_ATTENTE,
-            'type'   => Colis::TYPE_STOCK,
-        ], ['id' => 'DESC']);
+        $user = $this->getUser();
+
+        $qb = $repo->createQueryBuilder('c')
+            ->where('(c.type = :typeStock OR c.type = :typeStockShort OR LOWER(c.type) LIKE :typeStockLike)')
+            ->setParameter('typeStock', Colis::TYPE_STOCK)
+            ->setParameter('typeStockShort', 'stock')
+            ->setParameter('typeStockLike', '%stock%')
+            ->orderBy('c.id', 'DESC');
+
+        if (!$this->isGranted('ROLE_SUPERVISEUR') && !$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_SUPER_ADMIN') && $user instanceof User) {
+            $qb->andWhere('(c.createdBy = :user OR c.createdBy IS NULL)')
+               ->setParameter('user', $user);
+        }
+
+        $colisList = $qb->getQuery()->getResult();
 
         $data = [];
         foreach ($colisList as $colis) {
@@ -883,6 +894,7 @@ final class StockApiController extends AbstractController
                 },
                 'comment'      => $colis->getComment() ?: '-',
                 'assignedDriver' => $colis->getAssignedDriver() ?: '-',
+                'clientName'   => $colis->getCreatedBy() ? ($colis->getCreatedBy()->getFullName() ?: ($colis->getCreatedBy()->getBusinessName() ?: $colis->getCreatedBy()->getUserIdentifier())) : '-',
             ];
         }
 

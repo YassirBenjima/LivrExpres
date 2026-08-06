@@ -30,7 +30,7 @@ final class ColisApiController extends AbstractController
             ->orderBy('c.id', 'DESC');
 
         if (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) {
-            $qb->andWhere('c.createdBy = :user')
+            $qb->andWhere('(c.createdBy = :user OR c.createdBy IS NULL)')
                ->setParameter('user', $user);
         }
 

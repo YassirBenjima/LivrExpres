@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -19,22 +19,35 @@ export default function StockProductsPage({ navigate, showNotification }) {
   const [pickupProduct, setPickupProduct]       = useState(null);
   const [pickupLoading, setPickupLoading]       = useState(false);
   
-  const [pickupForm, setPickupForm] = useState({
-    city: '',
-    neighborhood: '',
-    address: '',
-    phone: '',
-    supplierPhone: '',
-    note: '',
-    hasLabels: false
+  const [pickupForm, setPickupForm] = useState(() => {
+    let city = '', address = '', phone = '';
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        city = u.city || '';
+        address = u.address || '';
+        phone = u.phone || '';
+      }
+    } catch {
+      // Ignore JSON parse errors if localStorage item is invalid
+    }
+    return {
+      city,
+      neighborhood: '',
+      address,
+      phone,
+      supplierPhone: '',
+      note: '',
+      hasLabels: false
+    };
   });
 
   const toggleDropdown = (id) => {
     setActiveDropdownId(prev => prev === id ? null : id);
   };
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/stock/products', {
@@ -49,14 +62,21 @@ export default function StockProductsPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProducts();
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) {
+        await fetchProducts();
+      }
+    };
+    load();
 
     fetch('/api/cities')
       .then(res => res.json())
       .then(data => {
+        if (!isMounted) return;
         if (Array.isArray(data)) {
           setCities(data);
         } else if (data && Array.isArray(data.cities)) {
@@ -65,19 +85,10 @@ export default function StockProductsPage({ navigate, showNotification }) {
       })
       .catch(err => console.warn('Could not fetch cities:', err));
 
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        setPickupForm(prev => ({
-          ...prev,
-          city: u.city || '',
-          address: u.address || '',
-          phone: u.phone || ''
-        }));
-      }
-    } catch(e) {}
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchProducts]);
 
   useEffect(() => {
     const handleDocumentClick = (e) => {
@@ -113,12 +124,12 @@ export default function StockProductsPage({ navigate, showNotification }) {
         try {
           const err = await res.json();
           errMsg = err.message || errMsg;
-        } catch (e) {
+        } catch {
           // Fallback if not JSON (e.g. HTML debug page)
         }
         showNotification('error', errMsg);
       }
-    } catch (err) {
+    } catch {
       showNotification('error', t('stockPage.connectionError', 'Erreur de connexion avec le serveur.'));
     } finally {
       setDeleteLoading(false);
@@ -163,7 +174,7 @@ export default function StockProductsPage({ navigate, showNotification }) {
         const err = await res.json();
         showNotification('error', err.message || t('stockPage.pickupError', 'Erreur lors de la demande de ramassage.'));
       }
-    } catch (err) {
+    } catch {
       showNotification('error', t('stockPage.connectionError', 'Erreur de connexion avec le serveur.'));
     } finally {
       setPickupLoading(false);

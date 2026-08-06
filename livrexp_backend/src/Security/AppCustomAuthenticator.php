@@ -117,6 +117,17 @@ class AppCustomAuthenticator extends AbstractLoginFormAuthenticator
         return parent::onAuthenticationFailure($request, $exception);
     }
 
+    public function start(Request $request, ?AuthenticationException $authException = null): Response
+    {
+        if (str_contains($request->headers->get('Accept', ''), 'application/json') || str_contains($request->headers->get('Content-Type', ''), 'application/json') || str_starts_with($request->getPathInfo(), '/api/')) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse([
+                'error' => 'Non authentifié. Veuillez vous connecter.'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return parent::start($request, $authException);
+    }
+
     protected function getLoginUrl(Request $request): string
     {
         $pathInfo = $request->getPathInfo();

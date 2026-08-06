@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -38,7 +38,7 @@ export default function StockStickerPage({ navigate, id, isVariant, showNotifica
     };
 
     fetchStickerData();
-  }, [id, isVariant]);
+  }, [id, isVariant, showNotification, t]);
 
   if (loading) {
     return (

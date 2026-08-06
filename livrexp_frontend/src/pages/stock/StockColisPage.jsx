@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function StockColisPage({ navigate, showNotification }) {
   const { t } = useLanguage();
+  const { isSuperAdmin } = useAuth();
   const [colisList, setColisList]       = useState([]);
   const [loading, setLoading]           = useState(true);
   const [searchQuery, setSearchQuery]   = useState('');
@@ -58,18 +60,20 @@ export default function StockColisPage({ navigate, showNotification }) {
     return key ? t(key, label) : label;
   };
 
-  const token = localStorage.getItem('auth_token');
-  const headers = {
-    'Accept': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  const getHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+      'Accept': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
   };
 
-  const fetchColis = async (silent = false) => {
-    if (!silent && colisList.length === 0) {
-      setLoading(true);
-    }
+  const fetchColis = useCallback(async () => {
     try {
-      const response = await fetch('/api/stock/colis', { headers });
+      const response = await fetch('/api/stock/colis', { 
+        headers: getHeaders(),
+        credentials: 'include'
+      });
       if (response.ok) {
         const json = await response.json();
         setColisList(Array.isArray(json) ? json : []);
@@ -82,10 +86,13 @@ export default function StockColisPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchColis();
+    const loadData = async () => {
+      await fetchColis();
+    };
+    loadData();
 
     const handleAiUpdate = () => fetchColis();
     window.addEventListener('ai:ramassage-updated', handleAiUpdate);
@@ -94,7 +101,7 @@ export default function StockColisPage({ navigate, showNotification }) {
       window.removeEventListener('ai:ramassage-updated', handleAiUpdate);
       window.removeEventListener('ai:colis-updated', handleAiUpdate);
     };
-  }, []);
+  }, [fetchColis]);
 
   useEffect(() => {
     const handleDocumentClick = (e) => {
@@ -134,9 +141,9 @@ export default function StockColisPage({ navigate, showNotification }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...getHeaders()
         },
+        credentials: 'include',
         body: JSON.stringify({ ids: selectedIds })
       });
       if (response.ok) {
@@ -167,9 +174,9 @@ export default function StockColisPage({ navigate, showNotification }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...getHeaders()
         },
+        credentials: 'include',
         body: JSON.stringify({ ids: [colisId] })
       });
       if (response.ok) {
@@ -199,7 +206,8 @@ export default function StockColisPage({ navigate, showNotification }) {
     try {
       const response = await fetch(`/api/colis/${deleteColis.id}`, {
         method: 'DELETE',
-        headers
+        headers: getHeaders(),
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -224,19 +232,19 @@ export default function StockColisPage({ navigate, showNotification }) {
     }
   };
 
-  // Filter logic
+  // Filter calculations
   const filteredColis = colisList.filter(colis => {
-    const matchesSearch = !searchQuery ? true : [
-      colis.trackingCode,
-      colis.productNature,
-      colis.address,
-      colis.city
-    ].some(v => v?.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesEtat = selectedEtat ? colis.etatLabel === selectedEtat : true;
-    const matchesStatut = selectedStatut ? colis.statutLabel === selectedStatut : true;
-
-    return matchesSearch && matchesEtat && matchesStatut;
+    const q = searchQuery.toLowerCase().trim();
+    const matchSearch = !q || (
+      (colis.trackingCode && colis.trackingCode.toLowerCase().includes(q)) ||
+      (colis.productNature && colis.productNature.toLowerCase().includes(q)) ||
+      (colis.address && colis.address.toLowerCase().includes(q)) ||
+      (colis.city && colis.city.toLowerCase().includes(q)) ||
+      (colis.clientName && colis.clientName.toLowerCase().includes(q))
+    );
+    const matchEtat = !selectedEtat || colis.etatLabel === selectedEtat;
+    const matchStatut = !selectedStatut || colis.statutLabel === selectedStatut;
+    return matchSearch && matchEtat && matchStatut;
   });
 
   const totalColis = filteredColis.length;
@@ -249,16 +257,9 @@ export default function StockColisPage({ navigate, showNotification }) {
   if (totalColis > 10) perPageOptions.push({ value: '20', label: '20' });
   if (totalColis >= 50) perPageOptions.push({ value: '50', label: '50' });
 
-  useEffect(() => {
-    const exists = perPageOptions.some(opt => Number(opt.value) === itemsPerPage);
-    if (!exists) {
-      setItemsPerPage(10);
-      setCurrentPage(1);
-    }
-  }, [totalColis, itemsPerPage]);
-
-  const totalPages = Math.ceil(totalColis / itemsPerPage);
-  const paginatedColis = filteredColis.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const effectiveItemsPerPage = perPageOptions.some(opt => Number(opt.value) === itemsPerPage) ? itemsPerPage : 10;
+  const totalPages = Math.ceil(totalColis / effectiveItemsPerPage);
+  const paginatedColis = filteredColis.slice((currentPage - 1) * effectiveItemsPerPage, currentPage * effectiveItemsPerPage);
 
   const etatsPossibles = Array.from(new Set(colisList.map(c => c.etatLabel).filter(Boolean)));
   const statutsPossibles = Array.from(new Set(colisList.map(c => c.statutLabel).filter(Boolean)));
@@ -272,7 +273,7 @@ export default function StockColisPage({ navigate, showNotification }) {
 
   const SkeletonRow = () => (
     <tr className="animate-pulse">
-      {Array.from({ length: 14 }).map((_, j) => (
+      {Array.from({ length: isSuperAdmin ? 15 : 14 }).map((_, j) => (
         <td key={j} className="py-4">
           <div
             style={{
@@ -404,6 +405,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                             />
                           </th>
                           <th className="min-w-[150px]">{t('stockPage.colTrackingCode', 'Code de suivi')}</th>
+                          {isSuperAdmin && <th className="min-w-[150px]">{t('common.client', 'Client')}</th>}
                           <th className="min-w-[180px]">{t('stockPage.colProduct', 'Nom du produit')}</th>
                           <th className="min-w-[150px]">{t('stockPage.colCreatedAt', 'Date de création')}</th>
                           <th className="min-w-[180px]">{t('stockPage.colAddress', 'Adresse de livraison')}</th>
@@ -433,6 +435,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                                 />
                               </td>
                               <td className="text-foreground font-medium text-mono">{colis.trackingCode}</td>
+                              {isSuperAdmin && <td className="text-foreground font-medium">{colis.clientName || '-'}</td>}
                               <td className="text-foreground font-normal">{colis.productNature}</td>
                               <td className="text-foreground font-normal">{colis.createdAt}</td>
                               <td className="text-foreground font-normal">{colis.address}</td>
@@ -525,7 +528,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={14} className="py-8 text-center text-secondary-foreground">
+                            <td colSpan={isSuperAdmin ? 15 : 14} className="py-8 text-center text-secondary-foreground">
                               {t('stockPage.noColisFound', 'Aucun colis en attente de ramassage')}
                             </td>
                           </tr>
@@ -539,7 +542,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                     <div className="flex items-center gap-2 order-2 md:order-1">
                       {t('stockPage.show', 'Afficher')}
                       <KtSelect
-                        value={String(itemsPerPage)}
+                        value={String(effectiveItemsPerPage)}
                         onChange={(val) => { setItemsPerPage(Number(val)); setCurrentPage(1); }}
                         className="w-16"
                         options={perPageOptions}
@@ -549,7 +552,7 @@ export default function StockColisPage({ navigate, showNotification }) {
                     
                     <div className="flex items-center gap-4 order-1 md:order-2">
                       <span>
-                        {t('stockPage.showingColis', 'Affichage de')} {Math.min(totalColis, (currentPage - 1) * itemsPerPage + 1)} {t('colisPage.to', 'à')} {Math.min(totalColis, currentPage * itemsPerPage)} {t('colisPage.of', 'sur')} {totalColis} {t('stockPage.colisCount', 'colis')}
+                        {t('stockPage.showingColis', 'Affichage de')} {Math.min(totalColis, (currentPage - 1) * effectiveItemsPerPage + 1)} {t('colisPage.to', 'à')} {Math.min(totalColis, currentPage * effectiveItemsPerPage)} {t('colisPage.of', 'sur')} {totalColis} {t('stockPage.colisCount', 'colis')}
                       </span>
                       {totalPages > 1 && (
                         <div className="flex gap-1">

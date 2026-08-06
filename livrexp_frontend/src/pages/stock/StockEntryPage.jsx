@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -49,12 +49,29 @@ export default function StockEntryPage({ showNotification }) {
   const [selectedMovementIds, setSelectedMovementIds] = useState([]);
   const [pickupModalOpen, setPickupModalOpen]         = useState(false);
   const [modalData, setModalData]                     = useState({ summary: '', count: 0, loading: false });
-  const [pickupForm, setPickupForm]                   = useState({
-    city: '',
-    neighborhood: '',
-    address: '',
-    phone: '',
-    note: ''
+  const [pickupForm, setPickupForm]                   = useState(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        return {
+          city: u.city || '',
+          neighborhood: '',
+          address: u.address || '',
+          phone: u.phone || '',
+          note: ''
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+    return {
+      city: '',
+      neighborhood: '',
+      address: '',
+      phone: '',
+      note: ''
+    };
   });
   const [pickupLoading, setPickupLoading]             = useState(false);
 
@@ -152,12 +169,16 @@ export default function StockEntryPage({ showNotification }) {
     }
   };
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
+      const token = localStorage.getItem('auth_token');
+      const reqHeaders = { 'Accept': 'application/json' };
+      if (token) reqHeaders['Authorization'] = `Bearer ${token}`;
+
       const [mRes, pRes, cRes] = await Promise.all([
-        fetch('/api/stock/entry', { headers }),
-        fetch('/api/stock/products', { headers }),
+        fetch('/api/stock/entry', { headers: reqHeaders }),
+        fetch('/api/stock/products', { headers: reqHeaders }),
         fetch('/api/cities')
       ]);
       if (mRes.ok) { 
@@ -181,24 +202,11 @@ export default function StockEntryPage({ showNotification }) {
     } finally { 
       setLoading(false); 
     }
-  };
+  }, []);
 
   useEffect(() => { 
-    fetchData(); 
-
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        setPickupForm(prev => ({
-          ...prev,
-          city: u.city || '',
-          address: u.address || '',
-          phone: u.phone || ''
-        }));
-      }
-    } catch(e) {}
-  }, []);
+    fetchData(true); 
+  }, [fetchData]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -250,7 +258,9 @@ export default function StockEntryPage({ showNotification }) {
         try {
           const err = await res.json();
           if (err.message) msg = err.message;
-        } catch(e) {}
+        } catch {
+          /* ignore */
+        }
         if (showNotification) showNotification('error', msg);
       }
     } catch (err) { 
@@ -328,7 +338,9 @@ export default function StockEntryPage({ showNotification }) {
         try {
           const err = await res.json();
           if (err.message) msg = err.message;
-        } catch(e) {}
+        } catch {
+          /* ignore */
+        }
         if (showNotification) showNotification('error', msg);
       }
     } catch (err) {
@@ -608,7 +620,7 @@ export default function StockEntryPage({ showNotification }) {
                               </thead>
                               <tbody>
                                 {selectedProducts.map(p => (
-                                  <React.Fragment key={p.id}>
+                                  <Fragment key={p.id}>
                                     <tr className="bg-muted/10">
                                       <td colSpan={3} className="text-foreground font-semibold py-2 px-3">
                                         {p.name}
@@ -633,7 +645,7 @@ export default function StockEntryPage({ showNotification }) {
                                         </td>
                                       </tr>
                                     ))}
-                                  </React.Fragment>
+                                  </Fragment>
                                 ))}
                               </tbody>
                             </table>

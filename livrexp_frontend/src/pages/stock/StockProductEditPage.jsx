@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -35,11 +35,11 @@ export default function StockProductEditPage({ productId, navigate, showNotifica
 
   const fileInputRef = useRef(null);
 
-  const triggerLocalNotification = (type, message) => {
+  const triggerLocalNotification = useCallback((type, message) => {
     if (showNotification) {
       showNotification(type, message);
     }
-  };
+  }, [showNotification]);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -96,7 +96,7 @@ export default function StockProductEditPage({ productId, navigate, showNotifica
     if (productId) {
       fetchProductDetails();
     }
-  }, [productId]);
+  }, [productId, navigate, t, triggerLocalNotification]);
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
