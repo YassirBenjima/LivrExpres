@@ -1,11 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
+import KtSelect from '../../components/ui/KtSelect';
 
-export default function ProfilePage({ navigate, showNotification }) {
+const FIELD_KEY_MAP = {
+  fullName: 'full_name',
+  personalPhone: 'personal_phone',
+  businessPhone: 'business_phone',
+  email: 'email',
+  city: 'city',
+  address: 'address',
+  businessName: 'business_name',
+  clientType: 'client_type',
+  ice: 'ice',
+  rc: 'rc',
+  website: 'website',
+  labelMessage: 'label_message',
+  packageOption: 'package_option',
+  bankName: 'bank_name',
+  bankRib: 'bank_rib',
+  returnReception: 'return_reception',
+  returnAgency: 'return_agency',
+  returnPhone: 'return_phone',
+  returnCity: 'return_city',
+  returnNeighborhood: 'return_neighborhood'
+};
+
+export default function ProfilePage({ showNotification }) {
   const { t } = useLanguage();
-  const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({});
+  const [initialData, setInitialData] = useState({});
+  const [saving, setSaving] = useState(false);
   const [cities, setCities] = useState([]);
   const [moroccanBanks, setMoroccanBanks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,8 +48,14 @@ export default function ProfilePage({ navigate, showNotification }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  const fetchProfile = async () => {
-    setLoading(true);
+  const isDirty = Object.keys(FIELD_KEY_MAP).some(key => {
+    const current = formData[key] ?? '';
+    const initial = initialData[key] ?? '';
+    return current !== initial;
+  });
+
+  const fetchProfile = async (showLoadingState = false) => {
+    if (showLoadingState) setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/profile', {
@@ -35,8 +66,9 @@ export default function ProfilePage({ navigate, showNotification }) {
       });
       if (res.ok) {
         const data = await res.json();
-        setProfile(data.user);
-        setFormData(data.user);
+        const userData = data.user || {};
+        setFormData(userData);
+        setInitialData(userData);
         setCities(data.cities || []);
         setMoroccanBanks(data.moroccanBanks || []);
         if (data.user) {
@@ -51,11 +83,91 @@ export default function ProfilePage({ navigate, showNotification }) {
   };
 
   useEffect(() => {
-    fetchProfile();
+    let ignore = false;
+    const loadProfile = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch('/api/profile', {
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore) {
+            const userData = data.user || {};
+            setFormData(userData);
+            setInitialData(userData);
+            setCities(data.cities || []);
+            setMoroccanBanks(data.moroccanBanks || []);
+            if (data.user) {
+              sessionStorage.setItem('user_profile', JSON.stringify(data.user));
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement profil:', err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+    loadProfile();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveAll = async () => {
+    if (!isDirty || saving) return;
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const changedKeys = Object.keys(FIELD_KEY_MAP).filter(key => {
+        const current = formData[key] ?? '';
+        const initial = initialData[key] ?? '';
+        return current !== initial;
+      });
+
+      let hasError = false;
+      for (const key of changedKeys) {
+        const fieldKey = FIELD_KEY_MAP[key];
+        const val = formData[key] ?? '';
+        const res = await fetch('/api/profile/field', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ field: fieldKey, value: val })
+        });
+        if (!res.ok) {
+          hasError = true;
+          const data = await res.json();
+          if (showNotification) showNotification('danger', data.message || t('profile.updateError', 'Erreur lors de la mise à jour.'));
+          break;
+        }
+      }
+
+      if (!hasError) {
+        if (showNotification) showNotification('success', t('profile.saveSuccess', 'Profil mis à jour avec succès.'));
+        await fetchProfile();
+      }
+    } catch (err) {
+      console.error('Erreur sauvegarde profil:', err);
+      if (showNotification) showNotification('danger', t('profile.networkError', 'Une erreur réseau est survenue.'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({ ...initialData });
   };
 
   const handleSaveField = async (fieldKey, valueToSave) => {
@@ -222,11 +334,28 @@ export default function ProfilePage({ navigate, showNotification }) {
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex items-center gap-2.5">
-                <button className="kt-btn kt-btn-outline" onClick={fetchProfile} type="button">
-                  {t('profile.cancelBtn', 'Cancel')}
+                <button
+                  className="kt-btn kt-btn-outline"
+                  onClick={handleCancel}
+                  disabled={!isDirty || saving}
+                  type="button"
+                >
+                  {t('profile.cancelBtn', 'Annuler')}
                 </button>
-                <button className="kt-btn kt-btn-primary" onClick={fetchProfile} type="button">
-                  {t('profile.saveBtn', 'Enregistrer')}
+                <button
+                  className="kt-btn kt-btn-primary"
+                  onClick={handleSaveAll}
+                  disabled={!isDirty || saving}
+                  type="button"
+                >
+                  {saving ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin border-2 border-white border-t-transparent rounded-full size-4"></span>
+                      {t('profile.savingBtn', 'Enregistrement...')}
+                    </span>
+                  ) : (
+                    t('profile.saveBtn', 'Enregistrer')
+                  )}
                 </button>
               </div>
             </div>
@@ -356,16 +485,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                         <tr>
                           <td className="py-2 text-secondary-foreground font-normal">{t('profile.cityLabel', 'Ville *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <select
-                              className="kt-select text-sm h-8"
+                            <KtSelect
                               value={formData.city || ''}
-                              onChange={e => handleChange('city', e.target.value)}
-                            >
-                              <option value="" disabled>{t('profile.selectCityPlaceholder', 'Choisir une ville')}</option>
-                              {cities.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
+                              onChange={val => handleChange('city', val)}
+                              placeholder={t('profile.selectCityPlaceholder', 'Choisir une ville')}
+                              enableSearch={true}
+                              searchPlaceholder={t('profile.searchCity', 'Rechercher une ville...')}
+                              options={cities.map(c => ({ value: c, label: c }))}
+                            />
                           </td>
                           <td className="py-2 text-center">
                             <button
@@ -442,14 +569,16 @@ export default function ProfilePage({ navigate, showNotification }) {
                         <tr>
                           <td className="py-2 text-secondary-foreground font-normal">{t('profile.packageLabel', 'Colis')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <select
-                              className="kt-select text-sm h-8"
+                            <KtSelect
                               value={formData.packageOption || 'Ne pas ouvrir le colis'}
-                              onChange={e => handleChange('packageOption', e.target.value)}
-                            >
-                              <option value="Ne pas ouvrir le colis">{t('profile.packageDoNotOpen', 'Ne pas ouvrir le colis')}</option>
-                              <option value="Ouvrir le colis">{t('profile.packageOpen', 'Ouvrir le colis')}</option>
-                            </select>
+                              onChange={val => handleChange('packageOption', val)}
+                              enableSearch={true}
+                              searchPlaceholder={t('common.search', 'Rechercher...')}
+                              options={[
+                                { value: 'Ne pas ouvrir le colis', label: t('profile.packageDoNotOpen', 'Ne pas ouvrir le colis') },
+                                { value: 'Ouvrir le colis', label: t('profile.packageOpen', 'Ouvrir le colis') }
+                              ]}
+                            />
                           </td>
                           <td className="py-2 text-center">
                             <button
@@ -656,18 +785,20 @@ export default function ProfilePage({ navigate, showNotification }) {
                         <tr>
                           <td className="py-2 text-secondary-foreground font-normal">{t('profile.clientTypeLabel', 'Type de client *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <select
-                              className="kt-select text-sm h-8"
+                            <KtSelect
                               value={formData.clientType || ''}
-                              onChange={e => handleChange('clientType', e.target.value)}
-                            >
-                              <option value="" disabled>{t('profile.selectTypePlaceholder', 'Choisir un type')}</option>
-                              <option value="E-commerce">E-commerce</option>
-                              <option value="Auto Entrepreneur">Auto Entrepreneur</option>
-                              <option value="SARL">SARL</option>
-                              <option value="SARLAU">SARLAU</option>
-                              <option value="Autres">Autres</option>
-                            </select>
+                              onChange={val => handleChange('clientType', val)}
+                              placeholder={t('profile.selectTypePlaceholder', 'Choisir un type')}
+                              enableSearch={true}
+                              searchPlaceholder={t('common.search', 'Rechercher...')}
+                              options={[
+                                { value: 'E-commerce', label: 'E-commerce' },
+                                { value: 'Auto Entrepreneur', label: 'Auto Entrepreneur' },
+                                { value: 'SARL', label: 'SARL' },
+                                { value: 'SARLAU', label: 'SARLAU' },
+                                { value: 'Autres', label: 'Autres' }
+                              ]}
+                            />
                           </td>
                           <td className="py-2 text-center">
                             <button
@@ -767,16 +898,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                         <tr>
                           <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.bankNameLabel', 'Nom de la banque *')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <select
-                              className="kt-select text-sm h-8"
+                            <KtSelect
                               value={formData.bankName || ''}
-                              onChange={e => handleChange('bankName', e.target.value)}
-                            >
-                              <option value="" disabled>{t('profile.selectBankPlaceholder', 'Choisir une banque')}</option>
-                              {moroccanBanks.map(b => (
-                                <option key={b} value={b}>{b}</option>
-                              ))}
-                            </select>
+                              onChange={val => handleChange('bankName', val)}
+                              placeholder={t('profile.selectBankPlaceholder', 'Choisir une banque')}
+                              enableSearch={true}
+                              searchPlaceholder={t('profile.searchBank', 'Rechercher une banque...')}
+                              options={moroccanBanks.map(b => ({ value: b, label: b }))}
+                            />
                           </td>
                           <td className="py-2 text-center">
                             <button
@@ -831,17 +960,19 @@ export default function ProfilePage({ navigate, showNotification }) {
                         <tr>
                           <td className="py-2 min-w-36 text-secondary-foreground font-normal">{t('profile.receptionModeLabel', 'Réception colis retournés')}</td>
                           <td className="py-2 text-foreground font-normal text-sm">
-                            <select
-                              className="kt-select text-sm h-8"
+                            <KtSelect
                               value={returnReceptionMode}
-                              onChange={e => {
-                                handleChange('returnReception', e.target.value);
-                                handleSaveField('return_reception', e.target.value);
+                              onChange={val => {
+                                handleChange('returnReception', val);
+                                handleSaveField('return_reception', val);
                               }}
-                            >
-                              <option value="En ramassage">{t('profile.pickupMode', 'En ramassage')}</option>
-                              <option value="En Agence">{t('profile.agencyMode', 'En Agence')}</option>
-                            </select>
+                              enableSearch={true}
+                              searchPlaceholder={t('common.search', 'Rechercher...')}
+                              options={[
+                                { value: 'En ramassage', label: t('profile.pickupMode', 'En ramassage') },
+                                { value: 'En Agence', label: t('profile.agencyMode', 'En Agence') }
+                              ]}
+                            />
                           </td>
                           <td className="py-2 text-center">
                             <button
@@ -859,15 +990,17 @@ export default function ProfilePage({ navigate, showNotification }) {
                           <tr>
                             <td className="py-2 text-secondary-foreground font-normal">{t('profile.agencyLabel', 'Agence')}</td>
                             <td className="py-2 text-foreground font-normal text-sm">
-                              <select
-                                className="kt-select text-sm h-8"
+                              <KtSelect
                                 value={formData.returnAgency || ''}
-                                onChange={e => handleChange('returnAgency', e.target.value)}
-                              >
-                                <option value="" disabled>{t('profile.allAgencies', 'Toutes nos agences')}</option>
-                                <option value="Agence Principale">{t('profile.mainAgency', 'Agence Principale')}</option>
-                                <option value="Agence Secondaire">{t('profile.secondaryAgency', 'Agence Secondaire')}</option>
-                              </select>
+                                onChange={val => handleChange('returnAgency', val)}
+                                placeholder={t('profile.allAgencies', 'Toutes nos agences')}
+                                enableSearch={true}
+                                searchPlaceholder={t('common.search', 'Rechercher...')}
+                                options={[
+                                  { value: 'Agence Principale', label: t('profile.mainAgency', 'Agence Principale') },
+                                  { value: 'Agence Secondaire', label: t('profile.secondaryAgency', 'Agence Secondaire') }
+                                ]}
+                              />
                             </td>
                             <td className="py-2 text-center">
                               <button
@@ -908,16 +1041,14 @@ export default function ProfilePage({ navigate, showNotification }) {
                             <tr>
                               <td className="py-2 text-secondary-foreground font-normal">{t('profile.cityLabel', 'Ville')}</td>
                               <td className="py-2 text-foreground font-normal text-sm">
-                                <select
-                                  className="kt-select text-sm h-8"
+                                <KtSelect
                                   value={formData.returnCity || ''}
-                                  onChange={e => handleChange('returnCity', e.target.value)}
-                                >
-                                  <option value="" disabled>{t('profile.selectCityPlaceholder', 'Choisir une ville')}</option>
-                                  {cities.map(c => (
-                                    <option key={c} value={c}>{c}</option>
-                                  ))}
-                                </select>
+                                  onChange={val => handleChange('returnCity', val)}
+                                  placeholder={t('profile.selectCityPlaceholder', 'Choisir une ville')}
+                                  enableSearch={true}
+                                  searchPlaceholder={t('profile.searchCity', 'Rechercher une ville...')}
+                                  options={cities.map(c => ({ value: c, label: c }))}
+                                />
                               </td>
                               <td className="py-2 text-center">
                                 <button
