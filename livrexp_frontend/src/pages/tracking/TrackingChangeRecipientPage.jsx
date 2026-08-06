@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function TrackingChangeRecipientPage({ navigate, showNotification }) {
+export default function TrackingChangeRecipientPage({ showNotification }) {
   const { t } = useLanguage();
   const [colisList, setColisList] = useState([]);
   const [cities, setCities] = useState([]);
@@ -49,7 +49,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
     return map[clean] || statut;
   };
 
-  const fetchCities = async () => {
+  const fetchCities = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/cities', {
@@ -65,10 +65,9 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
     } catch (err) {
       console.error('Erreur chargement des villes:', err);
     }
-  };
+  }, []);
 
-  const fetchColis = async () => {
-    setLoading(true);
+  const fetchColis = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth_token');
       const params = new URLSearchParams();
@@ -107,16 +106,29 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCities();
-  }, []);
-
-  useEffect(() => {
-    fetchColis();
-    setSelectedIds([]);
   }, [activeTab, searchQuery, filterCity]);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        await fetchCities();
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [fetchCities]);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      if (isMounted) {
+        setSelectedIds([]);
+        setLoading(true);
+        await fetchColis();
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [fetchColis]);
 
   // Helper to sync form prefill based on selected IDs
   const syncFormPrefill = (nextIds, list = colisList) => {
@@ -206,6 +218,7 @@ export default function TrackingChangeRecipientPage({ navigate, showNotification
         showNotification?.('error', data.message || t('changeRecipient.updateError', 'Erreur lors de la mise à jour groupée.'));
       }
     } catch (err) {
+      console.error('Erreur mise à jour dest:', err);
       showNotification?.('error', t('changeRecipient.serverError', 'Erreur de communication avec le serveur.'));
     } finally {
       setBulkSubmitting(false);
