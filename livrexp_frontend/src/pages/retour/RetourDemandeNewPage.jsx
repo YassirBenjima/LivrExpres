@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
@@ -17,7 +17,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -43,11 +43,20 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
 
   useEffect(() => {
-    fetchData();
-  }, [searchQuery]);
+    let isMounted = true;
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchData]);
 
   const handleSelectRow = (id) => {
     if (selectedIds.includes(id)) {
@@ -101,6 +110,7 @@ export default function RetourDemandeNewPage({ navigate, showNotification }) {
         showNotification?.('error', data.message || t('returns.createError', 'Erreur lors de la création.'));
       }
     } catch (err) {
+      console.error('Erreur lors de la création de la demande de retour:', err);
       showNotification?.('error', t('returns.serverError', 'Erreur de communication avec le serveur.'));
     } finally {
       setSubmitting(false);

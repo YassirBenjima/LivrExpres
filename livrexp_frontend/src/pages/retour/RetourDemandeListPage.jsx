@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -14,16 +14,6 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
   const [statutOptions, setStatutOptions] = useState([]);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
 
-  // Advanced Stats
-  const [stats, setStats] = useState({
-    totalReturns: 0,
-    returnRatePercent: 4.5,
-    inQualityCheck: 0,
-    retriedDeliveries: 0,
-    reasonsBreakdown: [],
-    topCities: [],
-    topClients: []
-  });
 
   // Modal State
   const [isQualityModalOpen, setIsQualityModalOpen] = useState(false);
@@ -47,7 +37,7 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
     return type;
   };
 
-  const formatStatusLabel = (statut, rawLabel) => {
+  const formatStatusLabel = useCallback((statut, rawLabel) => {
     const label = rawLabel || statut;
     if (!label) return t('returns.statusPending', 'En attente');
     const clean = String(label).trim().toLowerCase();
@@ -60,9 +50,9 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
       'annule': t('returns.statusCancelled', 'Annulé')
     };
     return map[clean] || label;
-  };
+  }, [t]);
 
-  const fetchDemandes = async () => {
+  const fetchDemandes = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
@@ -96,30 +86,20 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/retour/advanced-stats', {
-        headers: {
-          'Accept': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      }
-    } catch (e) {
-      console.error('Erreur stats retours:', e);
-    }
-  };
+  }, [searchQuery, selectedStatut, t, formatStatusLabel]);
 
   useEffect(() => {
-    fetchDemandes();
-    fetchStats();
-  }, [searchQuery, selectedStatut]);
+    let isMounted = true;
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchDemandes();
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchDemandes]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -164,7 +144,6 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
         if (showNotification) showNotification('success', data.message || t('returns.statusUpdated', 'Statut du retour mis à jour.'));
         setIsQualityModalOpen(false);
         fetchDemandes();
-        fetchStats();
       } else {
         if (showNotification) showNotification('error', t('returns.updateError', 'Erreur lors de la mise à jour du retour.'));
       }
@@ -190,7 +169,6 @@ export default function RetourDemandeListPage({ navigate, showNotification }) {
         const data = await res.json();
         if (showNotification) showNotification('success', data.message || t('returns.relaunchSuccess', 'Nouvelle tentative de livraison planifiée !'));
         fetchDemandes();
-        fetchStats();
       } else {
         if (showNotification) showNotification('error', t('returns.relaunchError', 'Impossible de relancer ce colis.'));
       }

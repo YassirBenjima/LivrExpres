@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
 import { useLanguage } from '../../context/LanguageContext';
 
-export default function RetourBonsListPage({ navigate, showNotification }) {
-  const { t, language } = useLanguage();
+export default function RetourBonsListPage() {
+  const { language, t } = useLanguage();
   const [bons, setBons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,7 +18,7 @@ export default function RetourBonsListPage({ navigate, showNotification }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const formatStatusLabel = (statut, rawLabel) => {
+  const formatStatusLabel = useCallback((statut, rawLabel) => {
     const label = rawLabel || statut;
     if (!label) return t('returns.statusPending', 'En attente');
     const clean = String(label).trim().toLowerCase();
@@ -31,10 +31,9 @@ export default function RetourBonsListPage({ navigate, showNotification }) {
       'annule': t('returns.statusCancelled', 'Annulé')
     };
     return map[clean] || label;
-  };
+  }, [t]);
 
-  const fetchBons = async () => {
-    setLoading(true);
+  const fetchBons = useCallback(async () => {
     try {
       const token = localStorage.getItem('auth_token');
       const params = new URLSearchParams();
@@ -67,11 +66,20 @@ export default function RetourBonsListPage({ navigate, showNotification }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedStatut, t, formatStatusLabel]);
 
   useEffect(() => {
-    fetchBons();
-  }, [searchQuery, selectedStatut]);
+    let isMounted = true;
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchBons();
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchBons]);
 
   useEffect(() => {
     const handleDocumentClick = () => setActiveDropdownId(null);
