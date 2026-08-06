@@ -21,7 +21,7 @@ async function request(url, options = {}) {
     try {
       const data = await response.json();
       errorMessage = data.message || data.error || errorMessage;
-    } catch (_e) {
+    } catch {
       // JSON parsing failed, use default error message
     }
     throw new Error(errorMessage);

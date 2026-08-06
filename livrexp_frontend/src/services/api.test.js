@@ -8,14 +8,14 @@ describe('authService API unit tests', () => {
 
   it('login sends POST request to /api/login and returns response', async () => {
     const mockResponse = { success: true, message: 'Connecté avec succès' };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
 
     const result = await authService.login('test@example.com', 'password123', true);
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/login', expect.objectContaining({
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/login', expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({
         username: 'test@example.com',
@@ -27,7 +27,7 @@ describe('authService API unit tests', () => {
   });
 
   it('throws error when response is not ok', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       json: async () => ({ message: 'Identifiants invalides' }),
     });
@@ -38,7 +38,7 @@ describe('authService API unit tests', () => {
 
   it('register sends payload to /api/register', async () => {
     const mockResponse = { success: true };
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -46,7 +46,7 @@ describe('authService API unit tests', () => {
     const payload = { email: 'new@example.com', password: 'pwd' };
     const result = await authService.register(payload);
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/register', expect.objectContaining({
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/register', expect.objectContaining({
       method: 'POST',
       body: JSON.stringify(payload),
     }));
