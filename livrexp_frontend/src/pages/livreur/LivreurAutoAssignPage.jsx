@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -10,7 +10,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
   const [selectedColis, setSelectedColis] = useState([]);
   const [searchQuery, setSearchQuery]   = useState('');
   const [currentPage, setCurrentPage]   = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const itemsPerPage = 10;
   const [loading, setLoading]         = useState(false);
   const [fetching, setFetching]       = useState(true);
   const [done, setDone]               = useState(false);
@@ -20,7 +20,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
     return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setFetching(true);
     try {
       const [r1, r2] = await Promise.all([
@@ -46,11 +46,11 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
         { id: 3, orderNumber: 'CMD-003', trackingCode: 'F-20260731-003', recipient: 'Leila Fassi', city: 'Casablanca', etat: 'En préparation' },
       ]);
     } finally { setFetching(false); }
-  };
+  }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    (async () => { await load(); })();
+  }, [load]);
 
   const handleAutoAssign = async () => {
     setLoading(true);
@@ -69,7 +69,7 @@ export default function LivreurAutoAssignPage({ navigate, showNotification }) {
     finally { setLoading(false); }
   };
 
-  const handleManualAssign = async (livreurId, livreurName) => {
+  const handleManualAssign = async (livreurId) => {
     if (selectedColis.length === 0) { showNotification?.('error', t('drivers.selectAtLeastOneColis', 'Sélectionnez au moins un colis.')); return; }
     setLoading(true);
     try {

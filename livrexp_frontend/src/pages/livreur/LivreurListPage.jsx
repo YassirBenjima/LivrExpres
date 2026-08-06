@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import KtSelect from '../../components/ui/KtSelect';
@@ -25,7 +25,6 @@ export default function LivreurListPage({ navigate, showNotification }) {
   };
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const [r1, r2] = await Promise.all([
         fetch('/api/livreurs', { headers: headers(), credentials: 'include' }),
@@ -40,10 +39,23 @@ export default function LivreurListPage({ navigate, showNotification }) {
         { id: 3, fullName: 'Omar Tazi', email: 'omar@livrexpress.ma', phone: '0663456789', city: 'Marrakech', disponible: false, isLive: false, lastSeen: 'Hier', stats: { total: 8, livres: 5, retours: 1, enCours: 2, tauxLivraison: 62.5, commission: 75 } },
       ]);
       setStats({ totalLivreurs: 3, disponibles: 2, colisLivres: 35, colisExpedies: 6, tauxLivraison: 72.4, tauxRetour: 8.3 });
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) {
+        await loadData();
+      }
+    };
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, [loadData]);
 
   useEffect(() => {
     const handleDocClick = (e) => {

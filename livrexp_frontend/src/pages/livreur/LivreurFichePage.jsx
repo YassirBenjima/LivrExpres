@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -19,24 +19,30 @@ export default function LivreurFichePage({ navigate, showNotification, livreurId
     return { 'Accept': 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   };
 
-  const load = useCallback(async () => {
+  useEffect(() => {
     if (!id) return;
-    setLoading(true);
-    try {
-      const [r1, r2] = await Promise.all([
-        fetch(`/api/livreurs/${id}`, { headers: headers(), credentials: 'include' }),
-        fetch(`/api/livreurs/${id}/commission`, { headers: headers(), credentials: 'include' }),
-      ]);
-      if (r1.ok) { const d = await r1.json(); if (d.success) { setLivreur(d.livreur); setColis(d.colis || []); setTournees(d.tournees || {}); } }
-      if (r2.ok) { const d = await r2.json(); if (d.success) setComm(d); }
-    } catch {
-      setLivreur({ id: 1, fullName: 'Karim Alami', email: 'karim@livrexpress.ma', phone: '0661234567', city: 'Casablanca', address: '45 Bd Anfa', disponible: true, isLive: true, lastSeen: "À l'instant", stats: { total: 24, livres: 18, retours: 3, enCours: 3, tauxLivraison: 75, tauxRetour: 12.5, commission: 270 } });
-      setColis([{ id: 1, orderNumber: 'CMD-84920', trackingCode: 'F-20260730-84920', recipient: 'Sofia Bennani', phone: '0611223344', address: 'Bd Anfa 45', city: 'Casablanca', price: 350, etat: 'Expédié', statut: 'En cours', createdAt: '30/07/2026 10:30' }]);
-      setComm({ livres: 18, tauxParColis: 15, totalCommission: 270, devise: 'MAD' });
-    } finally { setLoading(false); }
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const [r1, r2] = await Promise.all([
+          fetch(`/api/livreurs/${id}`, { headers: headers(), credentials: 'include' }),
+          fetch(`/api/livreurs/${id}/commission`, { headers: headers(), credentials: 'include' }),
+        ]);
+        if (!isMounted) return;
+        if (r1.ok) { const d = await r1.json(); if (d.success) { setLivreur(d.livreur); setColis(d.colis || []); setTournees(d.tournees || {}); } }
+        if (r2.ok) { const d = await r2.json(); if (d.success) setComm(d); }
+      } catch {
+        if (!isMounted) return;
+        setLivreur({ id: 1, fullName: 'Karim Alami', email: 'karim@livrexpress.ma', phone: '0661234567', city: 'Casablanca', address: '45 Bd Anfa', disponible: true, isLive: true, lastSeen: "À l'instant", stats: { total: 24, livres: 18, retours: 3, enCours: 3, tauxLivraison: 75, tauxRetour: 12.5, commission: 270 } });
+        setColis([{ id: 1, orderNumber: 'CMD-84920', trackingCode: 'F-20260730-84920', recipient: 'Sofia Bennani', phone: '0611223344', address: 'Bd Anfa 45', city: 'Casablanca', price: 350, etat: 'Expédié', statut: 'En cours', createdAt: '30/07/2026 10:30' }]);
+        setComm({ livres: 18, tauxParColis: 15, totalCommission: 270, devise: 'MAD' });
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { isMounted = false; };
   }, [id]);
-
-  useEffect(() => { load(); }, [load]);
 
   const toggleDispo = async () => {
     if (!livreur) return;
