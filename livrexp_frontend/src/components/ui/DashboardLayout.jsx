@@ -1191,7 +1191,12 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <img
                       alt="Avatar"
                       className="size-9 rounded-full ring-2 ring-border shadow-sm shrink-0 object-cover hover:ring-primary/50 transition-all"
-                    className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
+                      src={avatarUrl}
+                      onError={() => setAvatarUrl(null)}
+                    />
+                  ) : (
+                    <div
+                      className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
                       style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                     >
                       {getUserInitials(user)}
