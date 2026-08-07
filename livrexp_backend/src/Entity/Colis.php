@@ -9,7 +9,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_colis_etat', columns: ['etat'])]
 #[ORM\Index(name: 'idx_colis_statut', columns: ['statut'])]
 #[ORM\Index(name: 'idx_colis_created_at', columns: ['created_at'])]
-#[ORM\Index(name: 'idx_colis_created_by', columns: ['created_by_id'])]
 class Colis
 {
     public const TYPE_SIMPLE = 'Colis Simple';
