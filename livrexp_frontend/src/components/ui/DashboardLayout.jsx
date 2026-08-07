@@ -1206,11 +1206,11 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* High-grade Solid Non-Transparent Dropdown Panel */}
-                    <div className="absolute end-0 top-full mt-2.5 w-[320px] rounded-2xl shadow-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 z-[100] overflow-hidden opacity-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* Rounded Dropdown Panel with Crisp White/Light Borders */}
+                    <div className="absolute end-0 top-full mt-2.5 w-[320px] rounded-3xl shadow-2xl bg-white dark:bg-zinc-900 border-2 border-white dark:border-zinc-700 ring-1 ring-black/10 dark:ring-white/10 z-[100] overflow-hidden opacity-100 animate-in fade-in slide-in-from-top-1 duration-150">
                       
                       {/* User Header Info Card */}
-                      <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700/80 flex items-center justify-between gap-3">
+                      <div className="p-3.5 bg-zinc-50/90 dark:bg-zinc-800/80 border-b border-zinc-200/90 dark:border-zinc-700/90 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {avatarUrl ? (
                             <img alt="Avatar" className="size-10 rounded-full ring-2 ring-primary/20 shadow-xs object-cover shrink-0" src={avatarUrl} onError={() => setAvatarUrl(null)} />
