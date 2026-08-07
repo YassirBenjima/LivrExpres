@@ -20,6 +20,9 @@ final class ColisApiController extends AbstractController
     public function getColis(Request $request, ColisRepository $colisRepository): JsonResponse
     {
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $etatFilter = trim((string) $request->query->get('etat', ''));
         $statutFilter = trim((string) $request->query->get('statut', ''));
         $page = (int) $request->query->get('page', 0);

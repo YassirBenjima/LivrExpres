@@ -33,6 +33,9 @@ final class RetourFacturationApiController extends AbstractController
         $selectedStatut = trim((string) $request->query->get('statut', ''));
 
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $scopedUser = (!$this->isGranted('ROLE_SUPERVISEUR') && $user instanceof User) ? $user : null;
 
         $demandes = $returnRequestRepository->findAllForList($search, $selectedStatut, $scopedUser);

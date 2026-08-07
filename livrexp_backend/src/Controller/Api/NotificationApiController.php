@@ -19,6 +19,9 @@ class NotificationApiController extends AbstractController
     public function getNotifications(ColisRepository $colisRepo): JsonResponse
     {
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $isClientOnly = !$this->isGranted('ROLE_SUPERVISEUR');
 
         // Dynamically build smart notifications based on real system state

@@ -22,6 +22,9 @@ final class LivreurApiController extends AbstractController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(UserRepository $userRepository, ColisRepository $colisRepository): JsonResponse
     {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $allUsers = $userRepository->findAll();
         $livreurs = [];
 

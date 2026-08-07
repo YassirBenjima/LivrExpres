@@ -21,6 +21,9 @@ final class ProfileApiController extends AbstractController
     public function getProfile(CityRepository $cityRepository): JsonResponse
     {
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         if (!$user instanceof User) {
             return $this->json(['message' => 'Non autorisé.'], JsonResponse::HTTP_UNAUTHORIZED);
         }

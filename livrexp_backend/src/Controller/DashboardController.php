@@ -125,6 +125,10 @@ class DashboardController extends AbstractController
         $isClientOnly = !$this->isGranted('ROLE_SUPERVISEUR');
         $period = $request->query->get('period', '7');
 
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
         $qb = $colisRepo->createQueryBuilder('c')
             ->select('
                 COUNT(c.id) as totalColis,

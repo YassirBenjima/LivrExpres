@@ -173,8 +173,8 @@ function App() {
       return;
     }
 
-    // Trigger fetch when entering a protected route to keep data up-to-date
-    if (isAuthenticated && !loadingRef.current) {
+    // Trigger initial fetch when entering a protected route if not already loaded
+    if (isAuthenticated && colisListRef.current.length === 0 && !loadingRef.current) {
       queueMicrotask(() => fetchAllData());
     }
   }, [currentRoute, fetchAllData, isAuthenticated, navigate]);
