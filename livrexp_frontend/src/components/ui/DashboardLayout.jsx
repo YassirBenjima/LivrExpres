@@ -819,7 +819,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
       {/* Main Wrapper */}
       <div className="kt-wrapper flex grow flex-col ms-2" id="wrapper">
         {/* Header */}
-        <header className="kt-header fixed top-0 z-10 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
+        <header className="kt-header fixed top-0 z-40 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
           <div className="kt-container-fixed flex justify-between items-stretch lg:gap-4 w-full" id="headerContainer">
             {/* Mobile Header elements */}
             <div className="flex gap-2.5 lg:hidden items-center -ms-1">
@@ -1206,31 +1206,28 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* Metronic Professional User Menu Dropdown */}
-                    <div className="absolute end-0 top-full mt-2 w-[285px] rounded-xl shadow-xl bg-card border border-border/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* High-grade User Profile Dropdown Panel */}
+                    <div className="absolute end-0 top-full mt-2.5 w-[320px] rounded-2xl shadow-2xl bg-card border border-border z-[100] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
                       
-                      {/* User Info Header Banner */}
-                      <div className="p-3 bg-accent/30 dark:bg-accent/10 border-b border-border/70 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="relative shrink-0">
-                            {avatarUrl ? (
-                              <img alt="Avatar" className="size-9 rounded-full ring-2 ring-primary/20 shadow-2xs object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
-                            ) : (
-                              <div
-                                className="size-9 rounded-full flex items-center justify-center font-bold text-white text-xs ring-2 ring-primary/20 shadow-2xs"
-                                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
-                              >
-                                {getUserInitials(user)}
-                              </div>
-                            )}
-                            <span className="absolute bottom-0 end-0 size-2 bg-emerald-500 rounded-full ring-2 ring-card"></span>
-                          </div>
+                      {/* User Header Info Card */}
+                      <div className="p-3.5 bg-accent/40 dark:bg-accent/20 border-b border-border/80 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {avatarUrl ? (
+                            <img alt="Avatar" className="size-10 rounded-full ring-2 ring-primary/20 shadow-xs object-cover shrink-0" src={avatarUrl} onError={() => setAvatarUrl(null)} />
+                          ) : (
+                            <div
+                              className="size-10 rounded-full flex items-center justify-center font-bold text-white text-xs ring-2 ring-primary/20 shadow-xs shrink-0"
+                              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
+                            >
+                              {getUserInitials(user)}
+                            </div>
+                          )}
 
-                          <div className="flex flex-col min-w-0">
+                          <div className="flex flex-col min-w-0 flex-1">
                             <span className="text-xs font-bold text-foreground leading-tight truncate">
                               {getUserDisplayName(user)}
                             </span>
-                            <span className="text-[11px] font-medium text-muted-foreground leading-tight truncate mt-0.5">
+                            <span className="text-[11px] font-medium text-muted-foreground leading-tight truncate mt-0.5 max-w-[145px]" title={getUserDisplayEmail(user)}>
                               {getUserDisplayEmail(user)}
                             </span>
                           </div>
@@ -1238,24 +1235,24 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                         <div className="shrink-0">
                           {isSuperAdmin ? (
-                            <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
+                            <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline font-semibold">Super Admin</span>
                           ) : isSuperviseur ? (
-                            <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">Superviseur</span>
+                            <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline font-semibold">Superviseur</span>
                           ) : isAdmin ? (
-                            <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">Admin</span>
+                            <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline font-semibold">Admin</span>
                           ) : isLivreur ? (
-                            <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Livreur</span>
+                            <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline font-semibold">Livreur</span>
                           ) : (
-                            <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Client</span>
+                            <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline font-semibold">Client</span>
                           )}
                         </div>
                       </div>
 
-                      {/* Navigation Links */}
-                      <div className="p-1 space-y-0.5">
+                      {/* Navigation Actions */}
+                      <div className="p-1.5 space-y-1">
                         <a
                           href="/profile"
-                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-lg transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-xl transition-colors"
                           onClick={e => {
                             e.preventDefault();
                             setIsUserMenuOpen(false);
@@ -1263,7 +1260,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }}
                         >
-                          <i className="ki-filled ki-profile-circle text-base text-primary/80"></i>
+                          <i className="ki-filled ki-profile-circle text-base text-primary"></i>
                           <span>{t('nav.myProfile', 'Mon Profil')}</span>
                         </a>
 
@@ -1271,31 +1268,31 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <div className="relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setIsLangMenuOpen(!isLangMenuOpen); }}
-                            className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-lg transition-colors"
+                            className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-xl transition-colors"
                           >
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2.5">
                               <i className="ki-filled ki-icon text-base text-muted-foreground"></i>
                               <span>{t('nav.language', 'Langue')}</span>
                             </span>
 
-                            <span className="flex items-center gap-1 kt-badge kt-badge-stroke shrink-0 text-[10px] px-1.5 py-0.5">
-                              {currentLangObj?.label || 'Français'}
-                              <img alt="" className="inline-block size-3 rounded-full object-cover ms-0.5" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
+                            <span className="flex items-center gap-1.5 kt-badge kt-badge-stroke shrink-0 text-xs px-2 py-0.5 font-medium">
+                              <span>{currentLangObj?.label || 'Français'}</span>
+                              <img alt="" className="inline-block size-3.5 rounded-full object-cover" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
                             </span>
                           </button>
 
                           {isLangMenuOpen && (
-                            <div className="absolute end-full top-0 me-1.5 w-[170px] rounded-lg shadow-xl bg-card border border-border z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
+                            <div className="absolute end-full top-0 me-2 w-[180px] rounded-xl shadow-2xl bg-card border border-border z-[110] p-1 space-y-1 animate-in fade-in zoom-in-95 duration-100">
                               {langOptions.map(({ code, label, flag }) => (
                                 <button
                                   key={code}
-                                  className={`flex items-center justify-between w-full px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                  className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                                     language === code ? 'bg-accent text-primary font-bold' : 'text-foreground hover:bg-accent'
                                   }`}
                                   onClick={() => { setLanguage(code); setIsLangMenuOpen(false); }}
                                 >
                                   <span className="flex items-center gap-2">
-                                    <img alt="" className="size-3.5 rounded-full object-cover" src={flag} />
+                                    <img alt="" className="size-4 rounded-full object-cover" src={flag} />
                                     {label}
                                   </span>
                                   {language === code && <i className="ki-solid ki-check-circle text-primary text-sm"></i>}
@@ -1307,14 +1304,14 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       </div>
 
                       {/* Separator */}
-                      <div className="border-t border-border/70 mx-2.5 my-0.5"></div>
+                      <div className="border-t border-border/80 mx-3 my-1"></div>
 
-                      {/* Dark Mode & Logout */}
-                      <div className="p-2 space-y-2">
-                        <div className="flex items-center justify-between px-1 py-0.5">
-                          <span className="flex items-center gap-2 text-xs font-medium text-foreground">
+                      {/* Preferences & Logout */}
+                      <div className="p-2 space-y-2 bg-accent/10 dark:bg-accent/5">
+                        <div className="flex items-center justify-between px-2 py-1">
+                          <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
                             <i className="ki-filled ki-moon text-base text-muted-foreground"></i>
-                            <span className="text-2sm font-medium">{t('header.darkMode', 'Mode sombre')}</span>
+                            <span>{t('header.darkMode', 'Mode sombre')}</span>
                           </span>
 
                           <button
@@ -1323,8 +1320,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             role="switch"
                             aria-checked={themeMode === 'dark'}
                             style={{
-                              width: '34px',
-                              height: '18px',
+                              width: '36px',
+                              height: '20px',
                               backgroundColor: themeMode === 'dark' ? '#3b82f6' : 'rgb(228, 228, 231)',
                               borderRadius: '9999px',
                               position: 'relative',
@@ -1337,8 +1334,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           >
                             <div
                               style={{
-                                width: '12px',
-                                height: '12px',
+                                width: '14px',
+                                height: '14px',
                                 backgroundColor: 'rgb(255, 255, 255)',
                                 borderRadius: '50%',
                                 position: 'absolute',
@@ -1353,9 +1350,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                         <button
                           onClick={handleLogout}
-                          className="kt-btn kt-btn-outline kt-btn-sm justify-center w-full text-xs font-semibold gap-1.5 hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-150"
+                          className="kt-btn kt-btn-outline justify-center w-full text-xs font-bold gap-2 py-2 text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-150"
                         >
-                          <i className="ki-filled ki-exit-right text-xs"></i>
+                          <i className="ki-filled ki-exit-right text-sm"></i>
                           <span>{t('nav.logout', 'Se déconnecter')}</span>
                         </button>
                       </div>
