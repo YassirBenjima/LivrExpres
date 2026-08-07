@@ -1191,12 +1191,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     <img
                       alt="Avatar"
                       className="size-9 rounded-full ring-2 ring-border shadow-sm shrink-0 object-cover hover:ring-primary/50 transition-all"
-                      src={avatarUrl}
-                      onError={() => setAvatarUrl(null)}
-                    />
-                  ) : (
-                    <div
-                      className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
+                    className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm hover:ring-primary/50 transition-all"
                       style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                     >
                       {getUserInitials(user)}
@@ -1206,58 +1201,52 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* Dropdown panel */}
-                    <div className="absolute end-0 top-full mt-2.5 w-[310px] rounded-2xl shadow-2xl bg-background/95 dark:bg-card/95 backdrop-blur-md border border-border/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Vercel / Linear Minimalist Floating Card */}
+                    <div className="absolute end-0 top-full mt-2 w-[295px] rounded-xl shadow-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                       
-                      {/* User info header banner */}
-                      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-3.5 border-b border-border/60">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="relative shrink-0">
-                              {avatarUrl ? (
-                                <img alt="Avatar" className="size-10 rounded-full ring-2 ring-primary/20 shadow-md object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
-                              ) : (
-                                <div
-                                  className="size-10 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-primary/20 shadow-md"
-                                  style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}
-                                >
-                                  {getUserInitials(user)}
-                                </div>
-                              )}
-                              <span className="absolute bottom-0 end-0 size-2.5 bg-emerald-500 rounded-full ring-2 ring-background shadow-xs"></span>
+                      {/* User Header Section */}
+                      <div className="flex items-center justify-between p-3 gap-2 bg-zinc-50/50 dark:bg-zinc-900/40 border-b border-zinc-150 dark:border-zinc-800/80">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {avatarUrl ? (
+                            <img alt="Avatar" className="size-9 shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 shadow-2xs object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
+                          ) : (
+                            <div
+                              className="size-9 shrink-0 rounded-full flex items-center justify-center font-semibold text-white text-xs shadow-2xs"
+                              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
+                            >
+                              {getUserInitials(user)}
                             </div>
-
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-sm text-foreground font-bold leading-tight truncate">
-                                {getUserDisplayName(user)}
-                              </span>
-                              <span className="text-xs text-muted-foreground font-medium leading-tight truncate mt-0.5">
-                                {getUserDisplayEmail(user)}
-                              </span>
-                            </div>
+                          )}
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug truncate">
+                              {getUserDisplayName(user)}
+                            </span>
+                            <span className="text-[11px] font-normal text-zinc-500 dark:text-zinc-400 leading-none truncate mt-0.5">
+                              {getUserDisplayEmail(user)}
+                            </span>
                           </div>
+                        </div>
 
-                          <div className="shrink-0">
-                            {isSuperAdmin ? (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/15 text-primary border border-primary/30">Super Admin</span>
-                            ) : isSuperviseur ? (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">Superviseur</span>
-                            ) : isAdmin ? (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">Admin</span>
-                            ) : isLivreur ? (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Livreur</span>
-                            ) : (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-muted text-muted-foreground border border-border">Client</span>
-                            )}
-                          </div>
+                        <div className="shrink-0">
+                          {isSuperAdmin ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Super Admin</span>
+                          ) : isSuperviseur ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Superviseur</span>
+                          ) : isAdmin ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Admin</span>
+                          ) : isLivreur ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Livreur</span>
+                          ) : (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">Client</span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Main Navigation Links */}
-                      <div className="p-1.5 space-y-0.5">
+                      {/* Primary Navigation Menu */}
+                      <div className="p-1 space-y-0.5">
                         <a
                           href="/profile"
-                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent/80 hover:text-primary rounded-xl transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors"
                           onClick={e => {
                             e.preventDefault();
                             setIsUserMenuOpen(false);
@@ -1265,9 +1254,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }}
                         >
-                          <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                            <i className="ki-filled ki-profile-circle text-base"></i>
-                          </div>
+                          <i className="ki-filled ki-profile-circle text-base text-zinc-400 dark:text-zinc-500"></i>
                           <span>{t('nav.myProfile', 'Mon Profil')}</span>
                         </a>
 
@@ -1275,36 +1262,34 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         <div className="relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setIsLangMenuOpen(!isLangMenuOpen); }}
-                            className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent/80 hover:text-primary rounded-xl transition-colors"
+                            className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors"
                           >
-                            <div className="flex items-center gap-2.5">
-                              <div className="size-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 shrink-0">
-                                <i className="ki-filled ki-geolocation text-base"></i>
-                              </div>
+                            <span className="flex items-center gap-2">
+                              <i className="ki-filled ki-icon text-base text-zinc-400 dark:text-zinc-500"></i>
                               <span>{t('nav.language', 'Langue')}</span>
-                            </div>
+                            </span>
 
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted border border-border/60 text-[11px] font-medium text-foreground">
-                              <span>{currentLangObj?.label || 'Français'}</span>
-                              <img alt="" className="size-3.5 rounded-full object-cover" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
-                            </div>
+                            <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+                              {currentLangObj?.label || 'Français'}
+                              <img alt="" className="inline-block size-3 rounded-full object-cover ms-0.5" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
+                            </span>
                           </button>
 
                           {isLangMenuOpen && (
-                            <div className="absolute end-full top-0 me-2 w-[185px] rounded-xl shadow-xl bg-background/95 dark:bg-card/95 backdrop-blur-md border border-border/80 z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="absolute end-full top-0 me-1.5 w-[170px] rounded-lg shadow-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
                               {langOptions.map(({ code, label, flag }) => (
                                 <button
                                   key={code}
-                                  className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                                    language === code ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-accent'
+                                  className={`flex items-center justify-between w-full px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                                    language === code ? 'bg-primary/10 text-primary font-semibold' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                                   }`}
                                   onClick={() => { setLanguage(code); setIsLangMenuOpen(false); }}
                                 >
                                   <span className="flex items-center gap-2">
-                                    <img alt="" className="size-4 rounded-full object-cover shadow-xs" src={flag} />
+                                    <img alt="" className="size-3.5 rounded-full object-cover" src={flag} />
                                     {label}
                                   </span>
-                                  {language === code && <i className="ki-solid ki-check-circle text-primary text-sm"></i>}
+                                  {language === code && <i className="ki-solid ki-check-circle text-primary text-xs"></i>}
                                 </button>
                               ))}
                             </div>
@@ -1312,17 +1297,15 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         </div>
                       </div>
 
-                      {/* Separator */}
-                      <div className="border-t border-border/60 mx-3"></div>
+                      {/* Divider */}
+                      <div className="border-t border-zinc-150 dark:border-zinc-800/80 mx-2 my-0.5"></div>
 
-                      {/* Preference & Logout Actions */}
-                      <div className="p-2 space-y-2.5 bg-muted/20">
-                        {/* Dark Mode Switch */}
-                        <div className="flex items-center justify-between px-1.5 py-1">
-                          <span className="flex items-center gap-2.5 text-xs font-semibold text-foreground">
-                            <div className="size-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
-                              <i className="ki-filled ki-moon text-base"></i>
-                            </div>
+                      {/* Preferences & Actions */}
+                      <div className="p-1 space-y-1">
+                        {/* Dark mode switch */}
+                        <div className="flex items-center justify-between px-2.5 py-1">
+                          <span className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                            <i className="ki-filled ki-moon text-base text-zinc-400 dark:text-zinc-500"></i>
                             <span>{t('header.darkMode', 'Mode sombre')}</span>
                           </span>
 
@@ -1331,24 +1314,24 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             type="button"
                             role="switch"
                             aria-checked={themeMode === 'dark'}
-                            className={`w-9 h-5 rounded-full relative transition-colors duration-200 focus:outline-none cursor-pointer ${
-                              themeMode === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30 border border-border'
+                            className={`w-8 h-4.5 rounded-full relative transition-colors duration-150 focus:outline-none cursor-pointer ${
+                              themeMode === 'dark' ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600'
                             }`}
                           >
                             <div
-                              className={`size-3.5 bg-white rounded-full absolute top-0.75 transition-all duration-200 shadow-sm ${
-                                themeMode === 'dark' ? 'left-4.5' : 'left-0.75'
+                              className={`size-3.5 bg-white rounded-full absolute top-0.5 transition-all duration-150 shadow-2xs ${
+                                themeMode === 'dark' ? 'left-4' : 'left-0.5'
                               }`}
                             />
                           </button>
                         </div>
 
-                        {/* Logout Button */}
+                        {/* Logout button */}
                         <button
                           onClick={handleLogout}
-                          className="flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-bold rounded-xl border border-destructive/30 text-destructive bg-destructive/5 hover:bg-destructive hover:text-white transition-all duration-200 shadow-2xs"
+                          className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg border border-red-200/60 dark:border-red-900/30 transition-colors"
                         >
-                          <i className="ki-filled ki-exit-right text-sm"></i>
+                          <i className="ki-filled ki-exit-right text-xs"></i>
                           <span>{t('nav.logout', 'Se déconnecter')}</span>
                         </button>
                       </div>
