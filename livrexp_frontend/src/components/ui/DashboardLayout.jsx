@@ -1206,11 +1206,11 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* High-grade User Profile Dropdown Panel */}
-                    <div className="absolute end-0 top-full mt-2.5 w-[320px] rounded-2xl shadow-2xl bg-card border border-border z-[100] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* High-grade Solid Non-Transparent Dropdown Panel */}
+                    <div className="absolute end-0 top-full mt-2.5 w-[320px] rounded-2xl shadow-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 z-[100] overflow-hidden opacity-100 animate-in fade-in slide-in-from-top-1 duration-150">
                       
                       {/* User Header Info Card */}
-                      <div className="p-3.5 bg-accent/40 dark:bg-accent/20 border-b border-border/80 flex items-center justify-between gap-3">
+                      <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-700/80 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {avatarUrl ? (
                             <img alt="Avatar" className="size-10 rounded-full ring-2 ring-primary/20 shadow-xs object-cover shrink-0" src={avatarUrl} onError={() => setAvatarUrl(null)} />
@@ -1307,7 +1307,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <div className="border-t border-border/80 mx-3 my-1"></div>
 
                       {/* Preferences & Logout */}
-                      <div className="p-2 space-y-2 bg-accent/10 dark:bg-accent/5">
+                      <div className="p-2 space-y-2 bg-zinc-50/80 dark:bg-zinc-900/90 border-t border-zinc-200/80 dark:border-zinc-800/80">
                         <div className="flex items-center justify-between px-2 py-1">
                           <span className="flex items-center gap-2 text-xs font-semibold text-foreground">
                             <i className="ki-filled ki-moon text-base text-muted-foreground"></i>
