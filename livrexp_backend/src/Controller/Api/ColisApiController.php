@@ -51,6 +51,8 @@ final class ColisApiController extends AbstractController
             $page = max(1, $page);
             $qb->setFirstResult(($page - 1) * $limit)
                ->setMaxResults($limit);
+        } else {
+            $qb->setMaxResults(100);
         }
 
         $colisList = $qb->getQuery()->getArrayResult();
