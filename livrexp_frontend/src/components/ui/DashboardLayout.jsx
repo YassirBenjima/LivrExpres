@@ -1206,52 +1206,56 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* Vercel / Linear Minimalist Floating Card */}
-                    <div className="absolute end-0 top-full mt-2 w-[295px] rounded-xl shadow-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                      
-                      {/* User Header Section */}
-                      <div className="flex items-center justify-between p-3 gap-2 bg-zinc-50/50 dark:bg-zinc-900/40 border-b border-zinc-150 dark:border-zinc-800/80">
-                        <div className="flex items-center gap-2.5 min-w-0">
+                    <>
+                    {/* Dropdown panel */}
+                    <div className="absolute end-0 top-full mt-2 w-[300px] rounded-lg shadow-xl bg-background border border-border z-30 overflow-hidden">
+
+
+                      {/* User info header */}
+                      <div className="flex items-center justify-between px-2.5 py-2 gap-1.5">
+                        <div className="flex items-center gap-2">
                           {avatarUrl ? (
-                            <img alt="Avatar" className="size-9 shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 shadow-2xs object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
+                            <img alt="Avatar" className="size-9 shrink-0 rounded-full ring-2 ring-border shadow-sm object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
                           ) : (
+
                             <div
-                              className="size-9 shrink-0 rounded-full flex items-center justify-center font-semibold text-white text-xs shadow-2xs"
-                              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
+                              className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm"
+                              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
                             >
                               {getUserInitials(user)}
                             </div>
                           )}
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 leading-snug truncate">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm text-foreground font-semibold leading-none">
                               {getUserDisplayName(user)}
                             </span>
-                            <span className="text-[11px] font-normal text-zinc-500 dark:text-zinc-400 leading-none truncate mt-0.5">
+                            <span className="text-xs text-secondary-foreground font-medium leading-none">
                               {getUserDisplayEmail(user)}
                             </span>
                           </div>
                         </div>
 
-                        <div className="shrink-0">
-                          {isSuperAdmin ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">Super Admin</span>
-                          ) : isSuperviseur ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Superviseur</span>
-                          ) : isAdmin ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Admin</span>
-                          ) : isLivreur ? (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Livreur</span>
-                          ) : (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">Client</span>
-                          )}
-                        </div>
+                        {isSuperAdmin ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
+                        ) : isSuperviseur ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">Superviseur</span>
+                        ) : isAdmin ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">Admin</span>
+                        ) : isLivreur ? (
+                          <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Livreur</span>
+                        ) : (
+                          <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Client</span>
+                        )}
                       </div>
 
-                      {/* Primary Navigation Menu */}
-                      <div className="p-1 space-y-0.5">
+                      {/* Separator */}
+                      <div className="border-t border-border mx-2.5"></div>
+
+                      {/* Profile link */}
+                      <div className="py-1">
                         <a
                           href="/profile"
-                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors"
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-foreground hover:bg-accent rounded-md mx-1"
                           onClick={e => {
                             e.preventDefault();
                             setIsUserMenuOpen(false);
@@ -1259,91 +1263,105 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }}
                         >
-                          <i className="ki-filled ki-profile-circle text-base text-zinc-400 dark:text-zinc-500"></i>
-                          <span>{t('nav.myProfile', 'Mon Profil')}</span>
+                          <i className="ki-filled ki-profile-circle text-base"></i>
+                          {t('nav.myProfile', 'Mon Profil')}
                         </a>
 
-                        {/* Language Selector */}
+
+                        {/* Language selector */}
                         <div className="relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setIsLangMenuOpen(!isLangMenuOpen); }}
-                            className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors"
+                            className="flex items-center justify-between w-full px-2.5 py-2 text-sm text-foreground hover:bg-accent rounded-md mx-1"
+                            style={{ width: 'calc(100% - 8px)' }}
                           >
                             <span className="flex items-center gap-2">
-                              <i className="ki-filled ki-icon text-base text-zinc-400 dark:text-zinc-500"></i>
-                              <span>{t('nav.language', 'Langue')}</span>
+                              <i className="ki-filled ki-icon text-base"></i>
+                              {t('nav.language', 'Langue')}
+                            </span>
+                            <span className="flex items-center gap-1 kt-badge kt-badge-stroke shrink-0">
+                              {currentLangObj?.label || 'Français'}
+                              <img alt="" className="inline-block size-3.5 rounded-full" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
                             </span>
 
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700/60 shrink-0">
-                              {currentLangObj?.label || 'Français'}
-                              <img alt="" className="inline-block size-3 rounded-full object-cover ms-0.5" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
-                            </span>
                           </button>
 
                           {isLangMenuOpen && (
-                            <div className="absolute end-full top-0 me-1.5 w-[170px] rounded-lg shadow-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
+                            <div className="absolute end-full top-0 me-1 w-[180px] rounded-md shadow-lg bg-background border border-border z-40 py-1">
                               {langOptions.map(({ code, label, flag }) => (
                                 <button
                                   key={code}
-                                  className={`flex items-center justify-between w-full px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-                                    language === code ? 'bg-primary/10 text-primary font-semibold' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                                  }`}
+                                  className="flex items-center justify-between w-full px-3 py-2 text-sm text-foreground hover:bg-accent"
                                   onClick={() => { setLanguage(code); setIsLangMenuOpen(false); }}
                                 >
                                   <span className="flex items-center gap-2">
-                                    <img alt="" className="size-3.5 rounded-full object-cover" src={flag} />
+                                    <img alt="" className="inline-block size-4 rounded-full" src={flag} />
                                     {label}
                                   </span>
-                                  {language === code && <i className="ki-solid ki-check-circle text-primary text-xs"></i>}
+                                  {language === code && <i className="ki-solid ki-check-circle text-green-500 text-base"></i>}
                                 </button>
                               ))}
                             </div>
                           )}
                         </div>
+
                       </div>
 
-                      {/* Divider */}
-                      <div className="border-t border-zinc-150 dark:border-zinc-800/80 mx-2 my-0.5"></div>
+                      {/* Separator */}
+                      <div className="border-t border-border mx-2.5 my-1"></div>
 
-                      {/* Preferences & Actions */}
-                      <div className="p-1 space-y-1">
-                        {/* Dark mode switch */}
-                        <div className="flex items-center justify-between px-2.5 py-1">
-                          <span className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
-                            <i className="ki-filled ki-moon text-base text-zinc-400 dark:text-zinc-500"></i>
-                            <span>{t('header.darkMode', 'Mode sombre')}</span>
+                      {/* Dark mode + Logout */}
+                      <div className="px-2.5 pt-1 pb-2.5 flex flex-col gap-3">
+                        <div className="flex items-center gap-2 justify-between">
+                          <span className="flex items-center gap-2">
+                            <i className="ki-filled ki-moon text-base text-muted-foreground"></i>
+                            <span className="font-medium text-2sm">{t('header.darkMode', 'Mode sombre')}</span>
                           </span>
-
                           <button
                             onClick={toggleTheme}
                             type="button"
                             role="switch"
                             aria-checked={themeMode === 'dark'}
-                            className={`w-8 h-4.5 rounded-full relative transition-colors duration-150 focus:outline-none cursor-pointer ${
-                              themeMode === 'dark' ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600'
-                            }`}
+                            style={{
+                              width: '36px',
+                              height: '20px',
+                              backgroundColor: themeMode === 'dark' ? '#3b82f6' : 'rgb(228, 228, 231)',
+                              borderRadius: '9999px',
+                              position: 'relative',
+                              transition: 'background-color 0.2s',
+                              border: themeMode === 'dark' ? '1px solid #3b82f6' : '1px solid rgb(212, 212, 216)',
+                              cursor: 'pointer',
+                              padding: 0,
+                              outline: 'none'
+                            }}
                           >
                             <div
-                              className={`size-3.5 bg-white rounded-full absolute top-0.5 transition-all duration-150 shadow-2xs ${
-                                themeMode === 'dark' ? 'left-4' : 'left-0.5'
-                              }`}
+                              style={{
+                                width: '14px',
+                                height: '14px',
+                                backgroundColor: 'rgb(255, 255, 255)',
+                                borderRadius: '50%',
+                                position: 'absolute',
+                                top: '2px',
+                                left: themeMode === 'dark' ? '18px' : '2px',
+                                transition: 'left 0.2s',
+                                boxShadow: 'rgba(0, 0, 0, 0.15) 0px 1px 3px'
+                              }}
                             />
                           </button>
                         </div>
-
-                        {/* Logout button */}
                         <button
                           onClick={handleLogout}
-                          className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg border border-red-200/60 dark:border-red-900/30 transition-colors"
+                          className="kt-btn kt-btn-outline justify-center w-full text-sm"
                         >
-                          <i className="ki-filled ki-exit-right text-xs"></i>
-                          <span>{t('nav.logout', 'Se déconnecter')}</span>
+                          {t('nav.logout', 'Se déconnecter')}
                         </button>
-                      </div>
 
+                      </div>
                     </div>
-                  </MenuErrorBoundary>
-                )}
+                  </>
+                </MenuErrorBoundary>
+              )}
 
               </div>
             </div>
