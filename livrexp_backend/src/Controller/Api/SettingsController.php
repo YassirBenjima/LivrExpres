@@ -27,6 +27,9 @@ class SettingsController extends AbstractController
     {
         /** @var User $user */
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
 
         $settings = $this->settingsManager->getOrCreateForUser($user);
 
@@ -86,6 +89,9 @@ class SettingsController extends AbstractController
     {
         /** @var User $user */
         $user = $this->getUser();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $settings = $this->settingsManager->getOrCreateForUser($user);
         $parcel = $settings->getParcelSettings();
 
