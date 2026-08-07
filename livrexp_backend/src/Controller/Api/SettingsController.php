@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/api/settings')]
+#[Route('/api')]
 #[IsGranted('ROLE_USER')]
 class SettingsController extends AbstractController
 {
@@ -22,7 +22,7 @@ class SettingsController extends AbstractController
     ) {
     }
 
-    #[Route('', name: 'api_settings_get', methods: ['GET'])]
+    #[Route('/settings', name: 'api_settings_get', methods: ['GET'])]
     public function getSettings(): JsonResponse
     {
         /** @var User $user */
@@ -37,7 +37,7 @@ class SettingsController extends AbstractController
         ]);
     }
 
-    #[Route('', name: 'api_settings_put', methods: ['PUT'])]
+    #[Route('/settings', name: 'api_settings_put', methods: ['PUT'])]
     public function putSettings(Request $request): JsonResponse
     {
         /** @var User $user */
