@@ -48,16 +48,12 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
   const langOptions = [
     { code: 'fr', label: 'Français', flag: '/assets/media/flags/france.svg' },
     { code: 'en', label: 'English', flag: '/assets/media/flags/united-states.svg' },
   ];
-
-  const currentLangObj = langOptions.find(o => o.code === language) || langOptions[0] || { label: 'Français', flag: '/assets/media/flags/france.svg' };
-
 
   const [isColisMenuOpen, setIsColisMenuOpen] = useState(currentActive.startsWith('colis'));
   const [isStockMenuOpen, setIsStockMenuOpen] = useState(currentActive.startsWith('stock'));
@@ -105,7 +101,6 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setIsUserMenuOpen(false);
-        setIsLangMenuOpen(false);
       }
     };
     if (isUserMenuOpen) {
@@ -819,7 +814,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
       {/* Main Wrapper */}
       <div className="kt-wrapper flex grow flex-col ms-2" id="wrapper">
         {/* Header */}
-        <header className="kt-header fixed top-0 z-40 start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
+        <header className="kt-header fixed top-0 z-[1000] start-0 end-0 flex items-stretch shrink-0 bg-background border-b border-border" id="header">
           <div className="kt-container-fixed flex justify-between items-stretch lg:gap-4 w-full" id="headerContainer">
             {/* Mobile Header elements */}
             <div className="flex gap-2.5 lg:hidden items-center -ms-1">
@@ -1182,7 +1177,6 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                     e.preventDefault();
                     e.stopPropagation();
                     setIsUserMenuOpen(prev => !prev);
-                    setIsLangMenuOpen(false);
                     setIsNotifMenuOpen(false);
                   }}
                   className="cursor-pointer shrink-0 focus:outline-none"
@@ -1206,9 +1200,9 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    {/* High-grade Dropdown Panel with Guaranteed Solid BG, Rounded Corners & Card Border */}
+                    {/* High-grade Dropdown Panel with 100% Solid Non-Transparent BG */}
                     <div
-                      className="absolute end-0 top-full mt-2 w-[320px] shadow-2xl z-[100] animate-in fade-in slide-in-from-top-1 duration-150"
+                      className="absolute end-0 top-full mt-2 w-[320px] shadow-2xl z-[99999] animate-in fade-in slide-in-from-top-1 duration-150"
                       style={{
                         backgroundColor: themeMode === 'dark' ? '#18181b' : '#ffffff',
                         border: themeMode === 'dark' ? '1px solid #27272a' : '1px solid #e4e4e7',
@@ -1222,8 +1216,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       <div
                         className="p-3.5 flex items-center justify-between gap-3"
                         style={{
-                          backgroundColor: themeMode === 'dark' ? 'rgba(39, 39, 42, 0.5)' : '#f4f4f5',
-                          borderBottom: themeMode === 'dark' ? '1px solid #27272a' : '1px solid #e4e4e7'
+                          backgroundColor: themeMode === 'dark' ? '#27272a' : '#f4f4f5',
+                          borderBottom: themeMode === 'dark' ? '1px solid #3f3f46' : '1px solid #e4e4e7'
                         }}
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -1264,7 +1258,7 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                       </div>
 
                       {/* Navigation Actions */}
-                      <div className="p-1.5 space-y-1">
+                      <div className="p-1.5 space-y-1 bg-white dark:bg-[#18181b]">
                         <a
                           href="/profile"
                           className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-xl transition-colors"
@@ -1289,8 +1283,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           <div
                             className="flex items-center gap-1 p-1 rounded-xl"
                             style={{
-                              backgroundColor: themeMode === 'dark' ? 'rgba(39, 39, 42, 0.6)' : '#f4f4f5',
-                              border: themeMode === 'dark' ? '1px solid #27272a' : '1px solid #e4e4e7'
+                              backgroundColor: themeMode === 'dark' ? '#27272a' : '#f4f4f5',
+                              border: themeMode === 'dark' ? '1px solid #3f3f46' : '1px solid #e4e4e7'
                             }}
                           >
                             {langOptions.map(({ code, label, flag }) => (
@@ -1313,15 +1307,12 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         </div>
                       </div>
 
-                      {/* Separator */}
-                      <div className="border-t border-border/80 mx-3 my-1"></div>
-
                       {/* Preferences & Logout */}
                       <div
                         className="p-2 space-y-2"
                         style={{
-                          backgroundColor: themeMode === 'dark' ? 'rgba(39, 39, 42, 0.4)' : '#f4f4f5',
-                          borderTop: themeMode === 'dark' ? '1px solid #27272a' : '1px solid #e4e4e7'
+                          backgroundColor: themeMode === 'dark' ? '#27272a' : '#f4f4f5',
+                          borderTop: themeMode === 'dark' ? '1px solid #3f3f46' : '1px solid #e4e4e7'
                         }}
                       >
                         <div className="flex items-center justify-between px-2 py-1">
@@ -1365,11 +1356,27 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                         </div>
 
                         <button
+                          type="button"
                           onClick={handleLogout}
-                          className="kt-btn kt-btn-outline justify-center w-full text-xs font-bold gap-2 py-2 text-destructive hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-150"
+                          className="flex items-center justify-center w-full gap-2 px-3 py-2 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-xs group"
+                          style={{
+                            backgroundColor: themeMode === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                            color: themeMode === 'dark' ? '#f87171' : '#dc2626',
+                            border: themeMode === 'dark' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(220, 38, 38, 0.2)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#dc2626';
+                            e.currentTarget.style.color = '#ffffff';
+                            e.currentTarget.style.borderColor = '#dc2626';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = themeMode === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2';
+                            e.currentTarget.style.color = themeMode === 'dark' ? '#f87171' : '#dc2626';
+                            e.currentTarget.style.borderColor = themeMode === 'dark' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(220, 38, 38, 0.2)';
+                          }}
                         >
-                          <i className="ki-filled ki-exit-right text-sm"></i>
-                          <span>{t('nav.logout', 'Se déconnecter')}</span>
+                          <i className="ki-filled ki-exit-right text-sm transition-transform group-hover:translate-x-0.5" style={{ color: 'inherit' }}></i>
+                          <span style={{ color: 'inherit' }}>{t('nav.logout', 'Se déconnecter')}</span>
                         </button>
                       </div>
 
