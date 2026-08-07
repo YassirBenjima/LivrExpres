@@ -81,6 +81,57 @@ class SettingsController extends AbstractController
         ]);
     }
 
+    #[Route('/user/settings/parcel', name: 'api_user_settings_parcel_get', methods: ['GET'])]
+    public function getParcelSettings(): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $settings = $this->settingsManager->getOrCreateForUser($user);
+        $parcel = $settings->getParcelSettings();
+
+        return $this->json([
+            'fragile' => (bool) ($parcel['fragile']['enabled'] ?? false),
+            'openColis' => (bool) ($parcel['open_colis']['enabled'] ?? false),
+            'uniqueOrderNumber' => (bool) ($parcel['unique_order_number']['enabled'] ?? false),
+            'parcel_settings' => $parcel,
+        ]);
+    }
+
+    #[Route('/user/settings/parcel', name: 'api_user_settings_parcel_post', methods: ['POST'])]
+    public function postParcelSettings(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $settings = $this->settingsManager->getOrCreateForUser($user);
+
+        $data = json_decode($request->getContent() ?: '{}', true) ?? [];
+        $fragile = (bool) ($data['fragile'] ?? false);
+        $openColis = (bool) ($data['openColis'] ?? false);
+        $uniqueOrderNumber = (bool) ($data['uniqueOrderNumber'] ?? false);
+
+        $currentParcel = $settings->getParcelSettings();
+        $currentParcel['fragile']['enabled'] = $fragile;
+        $currentParcel['open_colis']['enabled'] = $openColis;
+        $currentParcel['unique_order_number']['enabled'] = $uniqueOrderNumber;
+
+        $settings->setParcelSettings($currentParcel);
+
+        if ($openColis) {
+            $user->setPackageOption('Ouvrir le colis');
+        } else {
+            $user->setPackageOption('Ne pas ouvrir le colis');
+        }
+
+        $this->entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'fragile' => $fragile,
+            'openColis' => $openColis,
+            'uniqueOrderNumber' => $uniqueOrderNumber,
+        ]);
+    }
+
     private function validateAndNormalizeParcelSettings(array $input): array
     {
         $defaults = $this->settingsManager->defaultParcelSettings();

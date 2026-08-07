@@ -14,8 +14,13 @@ export default function ColisSettingsPage({ showNotification }) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        const token = localStorage.getItem('auth_token');
         const response = await fetch('/api/user/settings/parcel', {
-          headers: { 'Accept': 'application/json' }
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          credentials: 'include'
         });
         if (response.ok) {
           const data = await response.json();
@@ -36,12 +41,15 @@ export default function ColisSettingsPage({ showNotification }) {
     setSaveLoading(true);
     setMsg('');
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/user/settings/parcel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
+        credentials: 'include',
         body: JSON.stringify({ fragile, openColis, uniqueOrderNumber })
       });
       if (response.ok) {
