@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from './context/LanguageContext';
 import { getUserRoles, getStoredUser } from './hooks/useAuth';
 import LoginPage from './pages/auth/LoginPage';
@@ -44,16 +44,34 @@ import LivreurAutoAssignPage from './pages/livreur/LivreurAutoAssignPage';
 import LivrExpressAiSuitePage from './pages/ai/LivrExpressAiSuitePage';
 import OfflineBanner from './components/ui/OfflineBanner';
 
+// Routes accessible to ROLE_LIVREUR
+const LIVREUR_ALLOWED_ROUTES = [
+  '/dashboard',
+  '/bon-livraison',
+  '/bon-livraison/new',
+  '/dispatch-map',
+  '/profile',
+  '/ai',
+];
+
+// Returns true if the path is allowed for ROLE_LIVREUR
+const isAllowedForLivreur = (path) => {
+  return LIVREUR_ALLOWED_ROUTES.some(allowed =>
+    path === allowed || path.startsWith(allowed + '/')
+  );
+};
+
 function App() {
   const { t } = useLanguage();
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
   const [colisList, setColisList] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!getStoredUser()
-  );
+  const isAuthenticated = !!getStoredUser();
   const [notification, setNotification] = useState(null);
+
+  const colisListRef = useRef([]);
+  const loadingRef = useRef(false);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -71,49 +89,18 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = (path) => {
+  const navigate = useCallback((path) => {
     window.history.pushState({}, '', path);
     setCurrentRoute(path);
-  };
-
-  // Routes accessible to ROLE_LIVREUR
-  const LIVREUR_ALLOWED_ROUTES = [
-    '/dashboard',
-    '/bon-livraison',
-    '/bon-livraison/new',
-    '/dispatch-map',
-    '/profile',
-    '/ai',
-  ];
-
-  // Returns true if the path is allowed for ROLE_LIVREUR
-  const isAllowedForLivreur = (path) => {
-    return LIVREUR_ALLOWED_ROUTES.some(allowed =>
-      path === allowed || path.startsWith(allowed + '/')
-    );
-  };
-
-
-
-  // Check auth status
-  const checkAuth = () => {
-    const authed = !!getStoredUser();
-    if (authed !== isAuthenticated) {
-      setIsAuthenticated(authed);
-      if (!authed) {
-        setColisList([]);
-        setDashboardData(null);
-      }
-    }
-    return authed;
-  };
+  }, []);
 
   // Master fetch function
-  const fetchAllData = async (showLoadingSpinner = false) => {
-    const authed = checkAuth();
-    if (!authed) return;
+  const fetchAllData = useCallback(async (showLoadingSpinner) => {
+    if (!isAuthenticated) return;
 
-    if (showLoadingSpinner) {
+    const needsSpinner = showLoadingSpinner ?? (colisListRef.current.length === 0);
+    if (needsSpinner) {
+      loadingRef.current = true;
       setLoading(true);
     }
 
@@ -130,7 +117,9 @@ function App() {
 
       if (colisRes.ok) {
         const json = await colisRes.json();
-        setColisList(Array.isArray(json) ? json : (json.colis_list || []));
+        const list = Array.isArray(json) ? json : (json.colis_list || []);
+        colisListRef.current = list;
+        setColisList(list);
       }
 
       if (dashRes.ok) {
@@ -140,16 +129,15 @@ function App() {
     } catch (err) {
       console.error('Erreur lors du chargement des données en temps réel:', err);
     } finally {
-      if (showLoadingSpinner) {
+      if (needsSpinner) {
+        loadingRef.current = false;
         setLoading(false);
       }
     }
-  };
+  }, [isAuthenticated]);
 
   // Check auth and apply global route guarding when route changes
   useEffect(() => {
-    const authed = checkAuth();
-    
     // Auth-only public routes
     const PUBLIC_AUTH_ROUTES = [
       '/login',
@@ -167,33 +155,29 @@ function App() {
     const isLivreur = roles.includes('ROLE_LIVREUR');
 
     // 1. Unauthenticated users: block access to all protected app routes -> redirect to /login
-    if (!authed && !isAuthRoute) {
-      navigate('/login');
+    if (!isAuthenticated && !isAuthRoute) {
+      queueMicrotask(() => navigate('/login'));
       return;
     }
 
     // 2. Authenticated users: prevent returning to login/auth pages -> redirect to home route
-    if (authed && isAuthRoute) {
-      if (isLivreur) {
-        navigate('/bon-livraison');
-      } else {
-        navigate('/dashboard');
-      }
+    if (isAuthenticated && isAuthRoute) {
+      const target = isLivreur ? '/bon-livraison' : '/dashboard';
+      queueMicrotask(() => navigate(target));
       return;
     }
 
     // 3. Role-Based Access Control (RBAC): restrict ROLE_LIVREUR from forbidden modules (/stock, /facturation, /colis, etc.)
-    if (authed && isLivreur && !isAllowedForLivreur(currentRoute)) {
-      navigate('/bon-livraison');
+    if (isAuthenticated && isLivreur && !isAllowedForLivreur(currentRoute)) {
+      queueMicrotask(() => navigate('/bon-livraison'));
       return;
     }
 
     // Trigger fetch when entering a protected route to keep data up-to-date
-    if (authed && !loading) {
-      const needsSpinner = colisList.length === 0;
-      fetchAllData(needsSpinner);
+    if (isAuthenticated && !loadingRef.current) {
+      queueMicrotask(() => fetchAllData());
     }
-  }, [currentRoute, isAuthenticated]);
+  }, [currentRoute, fetchAllData, isAuthenticated, navigate]);
 
   // Background polling for real-time updates (every 8 seconds)
   useEffect(() => {
@@ -209,11 +193,11 @@ function App() {
         clearInterval(intervalId);
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchAllData]);
 
   // Dynamic document title update based on route
   useEffect(() => {
-    let title = 'LivrExpress';
+    let title;
     let route = currentRoute;
     if (route !== '/' && route.endsWith('/')) {
       route = route.slice(0, -1);
@@ -329,7 +313,7 @@ function App() {
         title = 'LivrExpress';
     }
     document.title = title;
-  }, [currentRoute]);
+  }, [currentRoute, t]);
 
   let normalizedRoute = currentRoute;
   if (normalizedRoute === '/') {
