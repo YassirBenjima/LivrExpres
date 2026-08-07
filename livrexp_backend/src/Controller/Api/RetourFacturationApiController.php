@@ -228,7 +228,7 @@ final class RetourFacturationApiController extends AbstractController
                 $citiesCount[$city] = ($citiesCount[$city] ?? 0) + 1;
 
                 $creator = $colis->getCreatedBy();
-                $clientName = $creator ? ($creator->getNomStore() ?: ($creator->getNomComplet() ?: 'Client Privé')) : 'Client Privé';
+                $clientName = $creator ? ($creator->getBusinessName() ?: ($creator->getFullName() ?: 'Client Privé')) : 'Client Privé';
                 $clientsCount[$clientName] = ($clientsCount[$clientName] ?? 0) + 1;
 
                 // Simulate/Map reason distribution
