@@ -1206,56 +1206,56 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
 
                 {isUserMenuOpen && (
                   <MenuErrorBoundary>
-                    <>
-                    {/* Dropdown panel */}
-                    <div className="absolute end-0 top-full mt-2 w-[300px] rounded-lg shadow-xl bg-background border border-border z-30 overflow-hidden">
+                    {/* Metronic Professional User Menu Dropdown */}
+                    <div className="absolute end-0 top-full mt-2 w-[285px] rounded-xl shadow-xl bg-card border border-border/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      
+                      {/* User Info Header Banner */}
+                      <div className="p-3 bg-accent/30 dark:bg-accent/10 border-b border-border/70 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            {avatarUrl ? (
+                              <img alt="Avatar" className="size-9 rounded-full ring-2 ring-primary/20 shadow-2xs object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
+                            ) : (
+                              <div
+                                className="size-9 rounded-full flex items-center justify-center font-bold text-white text-xs ring-2 ring-primary/20 shadow-2xs"
+                                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}
+                              >
+                                {getUserInitials(user)}
+                              </div>
+                            )}
+                            <span className="absolute bottom-0 end-0 size-2 bg-emerald-500 rounded-full ring-2 ring-card"></span>
+                          </div>
 
-
-                      {/* User info header */}
-                      <div className="flex items-center justify-between px-2.5 py-2 gap-1.5">
-                        <div className="flex items-center gap-2">
-                          {avatarUrl ? (
-                            <img alt="Avatar" className="size-9 shrink-0 rounded-full ring-2 ring-border shadow-sm object-cover" src={avatarUrl} onError={() => setAvatarUrl(null)} />
-                          ) : (
-
-                            <div
-                              className="size-9 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-border shadow-sm"
-                              style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
-                            >
-                              {getUserInitials(user)}
-                            </div>
-                          )}
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm text-foreground font-semibold leading-none">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-bold text-foreground leading-tight truncate">
                               {getUserDisplayName(user)}
                             </span>
-                            <span className="text-xs text-secondary-foreground font-medium leading-none">
+                            <span className="text-[11px] font-medium text-muted-foreground leading-tight truncate mt-0.5">
                               {getUserDisplayEmail(user)}
                             </span>
                           </div>
                         </div>
 
-                        {isSuperAdmin ? (
-                          <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
-                        ) : isSuperviseur ? (
-                          <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">Superviseur</span>
-                        ) : isAdmin ? (
-                          <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">Admin</span>
-                        ) : isLivreur ? (
-                          <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Livreur</span>
-                        ) : (
-                          <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Client</span>
-                        )}
+                        <div className="shrink-0">
+                          {isSuperAdmin ? (
+                            <span className="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">Super Admin</span>
+                          ) : isSuperviseur ? (
+                            <span className="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">Superviseur</span>
+                          ) : isAdmin ? (
+                            <span className="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">Admin</span>
+                          ) : isLivreur ? (
+                            <span className="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">Livreur</span>
+                          ) : (
+                            <span className="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">Client</span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Separator */}
-                      <div className="border-t border-border mx-2.5"></div>
-
-                      {/* Profile link */}
-                      <div className="py-1">
+                      {/* Navigation Links */}
+                      <div className="p-1 space-y-0.5">
                         <a
                           href="/profile"
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-foreground hover:bg-accent rounded-md mx-1"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-lg transition-colors"
                           onClick={e => {
                             e.preventDefault();
                             setIsUserMenuOpen(false);
@@ -1263,68 +1263,68 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             window.dispatchEvent(new PopStateEvent('popstate'));
                           }}
                         >
-                          <i className="ki-filled ki-profile-circle text-base"></i>
-                          {t('nav.myProfile', 'Mon Profil')}
+                          <i className="ki-filled ki-profile-circle text-base text-primary/80"></i>
+                          <span>{t('nav.myProfile', 'Mon Profil')}</span>
                         </a>
 
-
-                        {/* Language selector */}
+                        {/* Language Selector */}
                         <div className="relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setIsLangMenuOpen(!isLangMenuOpen); }}
-                            className="flex items-center justify-between w-full px-2.5 py-2 text-sm text-foreground hover:bg-accent rounded-md mx-1"
-                            style={{ width: 'calc(100% - 8px)' }}
+                            className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-accent hover:text-primary rounded-lg transition-colors"
                           >
                             <span className="flex items-center gap-2">
-                              <i className="ki-filled ki-icon text-base"></i>
-                              {t('nav.language', 'Langue')}
-                            </span>
-                            <span className="flex items-center gap-1 kt-badge kt-badge-stroke shrink-0">
-                              {currentLangObj?.label || 'Français'}
-                              <img alt="" className="inline-block size-3.5 rounded-full" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
+                              <i className="ki-filled ki-icon text-base text-muted-foreground"></i>
+                              <span>{t('nav.language', 'Langue')}</span>
                             </span>
 
+                            <span className="flex items-center gap-1 kt-badge kt-badge-stroke shrink-0 text-[10px] px-1.5 py-0.5">
+                              {currentLangObj?.label || 'Français'}
+                              <img alt="" className="inline-block size-3 rounded-full object-cover ms-0.5" src={currentLangObj?.flag || '/assets/media/flags/france.svg'} />
+                            </span>
                           </button>
 
                           {isLangMenuOpen && (
-                            <div className="absolute end-full top-0 me-1 w-[180px] rounded-md shadow-lg bg-background border border-border z-40 py-1">
+                            <div className="absolute end-full top-0 me-1.5 w-[170px] rounded-lg shadow-xl bg-card border border-border z-50 p-1 space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
                               {langOptions.map(({ code, label, flag }) => (
                                 <button
                                   key={code}
-                                  className="flex items-center justify-between w-full px-3 py-2 text-sm text-foreground hover:bg-accent"
+                                  className={`flex items-center justify-between w-full px-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                                    language === code ? 'bg-accent text-primary font-bold' : 'text-foreground hover:bg-accent'
+                                  }`}
                                   onClick={() => { setLanguage(code); setIsLangMenuOpen(false); }}
                                 >
                                   <span className="flex items-center gap-2">
-                                    <img alt="" className="inline-block size-4 rounded-full" src={flag} />
+                                    <img alt="" className="size-3.5 rounded-full object-cover" src={flag} />
                                     {label}
                                   </span>
-                                  {language === code && <i className="ki-solid ki-check-circle text-green-500 text-base"></i>}
+                                  {language === code && <i className="ki-solid ki-check-circle text-primary text-sm"></i>}
                                 </button>
                               ))}
                             </div>
                           )}
                         </div>
-
                       </div>
 
                       {/* Separator */}
-                      <div className="border-t border-border mx-2.5 my-1"></div>
+                      <div className="border-t border-border/70 mx-2.5 my-0.5"></div>
 
-                      {/* Dark mode + Logout */}
-                      <div className="px-2.5 pt-1 pb-2.5 flex flex-col gap-3">
-                        <div className="flex items-center gap-2 justify-between">
-                          <span className="flex items-center gap-2">
+                      {/* Dark Mode & Logout */}
+                      <div className="p-2 space-y-2">
+                        <div className="flex items-center justify-between px-1 py-0.5">
+                          <span className="flex items-center gap-2 text-xs font-medium text-foreground">
                             <i className="ki-filled ki-moon text-base text-muted-foreground"></i>
-                            <span className="font-medium text-2sm">{t('header.darkMode', 'Mode sombre')}</span>
+                            <span className="text-2sm font-medium">{t('header.darkMode', 'Mode sombre')}</span>
                           </span>
+
                           <button
                             onClick={toggleTheme}
                             type="button"
                             role="switch"
                             aria-checked={themeMode === 'dark'}
                             style={{
-                              width: '36px',
-                              height: '20px',
+                              width: '34px',
+                              height: '18px',
                               backgroundColor: themeMode === 'dark' ? '#3b82f6' : 'rgb(228, 228, 231)',
                               borderRadius: '9999px',
                               position: 'relative',
@@ -1337,8 +1337,8 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                           >
                             <div
                               style={{
-                                width: '14px',
-                                height: '14px',
+                                width: '12px',
+                                height: '12px',
                                 backgroundColor: 'rgb(255, 255, 255)',
                                 borderRadius: '50%',
                                 position: 'absolute',
@@ -1350,18 +1350,19 @@ export default function DashboardLayout({ children, activeMenu, activeItem }) {
                             />
                           </button>
                         </div>
+
                         <button
                           onClick={handleLogout}
-                          className="kt-btn kt-btn-outline justify-center w-full text-sm"
+                          className="kt-btn kt-btn-outline kt-btn-sm justify-center w-full text-xs font-semibold gap-1.5 hover:bg-destructive hover:text-white hover:border-destructive transition-all duration-150"
                         >
-                          {t('nav.logout', 'Se déconnecter')}
+                          <i className="ki-filled ki-exit-right text-xs"></i>
+                          <span>{t('nav.logout', 'Se déconnecter')}</span>
                         </button>
-
                       </div>
+
                     </div>
-                  </>
-                </MenuErrorBoundary>
-              )}
+                  </MenuErrorBoundary>
+                )}
 
               </div>
             </div>
